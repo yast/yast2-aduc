@@ -43,7 +43,7 @@ def GPMCSequence(in_lp, in_creds):
         },
         'aduc' : {
             Symbol('abort') : Symbol('abort'),
-            Symbol('next') : 'next',
+            Symbol('next') : Symbol('next'),
         },
         'write' : {
             Symbol('abort') : Symbol('abort'),

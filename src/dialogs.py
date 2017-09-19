@@ -25,11 +25,13 @@ class ADUC:
         Wizard.SetContentsButtons(gettext.gettext('Active Directory Users and Computers'), self.__aduc_page(), self.__help(), 'Back', 'Next')
         Wizard.DisableBackButton()
         Wizard.DisableNextButton()
-        UI.SetFocus(Term('id', 'aduc_tree'))
+        #UI.SetFocus(Term('id', 'aduc_tree'))
 
         ret = Symbol('abort')
         while True:
             ret = UI.UserInput()
+            if str(ret) == 'abort' or str(ret) == 'cancel':
+                break
 
         return ret
 
