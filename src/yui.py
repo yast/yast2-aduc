@@ -1,0 +1,1048 @@
+import gettext
+from gettext import textdomain
+
+textdomain('aduc')
+
+import ycp
+ycp.import_module('UI')
+from ycp import *
+ycp.widget_names()
+import Wizard
+
+import sys
+
+def BarGraph(values, labels, id=None, opts=[]):
+    """Horizontal bar graph (optional widget)
+
+    Synopsis
+    BarGraph ( list values, list labels );
+
+    Parameters
+    list values
+
+    Optional Arguments
+    list labels
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result.append(values)
+    result.append(labels)
+    result = tuple(result)
+
+    return BarGraph(*result)
+
+def BusyIndicator(label, timeout=None, id=None, opts=[]):
+    """
+
+    Synopsis
+    BusyIndicator ( string label, integer timeout );
+
+    Parameters
+    string label  the label describing the bar
+
+    Optional Arguments
+    integer timeout  the timeout in milliseconds until busy indicator changes to stalled state, 1000ms by default
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result.append(label)
+    if timeout:
+        result.append(timeout)
+    result = tuple(result)
+
+    return BusyIndicator(*result)
+
+def ButtonBox(buttons, id=None, opts=[]):
+    """
+
+    Synopsis
+    ButtonBox ( term button1, term button2 );
+
+    Parameters
+    term buttons  list of PushButton items
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result.extend(buttons)
+    result = tuple(result)
+
+    return ButtonBox(*result)
+
+def CheckBox(id=None, opts=[]):
+    """
+
+    Synopsis
+    CheckBox (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return CheckBox(*result)
+
+def CheckBoxFrame(id=None, opts=[]):
+    """
+
+    Synopsis
+    CheckBoxFrame (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return CheckBoxFrame(*result)
+
+def ComboBox(id=None, opts=[]):
+    """
+
+    Synopsis
+    ComboBox (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return ComboBox(*result)
+
+def DateField(id=None, opts=[]):
+    """
+
+    Synopsis
+    DateField (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return DateField(*result)
+
+def DownloadProgress(id=None, opts=[]):
+    """
+
+    Synopsis
+    DownloadProgress (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return DownloadProgress(*result)
+
+def DumbTab(tabs, contents, id=None, opts=[]):
+    """Simplistic tab widget that behaves like push buttons
+
+    Synopsis
+    DumbTab ( list tabs , term contents );
+
+    Parameters
+    list tabs  page headers
+    term contents  page contents - usually a ReplacePoint
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if len(opts) > 0:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return DumbTab(*result)
+
+def Empty():
+    """
+
+    Synopsis
+    Empty (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    return Term('Empty')
+
+def Frame(id=None, opts=[]):
+    """
+
+    Synopsis
+    Frame (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return Frame(*result)
+
+def Graph(id=None, opts=[]):
+    """
+
+    Synopsis
+    Graph (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return Graph(*result)
+
+def HBox(children=[], id=None, opts=[]):
+    """
+
+    Synopsis
+    HBox ( children... );
+
+    Options
+    debugLayout  verbose logging
+
+    Optional Arguments
+    list children  children widgets
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result.extend(children)
+        result = tuple(result)
+
+        return HBox(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
+
+def HSpacing(id=None, opts=[]):
+    """
+
+    Synopsis
+    HSpacing (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return HSpacing(*result)
+
+def HSquash(id=None, opts=[]):
+    """
+
+    Synopsis
+    HSquash (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return HSquash(*result)
+
+def HWeight(weight, child):
+    """
+
+    Synopsis
+    HWeight ( integer weight, term child );
+
+    Parameters
+    integer weight  the new weight of the child widget
+    term child  the child widget
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    try:
+        result = []
+        result.append(weight)
+        result.append(child)
+        result = tuple(result)
+
+        return HWeight(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
+
+def Image(id=None, opts=[]):
+    """
+
+    Synopsis
+    Image (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return Image(*result)
+
+def InputField(id=None, opts=[]):
+    """
+
+    Synopsis
+    InputField (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return InputField(*result)
+
+def IntField(id=None, opts=[]):
+    """
+
+    Synopsis
+    IntField (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return IntField(*result)
+
+def Label(id=None, opts=[]):
+    """
+
+    Synopsis
+    Label (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return Label(*result)
+
+def Left(id=None, opts=[]):
+    """
+
+    Synopsis
+    Left (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return Left(*result)
+
+def LogView(id=None, opts=[]):
+    """
+
+    Synopsis
+    LogView (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return LogView(*result)
+
+def MarginBox(id=None, opts=[]):
+    """
+
+    Synopsis
+    MarginBox (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return MarginBox(*result)
+
+def MenuButton(id=None, opts=[]):
+    """
+
+    Synopsis
+    MenuButton (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return MenuButton(*result)
+
+def MinWidth(id=None, opts=[]):
+    """
+
+    Synopsis
+    MinWidth (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return MinWidth(*result)
+
+def MultiLineEdit(id=None, opts=[]):
+    """
+
+    Synopsis
+    MultiLineEdit (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return MultiLineEdit(*result)
+
+def MultiSelectionBox(id=None, opts=[]):
+    """
+
+    Synopsis
+    MultiSelectionBox (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return MultiSelectionBox(*result)
+
+def PackageSelector(id=None, opts=[]):
+    """
+
+    Synopsis
+    PackageSelector (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return PackageSelector(*result)
+
+def PartitionSplitter(id=None, opts=[]):
+    """
+
+    Synopsis
+    PartitionSplitter (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return PartitionSplitter(*result)
+
+def PatternSelector(id=None, opts=[]):
+    """
+
+    Synopsis
+    PatternSelector (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return PatternSelector(*result)
+
+def ProgressBar(id=None, opts=[]):
+    """
+
+    Synopsis
+    ProgressBar (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return ProgressBar(*result)
+
+def PushButton(id=None, opts=[]):
+    """
+
+    Synopsis
+    PushButton (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return PushButton(*result)
+
+def RadioButton(id=None, opts=[]):
+    """
+
+    Synopsis
+    RadioButton (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return RadioButton(*result)
+
+def RadioButtonGroup(id=None, opts=[]):
+    """
+
+    Synopsis
+    RadioButtonGroup (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return RadioButtonGroup(*result)
+
+def ReplacePoint(child, id=None, opts=[]):
+    """Pseudo widget to replace parts of a dialog
+
+    Synopsis
+    ReplacePoint ( term child );
+
+    Parameters
+    term child  the child widget
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if len(opts) > 0:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result.append(child)
+        result = tuple(result)
+
+        return ReplacePoint(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
+
+def RichText(id=None, opts=[]):
+    """
+
+    Synopsis
+    RichText (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return RichText(*result)
+
+def SelectionBox(id=None, opts=[]):
+    """
+
+    Synopsis
+    SelectionBox (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return SelectionBox(*result)
+
+def SimplePatchSelector(id=None, opts=[]):
+    """
+
+    Synopsis
+    SimplePatchSelector (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return SimplePatchSelector(*result)
+
+def Slider(id=None, opts=[]):
+    """
+
+    Synopsis
+    Slider (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return Slider(*result)
+
+def Table(id=None, opts=[]):
+    """
+
+    Synopsis
+    Table (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return Table(*result)
+
+def TimeField(id=None, opts=[]):
+    """
+
+    Synopsis
+    TimeField (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return TimeField(*result)
+
+def TimezoneSelector(id=None, opts=[]):
+    """
+
+    Synopsis
+    TimezoneSelector (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return TimezoneSelector(*result)
+
+def Node(label, expanded=False, children=[]):
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    result.append(label)
+    result.append(expanded)
+    result.append(children)
+    result = tuple(result)
+
+    return Term('item', *result)
+
+def Tree(label, items, id=None, opts=[]):
+    """Scrollable tree selection
+
+    Synopsis
+    Tree ( string label );
+
+    Parameters
+    string label
+
+    Options
+    immediate  make `notify trigger immediately when the selected item changes
+
+    Optional Arguments
+    itemList items  the items contained in the tree
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result.append(label)
+    result.append(items)
+    result = tuple(result)
+
+    return Tree(*result)
+
+def VMultiProgressMeter(id=None, opts=[]):
+    """
+
+    Synopsis
+    VMultiProgressMeter (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return VMultiProgressMeter(*result)
+
+def Wizard(id=None, opts=[]):
+    """
+
+    Synopsis
+    Wizard (  );
+
+    Parameters
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    if id is not None:
+        result.append(Term('id', id))
+    if opts is not None:
+        for opt in opts:
+            result.append(Term('opt', Symbol(opt)))
+    result = tuple(result)
+
+    return Wizard(*result)
+

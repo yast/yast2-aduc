@@ -6,14 +6,11 @@ from gettext import textdomain
 textdomain('aduc')
 
 import ycp
-ycp.import_module('UI')
 from ycp import *
 ycp.widget_names()
 import Wizard
-ycp.import_module('Label')
 
-import Aduc
-import re
+from yui import Empty, HWeight, ReplacePoint, HBox
 
 class ADUC:
     def __init__(self, lp, creds):
@@ -39,11 +36,8 @@ class ADUC:
         return ''
 
     def __aduc_page(self):
-        from ycp import *
-        ycp.widget_names()
-
-        return HBox(
-            HWeight(1, Term('Empty')),
-            HWeight(2, ReplacePoint(Term('id', 'rightPane'), Term('Empty'))),
+        return HBox([
+            HWeight(1, Empty()),
+            HWeight(2, ReplacePoint(Empty(), id='rightPane'))]
             )
 
