@@ -893,13 +893,17 @@ def Slider(id=None, opts=[]):
 
     return Slider(*result)
 
-def Table(id=None, opts=[]):
-    """
+def Table(header, items=[], id=None, opts=[]):
+    """Multicolumn table widget
 
     Synopsis
-    Table (  );
+    Table ( term header, list items );
 
     Parameters
+    term header  the headers of the columns
+
+    Optional Arguments
+    list items  the items contained in the selection box
 
     """
     from ycp import *
@@ -911,6 +915,12 @@ def Table(id=None, opts=[]):
     if opts is not None:
         for opt in opts:
             result.append(Term('opt', Symbol(opt)))
+    header = tuple(header)
+    result.append(Term('header', *header))
+    contents = []
+    for item in items:
+        contents.append(Term('item', *item))
+    result.append(contents)
     result = tuple(result)
 
     return Table(*result)

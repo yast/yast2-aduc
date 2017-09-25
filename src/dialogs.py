@@ -11,7 +11,7 @@ ycp.widget_names()
 import Wizard
 
 from complex import Connection
-from yui import Empty, HWeight, ReplacePoint, HBox, Tree, Node
+from yui import Empty, HWeight, ReplacePoint, HBox, Tree, Node, Table
 
 from syslog import syslog, LOG_INFO, LOG_ERR, LOG_DEBUG, LOG_EMERG, LOG_ALERT
 
@@ -40,11 +40,23 @@ class ADUC:
                 break
             elif str(ret) == 'aduc_tree':
                 choice = UI.QueryWidget(Term('id', 'aduc_tree'), Symbol('Value'))
+                if choice == 'Users':
+                    UI.ReplaceWidget(Term('id', 'rightPane'), self.__users_tab())
+                elif choice == 'Computers':
+                    UI.ReplaceWidget(Term('id', 'rightPane'), self.__computer_tab())
 
         return ret
 
     def __help(self):
         return ''
+
+    def __users_tab(self):
+        items = [(user[1]['cn'][-1], '', user[1]['description'][-1] if 'description' in user[1] else '') for user in self.users]
+        return Table(['Name', 'Type', 'Description'], items=items, id='user_items')
+
+    def __computer_tab(self):
+        items = [(user[1]['cn'][-1], '', user[1]['description'][-1] if 'description' in user[1] else '') for user in self.computers]
+        return Table(['Name', 'Type', 'Description'], items=items, id='user_items')
 
     def __aduc_tree(self):
         return Tree('Active Directory Users and Computers', [
