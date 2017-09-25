@@ -51,16 +51,16 @@ class ADUC:
         return ''
 
     def __users_tab(self):
-        items = [(user[1]['cn'][-1], '', user[1]['description'][-1] if 'description' in user[1] else '') for user in self.users]
+        items = [(user[1]['cn'][-1], user[1]['objectClass'][-1].title(), user[1]['description'][-1] if 'description' in user[1] else '') for user in self.users]
         return Table(['Name', 'Type', 'Description'], items=items, id='user_items')
 
     def __computer_tab(self):
-        items = [(user[1]['cn'][-1], '', user[1]['description'][-1] if 'description' in user[1] else '') for user in self.computers]
-        return Table(['Name', 'Type', 'Description'], items=items, id='user_items')
+        items = [(comp[1]['cn'][-1], comp[1]['objectClass'][-1].title(), comp[1]['description'][-1] if 'description' in comp[1] else '') for comp in self.computers]
+        return Table(['Name', 'Type', 'Description'], items=items, id='comp_items')
 
     def __aduc_tree(self):
         return Tree('Active Directory Users and Computers', [
-            Node('my.domain', True, [
+            Node(self.realm.lower(), True, [
                 Node('Users', True),
                 Node('Computers', True),
             ]),
