@@ -11,9 +11,32 @@ ycp.widget_names()
 import Wizard
 
 from complex import Connection
-from yui import Empty, HWeight, ReplacePoint, HBox, Tree, Node, Table
+from yui import Empty, HWeight, ReplacePoint, HBox, Tree, Node, Table, MinWidth, MinHeight, MinSize, VBox, PushButton
 
 from syslog import syslog, LOG_INFO, LOG_ERR, LOG_DEBUG, LOG_EMERG, LOG_ALERT
+
+class Properties:
+    def __init__(self, conn, obj):
+        self.conn = conn
+        self.obj = obj
+
+    def Show(self):
+        UI.OpenDialog(self.__prop_diag())
+
+        ret = Symbol('abort')
+        while True:
+            ret = UI.UserInput()
+            if str(ret) == 'cancel_prop':
+                UI.CloseDialog()
+                break
+
+    def __prop_diag(self):
+        return MinSize(40, 40,
+            VBox([
+                PushButton('OK', id='ok_prop'),
+                PushButton('Cancel', id='cancel_prop'),
+            ])
+        )
 
 class ADUC:
     def __init__(self, lp, creds):
@@ -28,9 +51,9 @@ class ADUC:
           syslog(LOG_EMERG, str(e))
 
     def Show(self):
-        Wizard.SetContentsButtons(gettext.gettext('Active Directory Users and Computers'), self.__aduc_page(), self.__help(), 'Back', 'Next')
+        Wizard.SetContentsButtons(gettext.gettext('Active Directory Users and Computers'), self.__aduc_page(), self.__help(), 'Back', 'Edit')
         Wizard.DisableBackButton()
-        Wizard.DisableNextButton()
+        #Wizard.DisableNextButton()
         UI.SetFocus(Term('id', 'aduc_tree'))
 
         ret = Symbol('abort')
@@ -44,6 +67,11 @@ class ADUC:
                     UI.ReplaceWidget(Term('id', 'rightPane'), self.__users_tab())
                 elif choice == 'Computers':
                     UI.ReplaceWidget(Term('id', 'rightPane'), self.__computer_tab())
+                else:
+                    UI.ReplaceWidget(Term('id', 'rightPane'), Empty())
+            elif str(ret) == 'next':
+                edit = Properties(self.conn, None)
+                edit.Show()
 
         return ret
 

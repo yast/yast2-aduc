@@ -283,7 +283,7 @@ def Graph(id=None, opts=[]):
     return Graph(*result)
 
 def HBox(children=[], id=None, opts=[]):
-    """
+    """Generic layout: Arrange widgets horizontally
 
     Synopsis
     HBox ( children... );
@@ -309,6 +309,37 @@ def HBox(children=[], id=None, opts=[]):
         result = tuple(result)
 
         return HBox(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
+
+def VBox(children=[], id=None, opts=[]):
+    """Generic layout: Arrange widgets vertically
+
+    Synopsis
+    VBox ( children... );
+
+    Options
+    debugLayout  verbose logging
+
+    Optional Arguments
+    list children  children widgets
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result.extend(children)
+        result = tuple(result)
+
+        return VBox(*result)
     except Exception as e:
         sys.stderr.write(str(e))
         sys.exit(1)
@@ -558,27 +589,70 @@ def MenuButton(id=None, opts=[]):
 
     return MenuButton(*result)
 
-def MinWidth(id=None, opts=[]):
-    """
+def MinWidth(size, child):
+    """Layout minimum size
 
     Synopsis
-    MinWidth (  );
+    MinWidth ( float|integer size, term child );
 
     Parameters
+    float|integer size  minimum width
+    term child  The contained child widget
 
     """
     from ycp import *
     ycp.widget_names()
 
     result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
+    result.append(size)
+    result.append(child)
     result = tuple(result)
 
     return MinWidth(*result)
+
+def MinHeight(size, child):
+    """Layout minimum size
+
+    Synopsis
+    MinHeight ( float|integer size, term child );
+
+    Parameters
+    float|integer size  minimum heigh
+    term child  The contained child widget
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    result.append(size)
+    result.append(child)
+    result = tuple(result)
+
+    return MinHeight(*result)
+
+def MinSize(width, height, child):
+    """Layout minimum size
+
+    Synopsis
+    MinSize ( float|integer size, float|integer size, term child );
+
+    Parameters
+    float|integer size  minimum width
+    float|integer size  minimum height
+    term child  The contained child widget
+
+    """
+    from ycp import *
+    ycp.widget_names()
+
+    result = []
+    result.append(width)
+    result.append(height)
+    result.append(child)
+    result = tuple(result)
+
+    return MinSize(*result)
 
 def MultiLineEdit(id=None, opts=[]):
     """
@@ -712,13 +786,22 @@ def ProgressBar(id=None, opts=[]):
 
     return ProgressBar(*result)
 
-def PushButton(id=None, opts=[]):
-    """
+def PushButton(label, id=None, opts=[]):
+    """Perform action on click
 
     Synopsis
-    PushButton (  );
+    PushButton ( string label );
 
     Parameters
+    string label
+
+    Options
+    default  makes this button the dialogs default button
+    helpButton  automatically shows topmost `HelpText
+    okButton  assign the [OK] role to this button (see ButtonBox)
+    cancelButton  assign the [Cancel] role to this button (see ButtonBox)
+    applyButton  assign the [Apply] role to this button (see ButtonBox)
+    customButton  override any other button role assigned to this button
 
     """
     from ycp import *
@@ -730,6 +813,7 @@ def PushButton(id=None, opts=[]):
     if opts is not None:
         for opt in opts:
             result.append(Term('opt', Symbol(opt)))
+    result.append(label)
     result = tuple(result)
 
     return PushButton(*result)
