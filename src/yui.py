@@ -57,20 +57,24 @@ def BarGraph(values, labels, id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result.append(values)
-    result.append(labels)
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result.append(values)
+        result.append(labels)
+        result = tuple(result)
 
-    return BarGraph(*result)
+        return BarGraph(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def BusyIndicator(label, timeout=None, id=None, opts=[]):
-    """
+    """Graphical busy indicator
 
     Synopsis
     BusyIndicator ( string label, integer timeout );
@@ -85,21 +89,25 @@ def BusyIndicator(label, timeout=None, id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result.append(label)
-    if timeout:
-        result.append(timeout)
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result.append(label)
+        if timeout:
+            result.append(timeout)
+        result = tuple(result)
 
-    return BusyIndicator(*result)
+        return BusyIndicator(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def ButtonBox(buttons, id=None, opts=[]):
-    """
+    """Layout for push buttons that takes button order into account
 
     Synopsis
     ButtonBox ( term button1, term button2 );
@@ -111,16 +119,20 @@ def ButtonBox(buttons, id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result.extend(buttons)
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result.extend(buttons)
+        result = tuple(result)
 
-    return ButtonBox(*result)
+        return ButtonBox(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def CheckBox(id=None, opts=[]):
     """
@@ -134,15 +146,19 @@ def CheckBox(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return CheckBox(*result)
+        return CheckBox(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def CheckBoxFrame(id=None, opts=[]):
     """
@@ -156,15 +172,19 @@ def CheckBoxFrame(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return CheckBoxFrame(*result)
+        return CheckBoxFrame(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def ComboBox(id=None, opts=[]):
     """
@@ -178,15 +198,19 @@ def ComboBox(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return ComboBox(*result)
+        return ComboBox(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def DateField(id=None, opts=[]):
     """
@@ -200,15 +224,19 @@ def DateField(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return DateField(*result)
+        return DateField(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def DownloadProgress(id=None, opts=[]):
     """
@@ -222,15 +250,19 @@ def DownloadProgress(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return DownloadProgress(*result)
+        return DownloadProgress(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def DumbTab(tabs, contents, id=None, opts=[]):
     """Simplistic tab widget that behaves like push buttons
@@ -245,15 +277,19 @@ def DumbTab(tabs, contents, id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if len(opts) > 0:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if len(opts) > 0:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return DumbTab(*result)
+        return DumbTab(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def Empty():
     """
@@ -267,7 +303,11 @@ def Empty():
     from ycp import *
     ycp.widget_names()
 
-    return Term('Empty')
+    try:
+        return Term('Empty')
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def Frame(id=None, opts=[]):
     """
@@ -281,15 +321,19 @@ def Frame(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return Frame(*result)
+        return Frame(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def Graph(id=None, opts=[]):
     """
@@ -303,15 +347,19 @@ def Graph(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return Graph(*result)
+        return Graph(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def HBox(children=[], id=None, opts=[]):
     """Generic layout: Arrange widgets horizontally
@@ -387,15 +435,19 @@ def HSpacing(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return HSpacing(*result)
+        return HSpacing(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def HSquash(id=None, opts=[]):
     """
@@ -409,15 +461,19 @@ def HSquash(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return HSquash(*result)
+        return HSquash(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def HWeight(weight, child):
     """
@@ -456,15 +512,19 @@ def Image(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return Image(*result)
+        return Image(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def InputField(id=None, opts=[]):
     """
@@ -478,15 +538,19 @@ def InputField(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return InputField(*result)
+        return InputField(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def IntField(id=None, opts=[]):
     """
@@ -500,15 +564,19 @@ def IntField(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return IntField(*result)
+        return IntField(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def Label(id=None, opts=[]):
     """
@@ -522,15 +590,19 @@ def Label(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return Label(*result)
+        return Label(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def Left(id=None, opts=[]):
     """
@@ -544,15 +616,19 @@ def Left(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return Left(*result)
+        return Left(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def LogView(id=None, opts=[]):
     """
@@ -566,15 +642,19 @@ def LogView(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return LogView(*result)
+        return LogView(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def MarginBox(id=None, opts=[]):
     """
@@ -588,15 +668,19 @@ def MarginBox(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return MarginBox(*result)
+        return MarginBox(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def MenuButton(id=None, opts=[]):
     """
@@ -610,15 +694,19 @@ def MenuButton(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return MenuButton(*result)
+        return MenuButton(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def MinWidth(size, child):
     """Layout minimum size
@@ -634,12 +722,16 @@ def MinWidth(size, child):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    result.append(size)
-    result.append(child)
-    result = tuple(result)
+    try:
+        result = []
+        result.append(size)
+        result.append(child)
+        result = tuple(result)
 
-    return MinWidth(*result)
+        return MinWidth(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def MinHeight(size, child):
     """Layout minimum size
@@ -655,12 +747,16 @@ def MinHeight(size, child):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    result.append(size)
-    result.append(child)
-    result = tuple(result)
+    try:
+        result = []
+        result.append(size)
+        result.append(child)
+        result = tuple(result)
 
-    return MinHeight(*result)
+        return MinHeight(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def MinSize(width, height, child):
     """Layout minimum size
@@ -677,13 +773,17 @@ def MinSize(width, height, child):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    result.append(width)
-    result.append(height)
-    result.append(child)
-    result = tuple(result)
+    try:
+        result = []
+        result.append(width)
+        result.append(height)
+        result.append(child)
+        result = tuple(result)
 
-    return MinSize(*result)
+        return MinSize(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def MultiLineEdit(id=None, opts=[]):
     """
@@ -697,15 +797,19 @@ def MultiLineEdit(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return MultiLineEdit(*result)
+        return MultiLineEdit(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def MultiSelectionBox(id=None, opts=[]):
     """
@@ -719,15 +823,19 @@ def MultiSelectionBox(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return MultiSelectionBox(*result)
+        return MultiSelectionBox(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def PackageSelector(id=None, opts=[]):
     """
@@ -741,15 +849,19 @@ def PackageSelector(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return PackageSelector(*result)
+        return PackageSelector(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def PartitionSplitter(id=None, opts=[]):
     """
@@ -763,15 +875,19 @@ def PartitionSplitter(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return PartitionSplitter(*result)
+        return PartitionSplitter(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def PatternSelector(id=None, opts=[]):
     """
@@ -785,15 +901,19 @@ def PatternSelector(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return PatternSelector(*result)
+        return PatternSelector(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def ProgressBar(id=None, opts=[]):
     """
@@ -807,15 +927,19 @@ def ProgressBar(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return ProgressBar(*result)
+        return ProgressBar(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def PushButton(label, id=None, opts=[]):
     """Perform action on click
@@ -838,16 +962,20 @@ def PushButton(label, id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result.append(label)
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result.append(label)
+        result = tuple(result)
 
-    return PushButton(*result)
+        return PushButton(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def RadioButton(id=None, opts=[]):
     """
@@ -861,15 +989,19 @@ def RadioButton(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return RadioButton(*result)
+        return RadioButton(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def RadioButtonGroup(id=None, opts=[]):
     """
@@ -883,15 +1015,19 @@ def RadioButtonGroup(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return RadioButtonGroup(*result)
+        return RadioButtonGroup(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def ReplacePoint(child, id=None, opts=[]):
     """Pseudo widget to replace parts of a dialog
@@ -932,15 +1068,19 @@ def RichText(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return RichText(*result)
+        return RichText(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def SelectionBox(id=None, opts=[]):
     """
@@ -954,15 +1094,19 @@ def SelectionBox(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return SelectionBox(*result)
+        return SelectionBox(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def SimplePatchSelector(id=None, opts=[]):
     """
@@ -976,15 +1120,19 @@ def SimplePatchSelector(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return SimplePatchSelector(*result)
+        return SimplePatchSelector(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def Slider(id=None, opts=[]):
     """
@@ -998,15 +1146,19 @@ def Slider(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return Slider(*result)
+        return Slider(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def Table(header, items=[], id=None, opts=[]):
     """Multicolumn table widget
@@ -1024,21 +1176,25 @@ def Table(header, items=[], id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    header = tuple(header)
-    result.append(Term('header', *header))
-    contents = []
-    for item in items:
-        contents.append(Term('item', *item))
-    result.append(contents)
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        header = tuple(header)
+        result.append(Term('header', *header))
+        contents = []
+        for item in items:
+            contents.append(Term('item', *item))
+        result.append(contents)
+        result = tuple(result)
 
-    return Table(*result)
+        return Table(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def TimeField(id=None, opts=[]):
     """
@@ -1052,15 +1208,19 @@ def TimeField(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return TimeField(*result)
+        return TimeField(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def TimezoneSelector(id=None, opts=[]):
     """
@@ -1074,27 +1234,35 @@ def TimezoneSelector(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return TimezoneSelector(*result)
+        return TimezoneSelector(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def Node(label, expanded=False, children=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    result.append(label)
-    result.append(expanded)
-    result.append(children)
-    result = tuple(result)
+    try:
+        result = []
+        result.append(label)
+        result.append(expanded)
+        result.append(children)
+        result = tuple(result)
 
-    return Term('item', *result)
+        return Term('item', *result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def Tree(label, items, id=None, opts=[]):
     """Scrollable tree selection
@@ -1115,17 +1283,21 @@ def Tree(label, items, id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result.append(label)
-    result.append(items)
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result.append(label)
+        result.append(items)
+        result = tuple(result)
 
-    return Tree(*result)
+        return Tree(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 def VMultiProgressMeter(id=None, opts=[]):
     """
@@ -1139,13 +1311,17 @@ def VMultiProgressMeter(id=None, opts=[]):
     from ycp import *
     ycp.widget_names()
 
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
+    try:
+        result = []
+        if id is not None:
+            result.append(Term('id', id))
+        if opts is not None:
+            for opt in opts:
+                result.append(Term('opt', Symbol(opt)))
+        result = tuple(result)
 
-    return VMultiProgressMeter(*result)
+        return VMultiProgressMeter(*result)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
