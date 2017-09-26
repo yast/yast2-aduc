@@ -10,6 +10,7 @@ ycp.widget_names()
 import Wizard
 
 import sys
+import traceback
 
 class DialogTop:
     def UserInput(self):
@@ -70,7 +71,7 @@ def BarGraph(values, labels, id=None, opts=[]):
 
         return BarGraph(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def BusyIndicator(label, timeout=None, id=None, opts=[]):
@@ -103,7 +104,7 @@ def BusyIndicator(label, timeout=None, id=None, opts=[]):
 
         return BusyIndicator(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def ButtonBox(buttons, id=None, opts=[]):
@@ -131,7 +132,7 @@ def ButtonBox(buttons, id=None, opts=[]):
 
         return ButtonBox(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def CheckBox(id=None, opts=[]):
@@ -157,7 +158,7 @@ def CheckBox(id=None, opts=[]):
 
         return CheckBox(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def CheckBoxFrame(id=None, opts=[]):
@@ -183,7 +184,7 @@ def CheckBoxFrame(id=None, opts=[]):
 
         return CheckBoxFrame(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def ComboBox(id=None, opts=[]):
@@ -209,7 +210,7 @@ def ComboBox(id=None, opts=[]):
 
         return ComboBox(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def DateField(id=None, opts=[]):
@@ -235,7 +236,7 @@ def DateField(id=None, opts=[]):
 
         return DateField(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def DownloadProgress(id=None, opts=[]):
@@ -261,7 +262,7 @@ def DownloadProgress(id=None, opts=[]):
 
         return DownloadProgress(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def DumbTab(tabs, contents, id=None, opts=[]):
@@ -288,7 +289,7 @@ def DumbTab(tabs, contents, id=None, opts=[]):
 
         return DumbTab(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def Empty():
@@ -306,7 +307,7 @@ def Empty():
     try:
         return Term('Empty')
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def Frame(id=None, opts=[]):
@@ -332,7 +333,7 @@ def Frame(id=None, opts=[]):
 
         return Frame(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def Graph(id=None, opts=[]):
@@ -358,7 +359,7 @@ def Graph(id=None, opts=[]):
 
         return Graph(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def HBox(children=[], id=None, opts=[]):
@@ -389,7 +390,7 @@ def HBox(children=[], id=None, opts=[]):
 
         return HBox(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def VBox(children=[], id=None, opts=[]):
@@ -420,7 +421,7 @@ def VBox(children=[], id=None, opts=[]):
 
         return VBox(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def HSpacing(id=None, opts=[]):
@@ -446,7 +447,7 @@ def HSpacing(id=None, opts=[]):
 
         return HSpacing(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def HSquash(id=None, opts=[]):
@@ -472,7 +473,7 @@ def HSquash(id=None, opts=[]):
 
         return HSquash(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def HWeight(weight, child):
@@ -497,7 +498,7 @@ def HWeight(weight, child):
 
         return HWeight(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def Image(id=None, opts=[]):
@@ -523,7 +524,7 @@ def Image(id=None, opts=[]):
 
         return Image(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def InputField(id=None, opts=[]):
@@ -549,7 +550,7 @@ def InputField(id=None, opts=[]):
 
         return InputField(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def IntField(id=None, opts=[]):
@@ -575,7 +576,7 @@ def IntField(id=None, opts=[]):
 
         return IntField(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def Label(id=None, opts=[]):
@@ -601,7 +602,7 @@ def Label(id=None, opts=[]):
 
         return Label(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def Left(id=None, opts=[]):
@@ -627,7 +628,7 @@ def Left(id=None, opts=[]):
 
         return Left(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def LogView(id=None, opts=[]):
@@ -653,7 +654,7 @@ def LogView(id=None, opts=[]):
 
         return LogView(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def MarginBox(id=None, opts=[]):
@@ -679,7 +680,7 @@ def MarginBox(id=None, opts=[]):
 
         return MarginBox(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def MenuButton(id=None, opts=[]):
@@ -705,7 +706,7 @@ def MenuButton(id=None, opts=[]):
 
         return MenuButton(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def MinWidth(size, child):
@@ -730,7 +731,7 @@ def MinWidth(size, child):
 
         return MinWidth(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def MinHeight(size, child):
@@ -755,7 +756,7 @@ def MinHeight(size, child):
 
         return MinHeight(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def MinSize(width, height, child):
@@ -782,7 +783,7 @@ def MinSize(width, height, child):
 
         return MinSize(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def MultiLineEdit(id=None, opts=[]):
@@ -808,7 +809,7 @@ def MultiLineEdit(id=None, opts=[]):
 
         return MultiLineEdit(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def MultiSelectionBox(id=None, opts=[]):
@@ -834,7 +835,7 @@ def MultiSelectionBox(id=None, opts=[]):
 
         return MultiSelectionBox(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def PackageSelector(id=None, opts=[]):
@@ -860,7 +861,7 @@ def PackageSelector(id=None, opts=[]):
 
         return PackageSelector(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def PartitionSplitter(id=None, opts=[]):
@@ -886,7 +887,7 @@ def PartitionSplitter(id=None, opts=[]):
 
         return PartitionSplitter(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def PatternSelector(id=None, opts=[]):
@@ -912,7 +913,7 @@ def PatternSelector(id=None, opts=[]):
 
         return PatternSelector(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def ProgressBar(id=None, opts=[]):
@@ -938,7 +939,7 @@ def ProgressBar(id=None, opts=[]):
 
         return ProgressBar(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def PushButton(label, id=None, opts=[]):
@@ -974,7 +975,7 @@ def PushButton(label, id=None, opts=[]):
 
         return PushButton(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def RadioButton(id=None, opts=[]):
@@ -1000,7 +1001,7 @@ def RadioButton(id=None, opts=[]):
 
         return RadioButton(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def RadioButtonGroup(id=None, opts=[]):
@@ -1026,7 +1027,7 @@ def RadioButtonGroup(id=None, opts=[]):
 
         return RadioButtonGroup(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def ReplacePoint(child, id=None, opts=[]):
@@ -1053,7 +1054,7 @@ def ReplacePoint(child, id=None, opts=[]):
 
         return ReplacePoint(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def RichText(id=None, opts=[]):
@@ -1079,7 +1080,7 @@ def RichText(id=None, opts=[]):
 
         return RichText(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def SelectionBox(id=None, opts=[]):
@@ -1105,7 +1106,7 @@ def SelectionBox(id=None, opts=[]):
 
         return SelectionBox(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def SimplePatchSelector(id=None, opts=[]):
@@ -1131,7 +1132,7 @@ def SimplePatchSelector(id=None, opts=[]):
 
         return SimplePatchSelector(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def Slider(id=None, opts=[]):
@@ -1157,7 +1158,7 @@ def Slider(id=None, opts=[]):
 
         return Slider(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def Table(header, items=[], id=None, opts=[]):
@@ -1193,7 +1194,7 @@ def Table(header, items=[], id=None, opts=[]):
 
         return Table(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def TimeField(id=None, opts=[]):
@@ -1219,7 +1220,7 @@ def TimeField(id=None, opts=[]):
 
         return TimeField(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def TimezoneSelector(id=None, opts=[]):
@@ -1245,7 +1246,7 @@ def TimezoneSelector(id=None, opts=[]):
 
         return TimezoneSelector(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def Node(label, expanded=False, children=[]):
@@ -1261,7 +1262,7 @@ def Node(label, expanded=False, children=[]):
 
         return Term('item', *result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def Tree(label, items, id=None, opts=[]):
@@ -1296,7 +1297,7 @@ def Tree(label, items, id=None, opts=[]):
 
         return Tree(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
 def VMultiProgressMeter(id=None, opts=[]):
@@ -1322,6 +1323,6 @@ def VMultiProgressMeter(id=None, opts=[]):
 
         return VMultiProgressMeter(*result)
     except Exception as e:
-        sys.stderr.write(str(e))
+        traceback.print_exc()
         sys.exit(1)
 
