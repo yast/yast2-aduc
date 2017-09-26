@@ -1,17 +1,7 @@
 #!/usr/bin/env python
 
-import gettext
-from gettext import textdomain
-
-textdomain('aduc')
-
-import ycp
-from ycp import *
-ycp.widget_names()
-import Wizard
-
 from complex import Connection
-from yui import Empty, HWeight, ReplacePoint, HBox, Tree, Node, Table, MinWidth, MinHeight, MinSize, VBox, PushButton
+from yui import *
 
 from syslog import syslog, LOG_INFO, LOG_ERR, LOG_DEBUG, LOG_EMERG, LOG_ALERT
 
@@ -21,13 +11,9 @@ class Properties:
         self.obj = obj
 
     def Show(self):
-        UI.OpenDialog(self.__prop_diag())
-
-        ret = Symbol('abort')
-        while True:
-            ret = UI.UserInput()
+        d = Dialog(self.__prop_diag())
+        for ret in d.UserInput():
             if str(ret) == 'cancel_prop':
-                UI.CloseDialog()
                 break
 
     def __prop_diag(self):
@@ -51,24 +37,20 @@ class ADUC:
           syslog(LOG_EMERG, str(e))
 
     def Show(self):
-        Wizard.SetContentsButtons(gettext.gettext('Active Directory Users and Computers'), self.__aduc_page(), self.__help(), 'Back', 'Edit')
-        Wizard.DisableBackButton()
-        #Wizard.DisableNextButton()
-        UI.SetFocus(Term('id', 'aduc_tree'))
-
-        ret = Symbol('abort')
-        while True:
-            ret = UI.UserInput()
+        d = WizardDialog('Active Directory Users and Computers', self.__aduc_page(), self.__help(), 'Back', 'Edit')
+        d.DisableBackButton()
+        d.SetFocus('aduc_tree')
+        for ret in d.UserInput():
             if str(ret) == 'abort' or str(ret) == 'cancel':
                 break
             elif str(ret) == 'aduc_tree':
-                choice = UI.QueryWidget(Term('id', 'aduc_tree'), Symbol('Value'))
+                choice = d.QueryWidget('aduc_tree', 'Value')
                 if choice == 'Users':
-                    UI.ReplaceWidget(Term('id', 'rightPane'), self.__users_tab())
+                    d.ReplaceWidget('rightPane', self.__users_tab())
                 elif choice == 'Computers':
-                    UI.ReplaceWidget(Term('id', 'rightPane'), self.__computer_tab())
+                    d.ReplaceWidget('rightPane', self.__computer_tab())
                 else:
-                    UI.ReplaceWidget(Term('id', 'rightPane'), Empty())
+                    d.ReplaceWidget('rightPane', Empty())
             elif str(ret) == 'next':
                 edit = Properties(self.conn, None)
                 edit.Show()

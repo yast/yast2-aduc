@@ -11,6 +11,37 @@ import Wizard
 
 import sys
 
+class DialogTop:
+    def UserInput(self):
+        while True:
+            yield UI.UserInput()
+
+    def QueryWidget(self, id, symbol):
+        return UI.QueryWidget(Term('id', id), Symbol(symbol))
+
+    def ReplaceWidget(self, id, contents):
+        UI.ReplaceWidget(Term('id', id), contents)
+
+    def SetFocus(self, id):
+        UI.SetFocus(Term('id', id))
+
+class WizardDialog(DialogTop):
+    def __init__(self, title, contents, help_txt, back_txt, next_txt):
+        Wizard.SetContentsButtons(gettext.gettext(title), contents, help_txt, back_txt, next_txt)
+
+    def DisableBackButton(self):
+        Wizard.DisableBackButton()
+
+    def DisableNextButton(self):
+        Wizard.DisableNextButton()
+
+class Dialog(DialogTop):
+    def __init__(self, contents):
+        UI.OpenDialog(contents)
+
+    def __del__(self):
+        UI.CloseDialog()
+
 def BarGraph(values, labels, id=None, opts=[]):
     """Horizontal bar graph (optional widget)
 
@@ -1117,26 +1148,4 @@ def VMultiProgressMeter(id=None, opts=[]):
     result = tuple(result)
 
     return VMultiProgressMeter(*result)
-
-def Wizard(id=None, opts=[]):
-    """
-
-    Synopsis
-    Wizard (  );
-
-    Parameters
-
-    """
-    from ycp import *
-    ycp.widget_names()
-
-    result = []
-    if id is not None:
-        result.append(Term('id', id))
-    if opts is not None:
-        for opt in opts:
-            result.append(Term('opt', Symbol(opt)))
-    result = tuple(result)
-
-    return Wizard(*result)
 
