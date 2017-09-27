@@ -3,13 +3,7 @@
 import optparse
 from samba import getopt as options
 from samba.auth import system_session
-
-from ycp import *
-import gettext
-from gettext import textdomain
-textdomain('aduc')
-
-import sys
+from ycp import init_ui
 from subprocess import Popen, PIPE
 
 def have_x():
@@ -51,6 +45,9 @@ if __name__ == "__main__":
     else:
         init_ui('qt')
 
-    import wizards
-    wizards.GPMCSequence(lp, creds)
+    from wizards import UISequencer
+    from dialogs import ADUC
+    s = UISequencer(lp, creds)
+    funcs = [(lambda lp, creds: ADUC(lp, creds).Show())]
+    s.run(funcs)
 

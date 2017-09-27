@@ -1,61 +1,32 @@
 #!/usr/bin/env python
 
-from ycp import *
-import gettext
-from gettext import textdomain
-textdomain('aduc')
-
-
+from ycp import import_module
 import_module('Sequencer')
 import_module('Wizard')
 import_module('UI')
-
-
 from ycp import *
-import dialogs
-import Aduc
 
-gpo = None
-lp = None
-creds = None
+class UISequencer:
+    def __init__(self, *cli_args):
+        UISequencer.cli_args = cli_args
+        UISequencer.itr = 0
 
-def show_aduc():
-    global lp, creds
-    g = dialogs.ADUC(lp, creds)
-    resp = g.Show()
-    return resp
+    @staticmethod
+    def runner():
+        UISequencer.funcs[UISequencer.itr](*(UISequencer.cli_args))
+        UISequencer.itr += 1
 
-def GPMCSequence(in_lp, in_creds):
-    global lp, creds
-    lp = in_lp
-    creds = in_creds
-    aliases = {
-        'read' : [Code(Aduc.ReadDialog), True],
-        'aduc' : Code(show_aduc),
-        'write' : Code(Aduc.WriteDialog)
-    }
+    def run(self, funcs):
+        UISequencer.funcs = funcs
+        aliases = { 'run%d' % i : Code(UISequencer.runner) for i in range(0, len(UISequencer.funcs)) }
 
-    sequence = {
-        'ws_start' : 'aduc',
-        'read' : {
-            Symbol('abort') : Symbol('abort'),
-            Symbol('next') : 'aduc'
-        },
-        'aduc' : {
-            Symbol('abort') : Symbol('abort'),
-            Symbol('next') : Symbol('next'),
-        },
-        'write' : {
-            Symbol('abort') : Symbol('abort'),
-            Symbol('next') : Symbol('next')
-        }
-    }
+        sequence = { 'run%d' % i : { Symbol('abort') : Symbol('abort'), Symbol('next') : 'run%d' % (i+1) if (i+1) < len(UISequencer.funcs) else Symbol('abort') } for i in range(0, len(UISequencer.funcs)) }
+        sequence['ws_start'] = 'run0'
 
-    Wizard.CreateDialog()
-    Wizard.SetTitleIcon('yast-aduc')
+        Wizard.CreateDialog()
 
-    ret = Sequencer.Run(aliases, sequence)
+        ret = Sequencer.Run(aliases, sequence)
 
-    UI.CloseDialog()
-    return ret
+        UI.CloseDialog()
+        return ret
 
