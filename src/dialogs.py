@@ -11,17 +11,18 @@ class Properties:
         self.obj = obj
 
     def Show(self):
-        d = Dialog(self.__prop_diag())
-        for ret in d.UserInput():
+        Dialog.OpenDialog(self.__prop_diag())
+        for ret in Dialog.UserInput():
             if str(ret) == 'cancel_prop':
+                Dialog.CloseDialog()
                 break
 
     def __prop_diag(self):
         return MinSize(40, 40,
-            VBox([
-                PushButton('OK', id='ok_prop'),
-                PushButton('Cancel', id='cancel_prop'),
-            ])
+            VBox(
+                PushButton('OK', ID='ok_prop'),
+                PushButton('Cancel', ID='cancel_prop'),
+            )
         )
 
 class ADUC:
@@ -37,20 +38,20 @@ class ADUC:
           syslog(LOG_EMERG, str(e))
 
     def Show(self):
-        d = WizardDialog('Active Directory Users and Computers', self.__aduc_page(), self.__help(), 'Back', 'Edit')
-        d.DisableBackButton()
-        d.SetFocus('aduc_tree')
-        for ret in d.UserInput():
+        WizardDialog.SetContentsButtons('Active Directory Users and Computers', self.__aduc_page(), self.__help(), 'Back', 'Edit')
+        WizardDialog.DisableBackButton()
+        WizardDialog.SetFocus('aduc_tree')
+        for ret in WizardDialog.UserInput():
             if str(ret) == 'abort' or str(ret) == 'cancel':
                 break
             elif str(ret) == 'aduc_tree':
-                choice = d.QueryWidget('aduc_tree', 'Value')
+                choice = WizardDialog.QueryWidget('aduc_tree', 'Value')
                 if choice == 'Users':
-                    d.ReplaceWidget('rightPane', self.__users_tab())
+                    WizardDialog.ReplaceWidget('rightPane', self.__users_tab())
                 elif choice == 'Computers':
-                    d.ReplaceWidget('rightPane', self.__computer_tab())
+                    WizardDialog.ReplaceWidget('rightPane', self.__computer_tab())
                 else:
-                    d.ReplaceWidget('rightPane', Empty())
+                    WizardDialog.ReplaceWidget('rightPane', Empty())
             elif str(ret) == 'next':
                 edit = Properties(self.conn, None)
                 edit.Show()
@@ -62,11 +63,11 @@ class ADUC:
 
     def __users_tab(self):
         items = [(user[1]['cn'][-1], user[1]['objectClass'][-1].title(), user[1]['description'][-1] if 'description' in user[1] else '') for user in self.users]
-        return Table(['Name', 'Type', 'Description'], items=items, id='user_items')
+        return Table(['Name', 'Type', 'Description'], items=items, ID='user_items')
 
     def __computer_tab(self):
         items = [(comp[1]['cn'][-1], comp[1]['objectClass'][-1].title(), comp[1]['description'][-1] if 'description' in comp[1] else '') for comp in self.computers]
-        return Table(['Name', 'Type', 'Description'], items=items, id='comp_items')
+        return Table(['Name', 'Type', 'Description'], items=items, ID='comp_items')
 
     def __aduc_tree(self):
         return Tree('Active Directory Users and Computers', [
@@ -74,11 +75,11 @@ class ADUC:
                 Node('Users', True),
                 Node('Computers', True),
             ]),
-        ], id='aduc_tree', opts=['notify'])
+        ], ID='aduc_tree', opts=['notify'])
 
     def __aduc_page(self):
-        return HBox([
+        return HBox(
             HWeight(1, self.__aduc_tree()),
-            HWeight(2, ReplacePoint(Empty(), id='rightPane'))
-        ])
+            HWeight(2, ReplacePoint(Empty(), ID='rightPane'))
+        )
 

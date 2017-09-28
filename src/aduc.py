@@ -45,7 +45,8 @@ if __name__ == "__main__":
     else:
         init_ui('qt')
 
-    from dialogs import ADUC, UISequencer
+    from dialogs import ADUC
+    from yui import UISequencer
     s = UISequencer(lp, creds)
     funcs = [(lambda lp, creds: ADUC(lp, creds).Show())]
     s.run(funcs)
