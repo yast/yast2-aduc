@@ -3,12 +3,7 @@
 import optparse
 from samba import getopt as options
 from samba.auth import system_session
-from ycp import init_ui
 from subprocess import Popen, PIPE
-
-def have_x():
-    p = Popen(['xset', '-q'], stdout=PIPE, stderr=PIPE)
-    return p.wait() == 0
 
 if __name__ == "__main__":
     parser = optparse.OptionParser('aduc [options]')
@@ -40,13 +35,8 @@ if __name__ == "__main__":
     creds = credopts.get_credentials(lp, fallback_machine=True)
     session = system_session()
 
-    if opts.ncurses or not have_x():
-        init_ui('ncurses')
-    else:
-        init_ui('qt')
-
     from dialogs import ADUC
-    from yui import UISequencer
+    from yast import UISequencer
     s = UISequencer(lp, creds)
     funcs = [(lambda lp, creds: ADUC(lp, creds).Show())]
     s.run(funcs)

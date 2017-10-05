@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from complex import Connection
-from yui import *
+from yast import *
 
 from syslog import syslog, LOG_INFO, LOG_ERR, LOG_DEBUG, LOG_EMERG, LOG_ALERT
 
@@ -11,10 +11,11 @@ class Properties:
         self.obj = obj
 
     def Show(self):
-        Dialog.OpenDialog(self.__prop_diag())
-        for ret in Dialog.UserInput():
+        UI.OpenDialog(self.__prop_diag())
+        while True:
+            ret = UI.UserInput()
             if str(ret) == 'cancel_prop':
-                Dialog.CloseDialog()
+                UI.CloseDialog()
                 break
 
     def __prop_diag(self):
@@ -38,20 +39,21 @@ class ADUC:
           syslog(LOG_EMERG, str(e))
 
     def Show(self):
-        WizardDialog.SetContentsButtons('Active Directory Users and Computers', self.__aduc_page(), self.__help(), 'Back', 'Edit')
-        WizardDialog.DisableBackButton()
-        WizardDialog.SetFocus('aduc_tree')
-        for ret in WizardDialog.UserInput():
+        Wizard.SetContentsButtons('Active Directory Users and Computers', self.__aduc_page(), self.__help(), 'Back', 'Edit')
+        Wizard.DisableBackButton()
+        UI.SetFocus('aduc_tree')
+        while True:
+            ret = UI.UserInput()
             if str(ret) == 'abort' or str(ret) == 'cancel':
                 break
             elif str(ret) == 'aduc_tree':
-                choice = WizardDialog.QueryWidget('aduc_tree', 'Value')
+                choice = UI.QueryWidget('aduc_tree', 'Value')
                 if choice == 'Users':
-                    WizardDialog.ReplaceWidget('rightPane', self.__users_tab())
+                    UI.ReplaceWidget('rightPane', self.__users_tab())
                 elif choice == 'Computers':
-                    WizardDialog.ReplaceWidget('rightPane', self.__computer_tab())
+                    UI.ReplaceWidget('rightPane', self.__computer_tab())
                 else:
-                    WizardDialog.ReplaceWidget('rightPane', Empty())
+                    UI.ReplaceWidget('rightPane', Empty())
             elif str(ret) == 'next':
                 edit = Properties(self.conn, None)
                 edit.Show()
