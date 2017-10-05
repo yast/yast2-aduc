@@ -160,4 +160,4 @@ checkpo:
 	test ! -f $(srcdir)/po/Makefile || $(MAKE) -C po checkpo
 #	test ! -f $(srcdir)/po/Makefile || $(MAKE) -C po checkpo make-pox
 # No ./SUBDIRS file found - assuming default: All direct subdirs with Makefile.am
-SUBDIRS = agents doc src
+SUBDIRS = src
