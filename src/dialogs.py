@@ -55,8 +55,8 @@ class ADUC:
 
     def __password_prompt(self, user, password):
         return MinWidth(30, VBox(
-            Left(TextEntry(Id('username_prompt'), 'Username')),
-            Left(Password(Id('password_prompt'), 'Password')),
+            Left(TextEntry(Id('username_prompt'), Opt('hstretch'), 'Username')),
+            Left(Password(Id('password_prompt'), Opt('hstretch'), 'Password')),
             Right(HBox(
                 PushButton(Id('creds_ok'), 'OK'),
                 PushButton(Id('creds_cancel'), 'Cancel'),
