@@ -18,6 +18,6 @@ X-SuSE-YaST-AutoInstResource=aduc
 Icon=yast-aduc
 Exec=/usr/bin/xdg-su -c '@CLIENTDIR@/aduc.py'
 
-Name=Group Policy Management Console
-GenericName=Manage Group Policy
+Name=Active Directory Users and Computers
+GenericName=Manage Active Directory Users and Computers
 StartupNotify=true
