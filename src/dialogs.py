@@ -21,8 +21,8 @@ class Properties:
     def __prop_diag(self):
         return MinSize(40, 40,
             VBox(
-                PushButton('OK', ID='ok_prop'),
-                PushButton('Cancel', ID='cancel_prop'),
+                PushButton(Id('ok_prop'), 'OK'),
+                PushButton(Id('cancel_prop'), 'Cancel'),
             )
         )
 
@@ -64,24 +64,24 @@ class ADUC:
         return ''
 
     def __users_tab(self):
-        items = [(user[1]['cn'][-1], user[1]['objectClass'][-1].title(), user[1]['description'][-1] if 'description' in user[1] else '') for user in self.users]
-        return Table(['Name', 'Type', 'Description'], items=items, ID='user_items')
+        items = [Item(user[1]['cn'][-1], user[1]['objectClass'][-1].title(), user[1]['description'][-1] if 'description' in user[1] else '') for user in self.users]
+        return Table(Id('user_items'), Header('Name', 'Type', 'Description'), items)
 
     def __computer_tab(self):
-        items = [(comp[1]['cn'][-1], comp[1]['objectClass'][-1].title(), comp[1]['description'][-1] if 'description' in comp[1] else '') for comp in self.computers]
-        return Table(['Name', 'Type', 'Description'], items=items, ID='comp_items')
+        items = [Item(comp[1]['cn'][-1], comp[1]['objectClass'][-1].title(), comp[1]['description'][-1] if 'description' in comp[1] else '') for comp in self.computers]
+        return Table(Id('comp_items'), Header('Name', 'Type', 'Description'), items)
 
     def __aduc_tree(self):
-        return Tree('Active Directory Users and Computers', [
-            Node(self.realm.lower(), True, [
-                Node('Users', True),
-                Node('Computers', True),
+        return Tree(Id('aduc_tree'), Opt('notify'), 'Active Directory Users and Computers', [
+            Item(self.realm.lower(), True, [
+                Item('Users', True),
+                Item('Computers', True),
             ]),
-        ], ID='aduc_tree', opts=['notify'])
+        ])
 
     def __aduc_page(self):
         return HBox(
             HWeight(1, self.__aduc_tree()),
-            HWeight(2, ReplacePoint(Empty(), ID='rightPane'))
+            HWeight(2, ReplacePoint(Id('rightPane'), Empty()))
         )
 
