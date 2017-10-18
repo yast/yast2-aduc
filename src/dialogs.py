@@ -28,6 +28,7 @@ class Properties:
 
 class ADUC:
     def __init__(self, lp, creds):
+        self.__get_creds(creds)
         self.realm = lp.get('realm')
         self.lp = lp
         self.creds = creds
@@ -37,6 +38,30 @@ class ADUC:
             self.computers = self.conn.computer_list()
         except Exception as e:
           syslog(LOG_EMERG, str(e))
+
+    def __get_creds(self, creds):
+        if not creds.get_username() or not creds.get_password():
+            UI.OpenDialog(self.__password_prompt(creds.get_username(), creds.get_password()))
+            while True:
+                subret = UI.UserInput()
+                if str(subret) == 'creds_ok':
+                    user = UI.QueryWidget('username_prompt', 'Value')
+                    password = UI.QueryWidget('password_prompt', 'Value')
+                    creds.set_username(user)
+                    creds.set_password(password)
+                if str(subret) == 'creds_cancel' or str(subret) == 'creds_ok':
+                    UI.CloseDialog()
+                    break
+
+    def __password_prompt(self, user, password):
+        return MinWidth(30, VBox(
+            Left(TextEntry(Id('username_prompt'), 'Username')),
+            Left(Password(Id('password_prompt'), 'Password')),
+            Right(HBox(
+                PushButton(Id('creds_ok'), 'OK'),
+                PushButton(Id('creds_cancel'), 'Cancel'),
+            ))
+        ))
 
     def Show(self):
         Wizard.SetContentsButtons('Active Directory Users and Computers', self.__aduc_page(), self.__help(), 'Back', 'Edit')
