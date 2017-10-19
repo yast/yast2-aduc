@@ -4,7 +4,9 @@ import optparse
 from samba.param import LoadParm
 from samba.credentials import Credentials
 
-import os
+import os, sys
+
+sys.path.append(sys.path[0]+"/../include/aduc")
 
 if __name__ == "__main__":
     parser = optparse.OptionParser('aduc [options]')
