@@ -49,7 +49,10 @@ if __name__ == "__main__":
 
     from dialogs import ADUC
     from yast import UISequencer
+    from yast import startup_yuicomponent, shutdown_yuicomponent
+    startup_yuicomponent()
     s = UISequencer(lp, creds)
     funcs = [(lambda lp, creds: ADUC(lp, creds).Show())]
     s.run(funcs)
+    shutdown_yuicomponent()
 
