@@ -15,67 +15,65 @@ def dump(obj):
         i = i + 1
             
 
-class Properties:
-    def __init__(self, conn, obj):
-        self.conn = conn
-        self.obj = obj
-
-    def Show(self):
-        UI.OpenDialog(self.__prop_diag())
-        while True:
-            ret = UI.UserInput()
-            if str(ret) == 'cancel_prop':
-                UI.CloseDialog()
-                break
-
-    def __prop_diag(self):
-        return MinSize(40, 40,
-            VBox(
-                PushButton(Id('ok_prop'), 'OK'),
-                PushButton(Id('cancel_prop'), 'Cancel'),
-            )
-        )
-
-class ComputerProps:
+class UserProps:
     def __init__(self, conn, obj):
         self.obj = obj   
         self.conn = conn
-        self.general = self.__general_tab()
         self.keys = self.obj[1].keys()
         self.props_map = self.obj[1]
 
-        self.operating_system = self.__operating_system_tab()
+        self.general = self.__general_tab()
+        self.address = self.__address_tab()
+        #self.account = self.__account_tab()
+        dump(obj)
 
     def Show(self):
         UI.OpenDialog(self.__multitab())
         while True:
             ret = UI.UserInput()
             print "tab dialog input is %s"%ret
-            if str(ret) == 'close':
+            if str(ret) == 'ok' or str(ret) == 'cancel':
                 UI.CloseDialog()
                 break
-            elif str(ret) == 'operating_system':
-                UI.ReplaceWidget('tabContents', self.operating_system)
-            elif str(ret) == 'general':
+            if str(ret) == 'general':
                 UI.ReplaceWidget('tabContents', self.general)
-        self.operating_system = self.__operating_system_tab()
+            elif str(ret) == 'address':
+                UI.ReplaceWidget('tabContents', self.address)
+#            elif str(ret) == 'account':
+#                UI.ReplaceWidget('tabContents', self.account)
+    def __address_tab(self):
+        return VBox(
+                HBox(
+                    Label('Street:'),
+                    RichText(Id('streetAddress'), self.props_map.get('streetAddress', [""])[-1])),
+                Left(InputField("P.O. Box:", self.props_map.get('postOfficeBox', [""])[-1])),
+                Left(InputField("City:", self.props_map.get('l', [""])[-1])),
+                Left(InputField("State/province:", self.props_map.get('st', [""])[-1])),
+                Left(InputField("Zip/Postal Code:", self.props_map.get('postalCode', [""])[-1])),
+                Left(InputField("Country/Region:", self.props_map.get('co', [""])[-1])))
+
+               
     def __general_tab(self):
         return VBox(
-            Left(Heading("General")))
+                Left(HBox(
+                InputField("First Name:", self.props_map.get('givenName', [""])[-1]),
+                InputField("Initials:", self.props_map.get('initials', [""])[-1]))),
 
-    def __operating_system_tab(self):
-         return VBox(
-                 InputField(Opt('disabled'),"Name:", self.props_map.get('operatingSystem', [""])[-1]),
-                 InputField(Opt('disabled'), "Operating System", self.props_map.get('operatingSystemVersion',[""])[-1]),
-                 InputField(Opt('disabled'),"Service Pack:", self.props_map.get('operatingSystemServicePack',[""])[-1]))
-
+                Left(InputField("Last name:", self.props_map.get('sn', [""])[-1])),
+                Left(InputField("Display name:", self.props_map.get('displayName', [""])[-1])),
+                Left(InputField("Office:", self.props_map.get('physicalDeliveryOfficeName', [""])[-1])),
+                Left(InputField("Telephone number:", self.props_map.get('telephoneNumber', [""])[-1])),
+                Left(InputField("E-mail:", self.props_map.get('mail', [""])[-1])),
+                Left(InputField("Web page:", self.props_map.get('wWWHomePage', [""])[-1]))
+                )
 
     def __multitab(self):
         multi = VBox(
           DumbTab(
             [
               Item(Id('general'), "General"),
-              Item(Id('operating_system'), "Operating System"),
+              Item(Id('address'), "Address"),
+#              Item(Id('account'), "Account"),
             ],
             Left(
               Top(
@@ -91,7 +89,94 @@ class ComputerProps:
               )
             )
           ), # true: selected
-          Right(PushButton(Id('close'), "Close"))
+          HBox(PushButton(Id('ok'), "OK"), PushButton(Id('cancel'), "Cancel"),
+              PushButton(Id('apply'), "Apply"))
+        )
+        return multi
+
+class ComputerProps:
+    def __init__(self, conn, obj):
+        self.obj = obj   
+        self.conn = conn
+        self.keys = self.obj[1].keys()
+        self.props_map = self.obj[1]
+
+        self.general = self.__general_tab()
+        self.operating_system = self.__operating_system_tab()
+        self.location = self.__location_tab()
+        dump(obj)
+
+    def Show(self):
+        UI.OpenDialog(self.__multitab())
+        while True:
+            ret = UI.UserInput()
+            print "tab dialog input is %s"%ret
+            if str(ret) == 'ok' or str(ret) == 'cancel':
+                UI.CloseDialog()
+                break
+            elif str(ret) == 'operating_system':
+                UI.ReplaceWidget('tabContents', self.operating_system)
+            elif str(ret) == 'general':
+                UI.ReplaceWidget('tabContents', self.general)
+            elif str(ret) == 'location':
+                UI.ReplaceWidget('tabContents', self.location)
+        self.operating_system = self.__operating_system_tab()
+    def __location_tab(self):
+        return VBox(
+                InputField("Location", self.props_map.get('location', [""])[-1]))
+
+    def __general_tab(self):
+        return VBox(
+                InputField(Opt('disabled'), "Computer name (pre-Windows 2000):", self.props_map.get('name', [""])[-1]),
+                InputField(Opt('disabled'), "DNS-name:", self.props_map.get('dNSHostName', [""])[-1]),
+                # #TODO find out what attribute site is
+                InputField(Opt('disabled'), "Site:", "Workstation or server"),
+                InputField("Description:", self.props_map.get('description', [""])[-1]),
+                )
+
+
+    def __operating_system_tab(self):
+#         return VBox(
+#             Left(HBox( 
+#                 Label('Name:'),
+#                 Label(Opt('outputField'), self.props_map.get('operatingSystem', [""])[-1]))),
+#             Left(HBox(
+#                 Label('Operating System:'),
+#                 Label(Opt('outputField'), self.props_map.get('operatingSystemVersion',[""])[-1]))),
+#             Left(HBox(
+#                 Label('Service Pack:'),
+#                 Label(Opt('outputField'), self.props_map.get('operatingSystemServicePack',[""])[-1]))))
+          return VBox(
+                  InputField(Opt('disabled'),"Name:", self.props_map.get('operatingSystem', [""])[-1]),
+                  InputField(Opt('disabled'), "Operating System", self.props_map.get('operatingSystemVersion',[""])[-1]),
+                  InputField(Opt('disabled'), "Service Pack:", self.props_map.get('operatingSystemServicePack',[""])[-1]))
+
+                 
+
+    def __multitab(self):
+        multi = VBox(
+          DumbTab(
+            [
+              Item(Id('general'), "General"),
+              Item(Id('operating_system'), "Operating System"),
+              Item(Id('location'), "Location"),
+            ],
+            Left(
+              Top(
+                HVSquash(
+                  VBox(
+                    VSpacing(0.3),
+                    HBox(
+                      HSpacing(1),
+                      ReplacePoint(Id('tabContents'), self.general)
+                    )
+                  )
+                )
+              )
+            )
+          ), # true: selected
+          HBox(PushButton(Id('ok'), "OK"), PushButton(Id('cancel'), "Cancel"),
+              PushButton(Id('apply'), "Apply"))
         )
         return multi
 
@@ -162,7 +247,7 @@ class ADUC:
                 if choice == 'Computers':
                     edit = ComputerProps(self.conn, currentItem)
                 else:
-                    edit = Properties(self.conn, currentItem)
+                    edit = UserProps(self.conn, currentItem)
                 edit.Show()
 
         return ret
