@@ -5,18 +5,20 @@ from yast import *
 
 from syslog import syslog, LOG_INFO, LOG_ERR, LOG_DEBUG, LOG_EMERG, LOG_ALERT
 
-class Properties:
-    def __dump(self):
-        print "len obj %d"%len(self.obj)
-        i = 0
-        for item in self.obj:
-            print "item[%d] type %s ->%s<-"%(i,type(item), item)
-            i = i + 1
+def dump(obj):
+    print "len obj %d"%len(obj)
+    i = 0
+    print "cn %s"%obj[0]
+    for key in obj[1].keys():
+        value = obj[1][key]
+        print "item[%d] key %s value type %s value ->%s<-"%(i,key, type(value), value)
+        i = i + 1
             
+
+class Properties:
     def __init__(self, conn, obj):
         self.conn = conn
         self.obj = obj
-        self.__dump()
 
     def Show(self):
         UI.OpenDialog(self.__prop_diag())
@@ -33,6 +35,65 @@ class Properties:
                 PushButton(Id('cancel_prop'), 'Cancel'),
             )
         )
+
+class ComputerProps:
+    def __init__(self, conn, obj):
+        self.obj = obj   
+        self.conn = conn
+        self.general = self.__general_tab()
+        self.keys = self.obj[1].keys()
+        self.props_map = self.obj[1]
+
+        self.operating_system = self.__operating_system_tab()
+
+    def Show(self):
+        UI.OpenDialog(self.__multitab())
+        while True:
+            ret = UI.UserInput()
+            print "tab dialog input is %s"%ret
+            if str(ret) == 'close':
+                UI.CloseDialog()
+                break
+            elif str(ret) == 'operating_system':
+                UI.ReplaceWidget('tabContents', self.operating_system)
+            elif str(ret) == 'general':
+                UI.ReplaceWidget('tabContents', self.general)
+        self.operating_system = self.__operating_system_tab()
+    def __general_tab(self):
+        return VBox(
+            Left(Heading("General")))
+
+    def __operating_system_tab(self):
+         return VBox(
+                 InputField(Opt('disabled'),"Name:", self.props_map.get('operatingSystem', [""])[-1]),
+                 InputField(Opt('disabled'), "Operating System", self.props_map.get('operatingSystemVersion',[""])[-1]),
+                 InputField(Opt('disabled'),"Service Pack:", self.props_map.get('operatingSystemServicePack',[""])[-1]))
+
+
+    def __multitab(self):
+        multi = VBox(
+          DumbTab(
+            [
+              Item(Id('general'), "General"),
+              Item(Id('operating_system'), "Operating System"),
+            ],
+            Left(
+              Top(
+                HVSquash(
+                  VBox(
+                    VSpacing(0.3),
+                    HBox(
+                      HSpacing(1),
+                      ReplacePoint(Id('tabContents'), self.general)
+                    )
+                  )
+                )
+              )
+            )
+          ), # true: selected
+          Right(PushButton(Id('close'), "Close"))
+        )
+        return multi
 
 class ADUC:
     def __init__(self, lp, creds):
@@ -98,7 +159,10 @@ class ADUC:
                     searchList = self.computers
                     currentItemName = UI.QueryWidget('comp_items', 'CurrentItem')
                 currentItem = self.__find_by_name(searchList, currentItemName)
-                edit = Properties(self.conn, currentItem)
+                if choice == 'Computers':
+                    edit = ComputerProps(self.conn, currentItem)
+                else:
+                    edit = Properties(self.conn, currentItem)
                 edit.Show()
 
         return ret
