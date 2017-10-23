@@ -6,9 +6,17 @@ from yast import *
 from syslog import syslog, LOG_INFO, LOG_ERR, LOG_DEBUG, LOG_EMERG, LOG_ALERT
 
 class Properties:
+    def __dump(self):
+        print "len obj %d"%len(self.obj)
+        i = 0
+        for item in self.obj:
+            print "item[%d] type %s ->%s<-"%(i,type(item), item)
+            i = i + 1
+            
     def __init__(self, conn, obj):
         self.conn = conn
         self.obj = obj
+        self.__dump()
 
     def Show(self):
         UI.OpenDialog(self.__prop_diag())
@@ -69,10 +77,11 @@ class ADUC:
         UI.SetFocus('aduc_tree')
         while True:
             ret = UI.UserInput()
+            choice = UI.QueryWidget('aduc_tree', 'Value')
+            #    currentItem = UI.QueryWidget('rightPane', 'CurrentItem')
             if str(ret) == 'abort' or str(ret) == 'cancel':
                 break
             elif str(ret) == 'aduc_tree':
-                choice = UI.QueryWidget('aduc_tree', 'Value')
                 if choice == 'Users':
                     UI.ReplaceWidget('rightPane', self.__users_tab())
                 elif choice == 'Computers':
@@ -80,14 +89,29 @@ class ADUC:
                 else:
                     UI.ReplaceWidget('rightPane', Empty())
             elif str(ret) == 'next':
-                edit = Properties(self.conn, None)
+                searchList = []
+                currentItemName = None
+                if choice == 'Users':
+                    currentItemName = UI.QueryWidget('user_items', 'CurrentItem')
+                    searchList = self.users
+                elif choice == 'Computers':
+                    searchList = self.computers
+                    currentItemName = UI.QueryWidget('comp_items', 'CurrentItem')
+                currentItem = self.__find_by_name(searchList, currentItemName)
+                edit = Properties(self.conn, currentItem)
                 edit.Show()
 
         return ret
 
     def __help(self):
         return ''
-
+    def __find_by_name(self, alist, name):
+        if name:
+            for item in alist:
+                
+                if item[1]['cn'][-1] == name:
+                    return item
+        return None 
     def __users_tab(self):
         items = [Item(user[1]['cn'][-1], user[1]['objectClass'][-1].title(), user[1]['description'][-1] if 'description' in user[1] else '') for user in self.users]
         return Table(Id('user_items'), Header('Name', 'Type', 'Description'), items)
