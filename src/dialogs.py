@@ -102,9 +102,7 @@ class TabModel:
     def set_value(self, key, value):
         # getting TypeError: 'list' object is not callable if we use the line
         # below... bizare
-        #oldval = self.props_map.get(key, [""])(-1)
-        oldvalue = self.props_map.get(key, [""])
-        oldvalue = oldvalue[-1]
+        oldvalue = self.props_map.get(key, [""])[-1]
         if value != oldvalue:
             self.props_map[key] = [value]
             if not self.modified:
@@ -112,9 +110,7 @@ class TabModel:
     def get_value(self, key):
         # getting TypeError: 'list' object is not callable if we use the line
         # below... bizare
-        #value = self.props_map.get(key, [""])(-1)
-        value = self.props_map.get(key, [""])
-        value = value[-1]
+        value = self.props_map.get(key, [""])[-1]
         return value
 
     def is_modified(self):
