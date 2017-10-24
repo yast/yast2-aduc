@@ -163,7 +163,6 @@ class ComputerProps:
                     elif str(ret) == 'location':
                         UI.ReplaceWidget('tabContents', self.__location_tab(locationModel))
                     print "#### new tab clicked previous %s current %s"%(previous_tab, current_tab)
-        self.operating_system = self.__operating_system_tab()
     def __location_tab(self, model):
         #return VBox(
         #        InputField(Id('loc_text'), "Location", model.get_location()))
@@ -269,7 +268,6 @@ class ADUC:
         while True:
             ret = UI.UserInput()
             choice = UI.QueryWidget('aduc_tree', 'Value')
-            #    currentItem = UI.QueryWidget('rightPane', 'CurrentItem')
             if str(ret) == 'abort' or str(ret) == 'cancel':
                 break
             elif str(ret) == 'aduc_tree':
