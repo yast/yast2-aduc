@@ -44,9 +44,9 @@ class UserProps:
 #                UI.ReplaceWidget('tabContents', self.account)
     def __address_tab(self):
         return VBox(
-                HBox(
-                    Label('Street:'),
-                    RichText(Id('streetAddress'), self.props_map.get('streetAddress', [""])[-1])),
+            HBox(
+                Label('Street:'),
+                RichText(Id('streetAddress'), self.props_map.get('streetAddress', [""])[-1])),
                 Left(InputField("P.O. Box:", self.props_map.get('postOfficeBox', [""])[-1])),
                 Left(InputField("City:", self.props_map.get('l', [""])[-1])),
                 Left(InputField("State/province:", self.props_map.get('st', [""])[-1])),
@@ -56,7 +56,7 @@ class UserProps:
                
     def __general_tab(self):
         return VBox(
-                Left(HBox(
+            Left(HBox(
                 InputField("First Name:", self.props_map.get('givenName', [""])[-1]),
                 InputField("Initials:", self.props_map.get('initials', [""])[-1]))),
 
@@ -95,29 +95,32 @@ class UserProps:
         )
         return multi
 
-class LocationModel:
+class TabModel:
     def __init__(self, props_map):
         self.props_map = copy.deepcopy(props_map)
         self.modified = False
-    def set_location(self, location):
+    def set_value(self, key, value):
         # getting TypeError: 'list' object is not callable if we use the line
         # below... bizare
-        #oldval = self.props_map.get('location', [""])(-1)
-        oldvalue = self.props_map.get('location', [""])
+        #oldval = self.props_map.get(key, [""])(-1)
+        oldvalue = self.props_map.get(key, [""])
         oldvalue = oldvalue[-1]
-        if location != oldvalue:
-            self.props_map['location'] = [location]
-            self.modified = True
-    def get_location(self):
+        if value != oldvalue:
+            self.props_map[key] = [value]
+            if not self.modified:
+                self.modified = True
+    def get_value(self, key):
         # getting TypeError: 'list' object is not callable if we use the line
         # below... bizare
-        #value = self.props_map.get('location', [""])(-1)
-        value = self.props_map.get('location', [""])
+        #value = self.props_map.get(key, [""])(-1)
+        value = self.props_map.get(key, [""])
         value = value[-1]
         return value
 
-    def is_modifie(self):
+    def is_modified(self):
         return self.modified
+    def get_map(self):
+        return self.props_map
 
 class ComputerProps:
     def __init__(self, conn, obj):
@@ -126,14 +129,11 @@ class ComputerProps:
         self.keys = self.obj[1].keys()
         self.props_map = self.obj[1]
 
-        self.general = self.__general_tab()
-        self.operating_system = self.__operating_system_tab()
-        #self.location = self.__location_tab()
         #dump(obj)
 
     def Show(self):
-        UI.OpenDialog(self.__multitab())
-        locationModel = LocationModel(self.props_map)
+        tabModel = TabModel(self.props_map)
+        UI.OpenDialog(self.__multitab(tabModel))
         # can we tell the current tab ? below doesn't seem to work
         #current_tab = UI.QueryWidget('tabContents','CurrentItem')
         #print "#### current item %s"%current_tab
@@ -151,35 +151,43 @@ class ComputerProps:
                 previous_tab = current_tab
                 current_tab = str(ret)
                 if current_tab != previous_tab:
+                    # update model, currently only location is 'writable'
                     if previous_tab == 'location':
-                        # capture view changes to model
-                        currentValue = UI.QueryWidget('loc_text', 'Value')
-                        print "##### location value is %s"%currentValue
-                        locationModel.set_location(currentValue)
+                        self.__updateLocationModel(tabModel)
+                    elif previous_tab == 'general':
+                        self.__updateGeneralModel(tabModel)
+
+                    # update tabview
                     if str(ret) == 'operating_system':
-                        UI.ReplaceWidget('tabContents', self.operating_system)
+                        UI.ReplaceWidget('tabContents', self.__operating_system_tab(tabModel))
                     elif str(ret) == 'general':
-                        UI.ReplaceWidget('tabContents', self.general)
+                        UI.ReplaceWidget('tabContents', self.__general_tab(tabModel))
                     elif str(ret) == 'location':
-                        UI.ReplaceWidget('tabContents', self.__location_tab(locationModel))
+                        UI.ReplaceWidget('tabContents', self.__location_tab(tabModel))
                     print "#### new tab clicked previous %s current %s"%(previous_tab, current_tab)
+
+    def __updateLocationModel(self,tabModel):
+        location = UI.QueryWidget('loc_text', 'Value')
+        if location != tabModel.get_value('location'):
+            tabModel.set_value('location', location)
     def __location_tab(self, model):
-        #return VBox(
-        #        InputField(Id('loc_text'), "Location", model.get_location()))
         return VBox(
-                TextEntry(Id('loc_text'), "Location", model.get_location()))
+                TextEntry(Id('loc_text'), "Location", model.get_value('location')))
 
-    def __general_tab(self):
+    def __updateGeneralModel(self, tabModel):
+        description = UI.QueryWidget('description', 'Value')
+        if description != tabModel.get_value('description'):
+            tabModel.set_value('description', description)
+
+    def __general_tab(self, model):
         return VBox(
-                InputField(Opt('disabled'), "Computer name (pre-Windows 2000):", self.props_map.get('name', [""])[-1]),
-                InputField(Opt('disabled'), "DNS-name:", self.props_map.get('dNSHostName', [""])[-1]),
+                InputField(Id('name'), Opt('disabled'), "Computer name (pre-Windows 2000):", model.get_value('name')),
+                InputField(Id('dns-name'), Opt('disabled'), "DNS-name:", model.get_value('dNSHostName')),
                 # #TODO find out what attribute site is
-                InputField(Opt('disabled'), "Site:", "Workstation or server"),
-                InputField("Description:", self.props_map.get('description', [""])[-1]),
+                InputField(Id('site'), Opt('disabled'), "Site:", "Workstation or server"),
+                InputField(Id('description'), "Description:", model.get_value('description'))
                 )
-
-
-    def __operating_system_tab(self):
+    def __operating_system_tab(self, model):
 #         return VBox(
 #             Left(HBox( 
 #                 Label('Name:'),
@@ -191,13 +199,13 @@ class ComputerProps:
 #                 Label('Service Pack:'),
 #                 Label(Opt('outputField'), self.props_map.get('operatingSystemServicePack',[""])[-1]))))
           return VBox(
-                  InputField(Opt('disabled'),"Name:", self.props_map.get('operatingSystem', [""])[-1]),
-                  InputField(Opt('disabled'), "Operating System", self.props_map.get('operatingSystemVersion',[""])[-1]),
-                  InputField(Opt('disabled'), "Service Pack:", self.props_map.get('operatingSystemServicePack',[""])[-1]))
+                  InputField(Id('name'), Opt('disabled'),"Name:", model.get_value('operatingSystem')),
+                  InputField(Id('opsystem'), Opt('disabled'), "Operating System", model.get_value('operatingSystemVersion')),
+                  InputField(Id('servicepack'), Opt('disabled'), "Service Pack:", model.get_value('operatingSystemServicePack')))
 
                  
 
-    def __multitab(self):
+    def __multitab(self, model):
         multi = VBox(
           DumbTab(
             [
@@ -212,7 +220,7 @@ class ComputerProps:
                     VSpacing(0.3),
                     HBox(
                       HSpacing(1),
-                      ReplacePoint(Id('tabContents'), self.general)
+                      ReplacePoint(Id('tabContents'), self.__general_tab(model))
                     )
                   )
                 )
