@@ -4,13 +4,12 @@ import optparse
 from samba.param import LoadParm
 from samba.credentials import Credentials
 
-import os, sys
+import os, sys, traceback
 
 sys.path.append(sys.path[0]+"/../include/aduc")
 
 if __name__ == "__main__":
     parser = optparse.OptionParser('aduc [options]')
-
     # Yast command line args
     yast_opt = optparse.OptionGroup(parser, 'Command line options for the YaST2 Qt UI')
     yast_opt.add_option('--nothreads', help='run without additional UI threads', action='store_true')
@@ -50,9 +49,16 @@ if __name__ == "__main__":
     from dialogs import ADUC
     from yast import UISequencer
     from yast import startup_yuicomponent, shutdown_yuicomponent
-    startup_yuicomponent()
-    s = UISequencer(lp, creds)
-    funcs = [(lambda lp, creds: ADUC(lp, creds).Show())]
-    s.run(funcs)
-    shutdown_yuicomponent()
+    component_started = False
+    try:
+        startup_yuicomponent()
+        component_started = True
+        s = UISequencer(lp, creds)
+        funcs = [(lambda lp, creds: ADUC(lp, creds).Show())]
+        s.run(funcs)
+    except:
+        traceback.print_exc(file=sys.stdout)
+
+    if component_started:
+        shutdown_yuicomponent()
 
