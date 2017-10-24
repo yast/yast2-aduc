@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import copy
 from complex import Connection
 from yast import *
 
@@ -25,7 +26,7 @@ class UserProps:
         self.general = self.__general_tab()
         self.address = self.__address_tab()
         #self.account = self.__account_tab()
-        dump(obj)
+        #dump(obj)
 
     def Show(self):
         UI.OpenDialog(self.__multitab())
@@ -69,7 +70,7 @@ class UserProps:
 
     def __multitab(self):
         multi = VBox(
-          DumbTab(
+          DumbTab(Id('multitab'),
             [
               Item(Id('general'), "General"),
               Item(Id('address'), "Address"),
@@ -94,6 +95,30 @@ class UserProps:
         )
         return multi
 
+class LocationModel:
+    def __init__(self, props_map):
+        self.props_map = copy.deepcopy(props_map)
+        self.modified = False
+    def set_location(self, location):
+        # getting TypeError: 'list' object is not callable if we use the line
+        # below... bizare
+        #oldval = self.props_map.get('location', [""])(-1)
+        oldvalue = self.props_map.get('location', [""])
+        oldvalue = oldvalue[-1]
+        if location != oldvalue:
+            self.props_map['location'] = [location]
+            self.modified = True
+    def get_location(self):
+        # getting TypeError: 'list' object is not callable if we use the line
+        # below... bizare
+        #value = self.props_map.get('location', [""])(-1)
+        value = self.props_map.get('location', [""])
+        value = value[-1]
+        return value
+
+    def is_modifie(self):
+        return self.modified
+
 class ComputerProps:
     def __init__(self, conn, obj):
         self.obj = obj   
@@ -103,27 +128,47 @@ class ComputerProps:
 
         self.general = self.__general_tab()
         self.operating_system = self.__operating_system_tab()
-        self.location = self.__location_tab()
-        dump(obj)
+        #self.location = self.__location_tab()
+        #dump(obj)
 
     def Show(self):
         UI.OpenDialog(self.__multitab())
+        locationModel = LocationModel(self.props_map)
+        # can we tell the current tab ? below doesn't seem to work
+        #current_tab = UI.QueryWidget('tabContents','CurrentItem')
+        #print "#### current item %s"%current_tab
+        current_tab = 'general'
+        tabs = ['location', 'operating_system', 'general']
+
         while True:
             ret = UI.UserInput()
             print "tab dialog input is %s"%ret
+
             if str(ret) == 'ok' or str(ret) == 'cancel':
                 UI.CloseDialog()
                 break
-            elif str(ret) == 'operating_system':
-                UI.ReplaceWidget('tabContents', self.operating_system)
-            elif str(ret) == 'general':
-                UI.ReplaceWidget('tabContents', self.general)
-            elif str(ret) == 'location':
-                UI.ReplaceWidget('tabContents', self.location)
+            if str(ret) in tabs:
+                previous_tab = current_tab
+                current_tab = str(ret)
+                if current_tab != previous_tab:
+                    if previous_tab == 'location':
+                        # capture view changes to model
+                        currentValue = UI.QueryWidget('loc_text', 'Value')
+                        print "##### location value is %s"%currentValue
+                        locationModel.set_location(currentValue)
+                    if str(ret) == 'operating_system':
+                        UI.ReplaceWidget('tabContents', self.operating_system)
+                    elif str(ret) == 'general':
+                        UI.ReplaceWidget('tabContents', self.general)
+                    elif str(ret) == 'location':
+                        UI.ReplaceWidget('tabContents', self.__location_tab(locationModel))
+                    print "#### new tab clicked previous %s current %s"%(previous_tab, current_tab)
         self.operating_system = self.__operating_system_tab()
-    def __location_tab(self):
+    def __location_tab(self, model):
+        #return VBox(
+        #        InputField(Id('loc_text'), "Location", model.get_location()))
         return VBox(
-                InputField("Location", self.props_map.get('location', [""])[-1]))
+                TextEntry(Id('loc_text'), "Location", model.get_location()))
 
     def __general_tab(self):
         return VBox(
