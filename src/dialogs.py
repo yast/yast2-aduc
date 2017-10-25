@@ -16,6 +16,25 @@ def dump(obj):
         i = i + 1
             
 
+class TabModel:
+    def __init__(self, props_map):
+        self.props_map = copy.deepcopy(props_map)
+        self.modified = False
+    def set_value(self, key, value):
+        oldvalue = self.props_map.get(key, [""])[-1]
+        if value != oldvalue:
+            self.props_map[key] = [value]
+            if not self.modified:
+                self.modified = True
+    def get_value(self, key):
+        value = self.props_map.get(key, [""])[-1]
+        return value
+
+    def is_modified(self):
+        return self.modified
+    def get_map(self):
+        return self.props_map
+
 class UserProps:
     def __init__(self, conn, obj):
         self.obj = obj   
@@ -95,28 +114,6 @@ class UserProps:
         )
         return multi
 
-class TabModel:
-    def __init__(self, props_map):
-        self.props_map = copy.deepcopy(props_map)
-        self.modified = False
-    def set_value(self, key, value):
-        # getting TypeError: 'list' object is not callable if we use the line
-        # below... bizare
-        oldvalue = self.props_map.get(key, [""])[-1]
-        if value != oldvalue:
-            self.props_map[key] = [value]
-            if not self.modified:
-                self.modified = True
-    def get_value(self, key):
-        # getting TypeError: 'list' object is not callable if we use the line
-        # below... bizare
-        value = self.props_map.get(key, [""])[-1]
-        return value
-
-    def is_modified(self):
-        return self.modified
-    def get_map(self):
-        return self.props_map
 
 class ComputerProps:
     def __init__(self, conn, obj):
@@ -124,15 +121,16 @@ class ComputerProps:
         self.conn = conn
         self.keys = self.obj[1].keys()
         self.props_map = self.obj[1]
+        self.tabModel = TabModel(self.props_map)
 
         #dump(obj)
 
     def Show(self):
-        tabModel = TabModel(self.props_map)
-        UI.OpenDialog(self.__multitab(tabModel))
+        UI.OpenDialog(self.__multitab(self.tabModel))
         # can we tell the current tab ? below doesn't seem to work
-        #current_tab = UI.QueryWidget('tabContents','CurrentItem')
-        #print "#### current item %s"%current_tab
+        print "#### about to query widget"
+        current_tab = UI.QueryWidget('tabContents','CurrentItem')
+        print "#### current item %s"%current_tab
         current_tab = 'general'
         tabs = ['location', 'operating_system', 'general']
 
@@ -149,31 +147,31 @@ class ComputerProps:
                 if current_tab != previous_tab:
                     # update model, currently only location is 'writable'
                     if previous_tab == 'location':
-                        self.__updateLocationModel(tabModel)
+                        self.__updateLocationModel(self.tabModel)
                     elif previous_tab == 'general':
-                        self.__updateGeneralModel(tabModel)
+                        self.__updateGeneralModel(self.tabModel)
 
                     # update tabview
                     if str(ret) == 'operating_system':
-                        UI.ReplaceWidget('tabContents', self.__operating_system_tab(tabModel))
+                        UI.ReplaceWidget('tabContents', self.__operating_system_tab(self.tabModel))
                     elif str(ret) == 'general':
-                        UI.ReplaceWidget('tabContents', self.__general_tab(tabModel))
+                        UI.ReplaceWidget('tabContents', self.__general_tab(self.tabModel))
                     elif str(ret) == 'location':
-                        UI.ReplaceWidget('tabContents', self.__location_tab(tabModel))
+                        UI.ReplaceWidget('tabContents', self.__location_tab(self.tabModel))
                     print "#### new tab clicked previous %s current %s"%(previous_tab, current_tab)
 
-    def __updateLocationModel(self,tabModel):
+    def __updateLocationModel(self, model):
         location = UI.QueryWidget('loc_text', 'Value')
-        if location != tabModel.get_value('location'):
-            tabModel.set_value('location', location)
+        if location != model.get_value('location'):
+            model.set_value('location', location)
     def __location_tab(self, model):
         return VBox(
                 TextEntry(Id('loc_text'), "Location", model.get_value('location')))
 
-    def __updateGeneralModel(self, tabModel):
+    def __updateGeneralModel(self, model):
         description = UI.QueryWidget('description', 'Value')
-        if description != tabModel.get_value('description'):
-            tabModel.set_value('description', description)
+        if description != model.get_value('description'):
+            model.set_value('description', description)
 
     def __general_tab(self, model):
         return VBox(
@@ -184,16 +182,6 @@ class ComputerProps:
                 InputField(Id('description'), "Description:", model.get_value('description'))
                 )
     def __operating_system_tab(self, model):
-#         return VBox(
-#             Left(HBox( 
-#                 Label('Name:'),
-#                 Label(Opt('outputField'), self.props_map.get('operatingSystem', [""])[-1]))),
-#             Left(HBox(
-#                 Label('Operating System:'),
-#                 Label(Opt('outputField'), self.props_map.get('operatingSystemVersion',[""])[-1]))),
-#             Left(HBox(
-#                 Label('Service Pack:'),
-#                 Label(Opt('outputField'), self.props_map.get('operatingSystemServicePack',[""])[-1]))))
           return VBox(
                   InputField(Id('name'), Opt('disabled'),"Name:", model.get_value('operatingSystem')),
                   InputField(Id('opsystem'), Opt('disabled'), "Operating System", model.get_value('operatingSystemVersion')),
