@@ -128,9 +128,9 @@ class ComputerProps:
     def Show(self):
         UI.OpenDialog(self.__multitab(self.tabModel))
         # can we tell the current tab ? below doesn't seem to work
-        print "#### about to query widget"
-        current_tab = UI.QueryWidget('tabContents','CurrentItem')
-        print "#### current item %s"%current_tab
+        #print "#### about to query widget"
+        #current_tab = UI.QueryWidget('tabContents','CurrentItem')
+        #print "#### current item %s"%current_tab
         current_tab = 'general'
         tabs = ['location', 'operating_system', 'general']
 
