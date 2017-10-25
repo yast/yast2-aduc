@@ -41,51 +41,83 @@ class UserProps:
         self.conn = conn
         self.keys = self.obj[1].keys()
         self.props_map = self.obj[1]
-
-        self.general = self.__general_tab()
-        self.address = self.__address_tab()
+        self.tabModel = TabModel(self.props_map)
+        #self.general = self.__general_tab()
+        #self.address = self.__address_tab()
         #self.account = self.__account_tab()
         #dump(obj)
 
     def Show(self):
         UI.OpenDialog(self.__multitab())
+        current_tab = 'general'
+        tabs = ['general', 'address']
         while True:
             ret = UI.UserInput()
             print "tab dialog input is %s"%ret
             if str(ret) == 'ok' or str(ret) == 'cancel':
                 UI.CloseDialog()
                 break
-            if str(ret) == 'general':
-                UI.ReplaceWidget('tabContents', self.general)
-            elif str(ret) == 'address':
-                UI.ReplaceWidget('tabContents', self.address)
-#            elif str(ret) == 'account':
-#                UI.ReplaceWidget('tabContents', self.account)
-    def __address_tab(self):
+            if str(ret) in tabs:
+                previous_tab = current_tab
+                current_tab = str(ret)
+                if current_tab != previous_tab:
+                    if previous_tab == 'general':
+                        self.__updateGeneralModel(self.tabModel)
+                    elif previous_tab == 'address':
+                        self.__updateAddressModel(self.tabModel)
+                    #switch tabs
+                    if str(ret) == 'general':
+                        UI.ReplaceWidget('tabContents', self.__general_tab(self.tabModel))
+                    elif str(ret) == 'address':
+                        UI.ReplaceWidget('tabContents', self.__address_tab(self.tabModel))
+#                   elif str(ret) == 'account':
+#                       UI.ReplaceWidget('tabContents', self.account)
+    def __updateAddressModel(self, model):
+        print "updating general model"
+
+    def __address_tab(self, model):
         return VBox(
             HBox(
                 Label('Street:'),
-                RichText(Id('streetAddress'), self.props_map.get('streetAddress', [""])[-1])),
-                Left(InputField("P.O. Box:", self.props_map.get('postOfficeBox', [""])[-1])),
-                Left(InputField("City:", self.props_map.get('l', [""])[-1])),
-                Left(InputField("State/province:", self.props_map.get('st', [""])[-1])),
-                Left(InputField("Zip/Postal Code:", self.props_map.get('postalCode', [""])[-1])),
-                Left(InputField("Country/Region:", self.props_map.get('co', [""])[-1])))
+                RichText(Id('streetAddress'), model.get_value('streetAddress'))),
+                Left(InputField("P.O. Box:", model.get_value('postOfficeBox'))),
+                Left(InputField("City:", model.get_value('l'))),
+                Left(InputField("State/province:", model.get_value('st'))),
+                Left(InputField("Zip/Postal Code:", model.get_value('postalCode',))),
+                Left(InputField("Country/Region:", model.get_value('co'))))
 
-               
-    def __general_tab(self):
+    def __updateGeneralModel(self, model):
+        name = UI.QueryWidget('name', 'Value')
+        initials = UI.QueryWidget('initials', 'Value')
+        surname = UI.QueryWidget('surname', 'Value')
+        dispname = UI.QueryWidget('dispname', 'Value')
+        office = UI.QueryWidget('office', 'Value')
+        telnum = UI.QueryWidget('telnum', 'Value')
+        email = UI.QueryWidget('email', 'Value')
+        www = UI.QueryWidget('www', 'Value')
+
+        model.set_value('givenName', name)
+        model.set_value('initials', initials)
+        model.set_value('sn', surname)
+        model.set_value('displayName', dispname)
+        model.set_value('physicalDeliveryOfficeName', office)
+        model.set_value('telephoneNumber', telnum)
+        model.set_value('mail', email)
+        model.set_value('wWWHomePage', www)
+
+    def __general_tab(self, model):
         return VBox(
             Left(HBox(
-                InputField("First Name:", self.props_map.get('givenName', [""])[-1]),
-                InputField("Initials:", self.props_map.get('initials', [""])[-1]))),
+                InputField(Id('name'),"First Name:", model.get_value('givenName')),
+                InputField(Id('initials'), "Initials:", model.get_value('initials')))),
 
-                Left(InputField("Last name:", self.props_map.get('sn', [""])[-1])),
-                Left(InputField("Display name:", self.props_map.get('displayName', [""])[-1])),
-                Left(InputField("Office:", self.props_map.get('physicalDeliveryOfficeName', [""])[-1])),
-                Left(InputField("Telephone number:", self.props_map.get('telephoneNumber', [""])[-1])),
-                Left(InputField("E-mail:", self.props_map.get('mail', [""])[-1])),
-                Left(InputField("Web page:", self.props_map.get('wWWHomePage', [""])[-1]))
-                )
+            Left(InputField(Id('surname'), "Last name:", model.get_value('sn'))),
+            Left(InputField(Id('dispname'), "Display name:", model.get_value('displayName'))),
+            Left(InputField(Id('office'), "Office:", model.get_value('physicalDeliveryOfficeName'))),
+            Left(InputField(Id('telnum'), "Telephone number:", model.get_value('telephoneNumber'))),
+            Left(InputField(Id('email'), "E-mail:", model.get_value('mail'))),
+            Left(InputField(Id('www'), "Web page:", model.get_value('wWWHomePage')))
+            )
 
     def __multitab(self):
         multi = VBox(
@@ -102,7 +134,7 @@ class UserProps:
                     VSpacing(0.3),
                     HBox(
                       HSpacing(1),
-                      ReplacePoint(Id('tabContents'), self.general)
+                      ReplacePoint(Id('tabContents'), self.__general_tab(self.tabModel))
                     )
                   )
                 )
@@ -145,7 +177,7 @@ class ComputerProps:
                 previous_tab = current_tab
                 current_tab = str(ret)
                 if current_tab != previous_tab:
-                    # update model, currently only location is 'writable'
+                    # update model
                     if previous_tab == 'location':
                         self.__updateLocationModel(self.tabModel)
                     elif previous_tab == 'general':
