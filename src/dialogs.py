@@ -43,7 +43,8 @@ UserTabContents = {
                 Left(InputField(Id('st'), "State/province:", model.get_value('st'))),
                 Left(InputField(Id('postalCode'), "Zip/Postal Code:", model.get_value('postalCode',))),
                 Left(InputField(Id('co'), "Country/Region:", model.get_value('co'))))),
-            'data' : UserDataModel['address']
+            'data' : UserDataModel['address'],
+            'title' : 'Address'
             },
         'general' : {
             'content' : (lambda model: VBox( Left(HBox(
@@ -56,7 +57,8 @@ UserTabContents = {
                 Left(InputField(Id('mail'), "E-mail:", model.get_value('mail'))),
                 Left(InputField(Id('wWWHomePage'), "Web page:", model.get_value('wWWHomePage')))
             )),
-            'data' : UserDataModel['general']
+            'data' : UserDataModel['general'],
+            'title' : 'General'
             }
         }
 
@@ -91,11 +93,12 @@ class UserProps:
         self.keys = self.obj[1].keys()
         self.props_map = self.obj[1]
         self.tabModel = TabModel(self.props_map)
+        self.initial_tab = 'general'
         #dump(obj)
 
     def Show(self):
         UI.OpenDialog(self.__multitab())
-        next_tab = 'general'
+        next_tab = self.initial_tab
         while True:
             ret = UI.UserInput()
             print "tab dialog input is %s"%ret
@@ -115,8 +118,7 @@ class UserProps:
         multi = VBox(
           DumbTab(Id('multitab'),
             [
-              Item(Id('general'), "General"),
-              Item(Id('address'), "Address"),
+               Item(Id(key), UserTabContents[key]['title']) for key in UserTabContents.keys()
             ],
             Left(
               Top(
@@ -125,7 +127,7 @@ class UserProps:
                     VSpacing(0.3),
                     HBox(
                       HSpacing(1),
-                      ReplacePoint(Id('tabContents'), UserTabContents['general']['content'](self.tabModel))
+                      ReplacePoint(Id('tabContents'), UserTabContents[self.initial_tab]['content'](self.tabModel))
                     )
                   )
                 )
