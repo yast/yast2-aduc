@@ -15,6 +15,23 @@ def dump(obj):
         print "item[%d] key %s value type %s value ->%s<-"%(i,key, type(value), value)
         i = i + 1
             
+UserDataModel = {
+    'general' : {
+        'givenName' : 'First Name:',
+        'initials' : 'Initials:',
+        'sn' : 'Last name:',
+        'displayName' : 'Display name:',
+        'physicalDeliveryOfficeName' : 'Office:',
+        'telephoneNumber' : 'Telephone number:',
+        'mail' : 'E-mail:',
+        'wWWHomePage' : 'Web page:' },
+    'address' : {
+        'streetAddress' : 'Street:',
+        'postOfficeBox' : 'P.O. Box:',
+        'st' : 'State/province:',
+        'postalCode' : 'Zip/Postal Code:',
+        'co' : 'Country/Region:' }
+    }
 
 class TabModel:
     def __init__(self, props_map):
@@ -34,6 +51,14 @@ class TabModel:
         return self.modified
     def get_map(self):
         return self.props_map
+    def update_tab(self, data_model, tabname):
+        print '##### update %s'%tabname
+        tabData = data_model[tabname]
+        for key in tabData.keys():
+            print 'about to query widget %s'%key
+            value = UI.QueryWidget(key, 'Value')
+            print 'value for widget %s is %s'%(key, value)
+            self.set_value(key, value)
 
 class UserProps:
     def __init__(self, conn, obj):
@@ -48,6 +73,7 @@ class UserProps:
         #dump(obj)
 
     def Show(self):
+       
         UI.OpenDialog(self.__multitab())
         current_tab = 'general'
         tabs = ['general', 'address']
@@ -61,10 +87,9 @@ class UserProps:
                 previous_tab = current_tab
                 current_tab = str(ret)
                 if current_tab != previous_tab:
-                    if previous_tab == 'general':
-                        self.__updateGeneralModel(self.tabModel)
-                    elif previous_tab == 'address':
-                        self.__updateAddressModel(self.tabModel)
+                    # update the model of the tab we are switching away from
+                    self.tabModel.update_tab(UserDataModel, previous_tab)
+
                     #switch tabs
                     if str(ret) == 'general':
                         UI.ReplaceWidget('tabContents', self.__general_tab(self.tabModel))
@@ -72,51 +97,30 @@ class UserProps:
                         UI.ReplaceWidget('tabContents', self.__address_tab(self.tabModel))
 #                   elif str(ret) == 'account':
 #                       UI.ReplaceWidget('tabContents', self.account)
-    def __updateAddressModel(self, model):
-        print "updating general model"
 
     def __address_tab(self, model):
         return VBox(
             HBox(
-                Label('Street:'),
+                Label(Id('street'), 'Street:'),
                 RichText(Id('streetAddress'), model.get_value('streetAddress'))),
-                Left(InputField("P.O. Box:", model.get_value('postOfficeBox'))),
-                Left(InputField("City:", model.get_value('l'))),
-                Left(InputField("State/province:", model.get_value('st'))),
-                Left(InputField("Zip/Postal Code:", model.get_value('postalCode',))),
-                Left(InputField("Country/Region:", model.get_value('co'))))
-
-    def __updateGeneralModel(self, model):
-        name = UI.QueryWidget('name', 'Value')
-        initials = UI.QueryWidget('initials', 'Value')
-        surname = UI.QueryWidget('surname', 'Value')
-        dispname = UI.QueryWidget('dispname', 'Value')
-        office = UI.QueryWidget('office', 'Value')
-        telnum = UI.QueryWidget('telnum', 'Value')
-        email = UI.QueryWidget('email', 'Value')
-        www = UI.QueryWidget('www', 'Value')
-
-        model.set_value('givenName', name)
-        model.set_value('initials', initials)
-        model.set_value('sn', surname)
-        model.set_value('displayName', dispname)
-        model.set_value('physicalDeliveryOfficeName', office)
-        model.set_value('telephoneNumber', telnum)
-        model.set_value('mail', email)
-        model.set_value('wWWHomePage', www)
+                Left(InputField(Id('postOfficeBox'), "P.O. Box:", model.get_value('postOfficeBox'))),
+                Left(InputField(Id('l'), "City:", model.get_value('l'))),
+                Left(InputField(Id('st'), "State/province:", model.get_value('st'))),
+                Left(InputField(Id('postalCode'), "Zip/Postal Code:", model.get_value('postalCode',))),
+                Left(InputField(Id('co'), "Country/Region:", model.get_value('co'))))
 
     def __general_tab(self, model):
         return VBox(
             Left(HBox(
-                InputField(Id('name'),"First Name:", model.get_value('givenName')),
+                InputField(Id('givenName'),"First Name:", model.get_value('givenName')),
                 InputField(Id('initials'), "Initials:", model.get_value('initials')))),
 
-            Left(InputField(Id('surname'), "Last name:", model.get_value('sn'))),
-            Left(InputField(Id('dispname'), "Display name:", model.get_value('displayName'))),
-            Left(InputField(Id('office'), "Office:", model.get_value('physicalDeliveryOfficeName'))),
-            Left(InputField(Id('telnum'), "Telephone number:", model.get_value('telephoneNumber'))),
-            Left(InputField(Id('email'), "E-mail:", model.get_value('mail'))),
-            Left(InputField(Id('www'), "Web page:", model.get_value('wWWHomePage')))
+            Left(InputField(Id('sn'), "Last name:", model.get_value('sn'))),
+            Left(InputField(Id('displayName'), "Display name:", model.get_value('displayName'))),
+            Left(InputField(Id('physicalDeliveryOfficeName'), "Office:", model.get_value('physicalDeliveryOfficeName'))),
+            Left(InputField(Id('telephoneNumber'), "Telephone number:", model.get_value('telephoneNumber'))),
+            Left(InputField(Id('mail'), "E-mail:", model.get_value('mail'))),
+            Left(InputField(Id('wWWHomePage'), "Web page:", model.get_value('wWWHomePage')))
             )
 
     def __multitab(self):
