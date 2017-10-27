@@ -78,8 +78,7 @@ class TabModel:
 
     def is_modified(self):
         return self.modified
-    def get_map(self):
-        return self.props_map
+
     def update_tab(self, data_model, tabname):
         tabData = data_model[tabname]
         for key in tabData.keys():
@@ -121,24 +120,65 @@ class UserProps:
                Item(Id(key), UserTabContents[key]['title']) for key in UserTabContents.keys()
             ],
             Left(
-              Top(
-                HVSquash(
-                  VBox(
-                    VSpacing(0.3),
-                    HBox(
-                      HSpacing(1),
-                      ReplacePoint(Id('tabContents'), UserTabContents[self.initial_tab]['content'](self.tabModel))
+                Top(
+                    VBox(
+                        VSpacing(0.3),
+                        HBox(
+                            HSpacing(1), ReplacePoint(Id('tabContents'), UserTabContents[self.initial_tab]['content'](self.tabModel)))
+                        )
                     )
-                  )
                 )
-              )
-            )
           ), # true: selected
           HBox(PushButton(Id('ok'), "OK"), PushButton(Id('cancel'), "Cancel"),
               PushButton(Id('apply'), "Apply"))
         )
         return multi
 
+ComputerDataModel = {
+        'general' : {
+            'name' : 'Computer name (pre-Windows 2000):',
+            'dNSHostName' : 'DNS-name:',
+            'idontknow' : 'Workstation or server:',
+            'description' : 'Description:'
+            },
+        'operating_system' : {
+            'name' : 'Name:',
+            'operatingSystemVersion' : 'Operating System:',
+            'operatingSystemServicePack' : 'Service Pack:'
+            },
+        'location' : {
+            'location' : 'Location:'
+            },
+        }
+
+ComputerTabContents = {
+        'general' : {
+            'content' : (lambda model: VBox(
+                InputField(Id('name'), Opt('disabled'), "Computer name (pre-Windows 2000):", model.get_value('name')),
+                InputField(Id('dNSHostName'), Opt('disabled'), "DNS-name:", model.get_value('dNSHostName')),
+                # #TODO find out what attribute site is
+                InputField(Id('idontknow'), Opt('disabled'), "Site:", "Workstation or server"),
+                InputField(Id('description'), "Description:", model.get_value('description')))),
+
+            'data' : ComputerDataModel['general'],
+            'title': 'General'
+            },
+
+        'operating_system' : {
+            'content' : (lambda model: VBox(
+                  InputField(Id('name'), Opt('disabled'),"Name:", model.get_value('operatingSystem')),
+                  InputField(Id('operatingSystemVersion'), Opt('disabled'), "Operating System", model.get_value('operatingSystemVersion')),
+                  InputField(Id('operatingSystemServicePack'), Opt('disabled'), "Service Pack:", model.get_value('operatingSystemServicePack')))),
+            'data' : ComputerDataModel['operating_system'],
+            'title': 'Operating System'
+            },
+        'location' : {
+            'content' : (lambda model: VBox(
+                TextEntry(Id('location'), "Location", model.get_value('location')))),
+            'data' : ComputerDataModel['location'],
+            'title': 'Location'
+            }
+        }
 
 class ComputerProps:
     def __init__(self, conn, obj):
@@ -147,94 +187,56 @@ class ComputerProps:
         self.keys = self.obj[1].keys()
         self.props_map = self.obj[1]
         self.tabModel = TabModel(self.props_map)
-
+        self.initial_tab = 'general'
         #dump(obj)
 
     def Show(self):
-        UI.OpenDialog(self.__multitab(self.tabModel))
-        # can we tell the current tab ? below doesn't seem to work
-        #print "#### about to query widget"
-        #current_tab = UI.QueryWidget('tabContents','CurrentItem')
-        #print "#### current item %s"%current_tab
-        current_tab = 'general'
-        tabs = ['location', 'operating_system', 'general']
+        UI.OpenDialog(self.__multitab())
+        next_tab = self.initial_tab
+        
+        # This call below doesn't work
+        UI.ChangeWidget('multitab', 'CurrentItem', next_tab)
 
         while True:
             ret = UI.UserInput()
             print "tab dialog input is %s"%ret
-
             if str(ret) == 'ok' or str(ret) == 'cancel':
                 UI.CloseDialog()
                 break
-            if str(ret) in tabs:
-                previous_tab = current_tab
-                current_tab = str(ret)
-                if current_tab != previous_tab:
-                    # update model
-                    if previous_tab == 'location':
-                        self.__updateLocationModel(self.tabModel)
-                    elif previous_tab == 'general':
-                        self.__updateGeneralModel(self.tabModel)
+            if str(ret) in ComputerTabContents.keys():
+                previous_tab = next_tab
+                next_tab = str(ret)
+                if next_tab != previous_tab:
+                    # update the model of the tab we are switching away from
+                    self.tabModel.update_tab(ComputerDataModel, previous_tab)
+                    #switch tabs
+                    UI.ReplaceWidget('tabContents', ComputerTabContents[next_tab]['content'](self.tabModel))
 
-                    # update tabview
-                    if str(ret) == 'operating_system':
-                        UI.ReplaceWidget('tabContents', self.__operating_system_tab(self.tabModel))
-                    elif str(ret) == 'general':
-                        UI.ReplaceWidget('tabContents', self.__general_tab(self.tabModel))
-                    elif str(ret) == 'location':
-                        UI.ReplaceWidget('tabContents', self.__location_tab(self.tabModel))
-                    print "#### new tab clicked previous %s current %s"%(previous_tab, current_tab)
+    def __multitab(self):
+        # 2 problems here,
+        #  * ComputerTabContents.keys() doesn't return
+        #    the tabs in the desired order (that's just because of the way
+        #    python sorts the keys
+        #  * We can't set the initial tab that is selected, we fake
+        #    this by making sure 'general' (which is the desired initial_tab)
+        #    is the first tab
+        TabOrder = ('general', 'operating_system', 'location')
 
-    def __updateLocationModel(self, model):
-        location = UI.QueryWidget('loc_text', 'Value')
-        if location != model.get_value('location'):
-            model.set_value('location', location)
-    def __location_tab(self, model):
-        return VBox(
-                TextEntry(Id('loc_text'), "Location", model.get_value('location')))
-
-    def __updateGeneralModel(self, model):
-        description = UI.QueryWidget('description', 'Value')
-        if description != model.get_value('description'):
-            model.set_value('description', description)
-
-    def __general_tab(self, model):
-        return VBox(
-                InputField(Id('name'), Opt('disabled'), "Computer name (pre-Windows 2000):", model.get_value('name')),
-                InputField(Id('dns-name'), Opt('disabled'), "DNS-name:", model.get_value('dNSHostName')),
-                # #TODO find out what attribute site is
-                InputField(Id('site'), Opt('disabled'), "Site:", "Workstation or server"),
-                InputField(Id('description'), "Description:", model.get_value('description'))
-                )
-    def __operating_system_tab(self, model):
-          return VBox(
-                  InputField(Id('name'), Opt('disabled'),"Name:", model.get_value('operatingSystem')),
-                  InputField(Id('opsystem'), Opt('disabled'), "Operating System", model.get_value('operatingSystemVersion')),
-                  InputField(Id('servicepack'), Opt('disabled'), "Service Pack:", model.get_value('operatingSystemServicePack')))
-
-                 
-
-    def __multitab(self, model):
         multi = VBox(
-          DumbTab(
+          DumbTab(Id('multitab'),
             [
-              Item(Id('general'), "General"),
-              Item(Id('operating_system'), "Operating System"),
-              Item(Id('location'), "Location"),
+#               Item(Id(key), ComputerTabContents[key]['title']) for key in ComputerTabContents.keys()
+               Item(Id(key), ComputerTabContents[key]['title']) for key in TabOrder 
             ],
             Left(
-              Top(
-                HVSquash(
-                  VBox(
-                    VSpacing(0.3),
-                    HBox(
-                      HSpacing(1),
-                      ReplacePoint(Id('tabContents'), self.__general_tab(model))
+                Top(
+                    VBox(
+                        VSpacing(0.3),
+                        HBox(
+                            HSpacing(1), ReplacePoint(Id('tabContents'), ComputerTabContents[self.initial_tab]['content'](self.tabModel)))
+                        )
                     )
-                  )
                 )
-              )
-            )
           ), # true: selected
           HBox(PushButton(Id('ok'), "OK"), PushButton(Id('cancel'), "Cancel"),
               PushButton(Id('apply'), "Apply"))
