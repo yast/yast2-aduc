@@ -27,6 +27,7 @@ UserDataModel = {
         'wWWHomePage' : 'Web page:' },
     'address' : {
         'streetAddress' : 'Street:',
+        'l' : 'City:',
         'postOfficeBox' : 'P.O. Box:',
         'st' : 'State/province:',
         'postalCode' : 'Zip/Postal Code:',
@@ -64,6 +65,7 @@ UserTabContents = {
 
 class TabModel:
     def __init__(self, props_map):
+        self.props_orig = props_map
         self.props_map = copy.deepcopy(props_map)
         self.modified = False
     def set_value(self, key, value):
@@ -79,45 +81,85 @@ class TabModel:
     def is_modified(self):
         return self.modified
 
-    def update_tab(self, data_model, tabname):
-        tabData = data_model[tabname]
+    def update_from_view(self, tabData):
         for key in tabData.keys():
             value = UI.QueryWidget(key, 'Value')
             self.set_value(key, value)
+    def apply_changes(self, conn):
+        if self.is_modified():
+            modattr = {}
+            addattr = {}
+            for key in self.props_map.keys():
+                # filter out temporary placeholder keys  (like idontknow)
+                if key.startswith('idontknow'):
+                    continue
+                if key in self.props_orig.keys():
+                    if self.props_map[key] != self.props_orig[key]:
+                        print 'attribute %s changed.. old %s -> new %s'%(key, self.props_orig.get(key, [""])[-1], self.get_value(key))
+                        modattr[key] = self.props_map[key]
+                else:
+                    addattr[key] = self.props_map[key]
 
-class UserProps:
-    def __init__(self, conn, obj):
+            conn.update(self.props_map['distinguishedName'][-1], self.props_orig, modattr, addattr)
+
+            
+class TabProps(object):
+    def __init__(self, conn, obj, contents, start_tab):
         self.obj = obj   
         self.conn = conn
         self.keys = self.obj[1].keys()
         self.props_map = self.obj[1]
         self.tabModel = TabModel(self.props_map)
-        self.initial_tab = 'general'
-        #dump(obj)
+        self.contents = contents
+        self.initial_tab = start_tab
+        dump(obj)
+
+    def __multitab(self):
+        raise NotImplementedError()
 
     def Show(self):
-        UI.OpenDialog(self.__multitab())
+        UI.OpenDialog(self.multitab())
         next_tab = self.initial_tab
+        self.current_tab = next_tab
         while True:
             ret = UI.UserInput()
             print "tab dialog input is %s"%ret
-            if str(ret) == 'ok' or str(ret) == 'cancel':
-                UI.CloseDialog()
-                break
-            if str(ret) in UserTabContents.keys():
+            if str(ret) in self.contents.keys():
                 previous_tab = next_tab
                 next_tab = str(ret)
                 if next_tab != previous_tab:
                     # update the model of the tab we are switching away from
-                    self.tabModel.update_tab(UserDataModel, previous_tab)
+                    self.tabModel.update_from_view(self.contents[previous_tab]['data'])
                     #switch tabs
-                    UI.ReplaceWidget('tabContents', UserTabContents[next_tab]['content'](self.tabModel))
+                    UI.ReplaceWidget('tabContents', self.contents[next_tab]['content'](self.tabModel))
+                    self.current_tab = next_tab
+            if self.HandleInput(ret):
+                break
 
-    def __multitab(self):
+   # return True (continue processing user input)
+   # return False to break out
+    def HandleInput(self, ret):
+        print 'TabProps.Handleinput %s'%ret
+        if str(ret) in ('ok', 'cancel', 'apply') :
+            if str(ret) != 'cancel':
+                print 'updating model from tab view %s'%self.current_tab
+                self.tabModel.update_from_view(self.contents[self.current_tab]['data'])
+            self.tabModel.apply_changes(self.conn)
+            if str(ret) == 'apply':
+                return False
+            UI.CloseDialog()
+            return True
+        return False
+
+class UserProps(TabProps):
+    def __init__(self, conn, obj):
+        TabProps.__init__(self, conn, obj, UserTabContents, 'general')
+
+    def multitab(self):
         multi = VBox(
           DumbTab(Id('multitab'),
             [
-               Item(Id(key), UserTabContents[key]['title']) for key in UserTabContents.keys()
+               Item(Id(key), self.contents[key]['title']) for key in self.contents.keys()
             ],
             Left(
                 Top(
@@ -133,6 +175,12 @@ class UserProps:
               PushButton(Id('apply'), "Apply"))
         )
         return multi
+
+   # return True (continue processing user input)
+   # return False to break out
+    def HandleInput(self, ret):
+        print 'UserProps.Handleinput %s'%ret
+        return TabProps.HandleInput(self, ret)
 
 ComputerDataModel = {
         'general' : {
@@ -180,46 +228,18 @@ ComputerTabContents = {
             }
         }
 
-class ComputerProps:
+class ComputerProps(TabProps):
     def __init__(self, conn, obj):
-        self.obj = obj   
-        self.conn = conn
-        self.keys = self.obj[1].keys()
-        self.props_map = self.obj[1]
-        self.tabModel = TabModel(self.props_map)
-        self.initial_tab = 'general'
-        #dump(obj)
+        TabProps.__init__(self, conn, obj, ComputerTabContents, 'general')
 
-    def Show(self):
-        UI.OpenDialog(self.__multitab())
-        next_tab = self.initial_tab
-        
-        # This call below doesn't work
-        UI.ChangeWidget('multitab', 'CurrentItem', next_tab)
-
-        while True:
-            ret = UI.UserInput()
-            print "tab dialog input is %s"%ret
-            if str(ret) == 'ok' or str(ret) == 'cancel':
-                UI.CloseDialog()
-                break
-            if str(ret) in ComputerTabContents.keys():
-                previous_tab = next_tab
-                next_tab = str(ret)
-                if next_tab != previous_tab:
-                    # update the model of the tab we are switching away from
-                    self.tabModel.update_tab(ComputerDataModel, previous_tab)
-                    #switch tabs
-                    UI.ReplaceWidget('tabContents', ComputerTabContents[next_tab]['content'](self.tabModel))
-
-    def __multitab(self):
+    def multitab(self):
         # 2 problems here,
         #  * ComputerTabContents.keys() doesn't return
         #    the tabs in the desired order (that's just because of the way
-        #    python sorts the keys
+        #    python sorts the keys)
         #  * We can't set the initial tab that is selected, we fake
         #    this by making sure 'general' (which is the desired initial_tab)
-        #    is the first tab
+        #    is the first tab. This seems a problem with the bindings
         TabOrder = ('general', 'operating_system', 'location')
 
         multi = VBox(

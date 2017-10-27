@@ -8,7 +8,8 @@ import uuid
 import re
 from subprocess import Popen, PIPE
 from syslog import syslog, LOG_INFO, LOG_ERR, LOG_DEBUG, LOG_EMERG, LOG_ALERT
-
+from ldap.modlist import addModlist as addlist
+from ldap.modlist import modifyModlist as modlist
 class Connection:
     def __init__(self, lp, creds):
         self.lp = lp
@@ -49,4 +50,16 @@ class Connection:
 
     def computer_list(self):
         return self.l.search_s(self.__well_known_container('computers'), ldap.SCOPE_SUBTREE, '(objectCategory=computer)', [])
+
+    def update(self, dn, orig_map, modattr, addattr):
+        try:
+            print '##### attempting mod %s'%modattr
+            oldattr = {}
+            for key in modattr:
+                oldattr[key] = orig_map[key]
+            self.l.modify_s(dn, modlist(oldattr, modattr))
+        except Exception as e:
+            print '##### exception %s'%e
+            return
+        print '##### appeared to work modify %s with %s'%(dn,modattr)
 
