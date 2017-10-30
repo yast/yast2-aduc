@@ -39,24 +39,24 @@ UserTabContents = {
             'content' : (lambda model: VBox(HBox(
                 Label(Id('street'), UserDataModel['address']['streetAddress']),
                 RichText(Id('streetAddress'), model.get_value('streetAddress'))),
-                Left(InputField(Id('postOfficeBox'), UserDataModel['address']['postOfficeBox'], model.get_value('postOfficeBox'))),
-                Left(InputField(Id('l'), UserDataModel['address']['l'], model.get_value('l'))),
-                Left(InputField(Id('st'), UserDataModel['address']['st'], model.get_value('st'))),
-                Left(InputField(Id('postalCode'), UserDataModel['address']['postalCode'], model.get_value('postalCode',))),
-                Left(InputField(Id('co'), UserDataModel['address']['co'], model.get_value('co'))))),
+                Left(InputField(Id('postOfficeBox'), Opt('hstretch'), UserDataModel['address']['postOfficeBox'], model.get_value('postOfficeBox'))),
+                Left(InputField(Id('l'), Opt('hstretch'), UserDataModel['address']['l'], model.get_value('l'))),
+                Left(InputField(Id('st'), Opt('hstretch'), UserDataModel['address']['st'], model.get_value('st'))),
+                Left(InputField(Id('postalCode'), Opt('hstretch'), UserDataModel['address']['postalCode'], model.get_value('postalCode',))),
+                Left(InputField(Id('co'), Opt('hstretch'), UserDataModel['address']['co'], model.get_value('co'))))),
             'data' : UserDataModel['address'],
             'title' : 'Address'
             },
         'general' : {
             'content' : (lambda model: VBox( Left(HBox(
-                InputField(Id('givenName'),UserDataModel['general']['givenName'], model.get_value('givenName')),
-                InputField(Id('initials'), UserDataModel['general']['initials'], model.get_value('initials')))),
-                Left(InputField(Id('sn'), UserDataModel['general']['sn'], model.get_value('sn'))),
-                Left(InputField(Id('displayName'), UserDataModel['general']['displayName'], model.get_value('displayName'))),
-                Left(InputField(Id('physicalDeliveryOfficeName'), UserDataModel['general']['physicalDeliveryOfficeName'], model.get_value('physicalDeliveryOfficeName'))),
-                Left(InputField(Id('telephoneNumber'), UserDataModel['general']['telephoneNumber'], model.get_value('telephoneNumber'))),
-                Left(InputField(Id('mail'), UserDataModel['general']['mail'], model.get_value('mail'))),
-                Left(InputField(Id('wWWHomePage'), UserDataModel['general']['wWWHomePage'], model.get_value('wWWHomePage')))
+                InputField(Id('givenName'), Opt('hstretch'), UserDataModel['general']['givenName'], model.get_value('givenName')),
+                InputField(Id('initials'), Opt('hstretch'), UserDataModel['general']['initials'], model.get_value('initials')))),
+                Left(InputField(Id('sn'), Opt('hstretch'), UserDataModel['general']['sn'], model.get_value('sn'))),
+                Left(InputField(Id('displayName'), Opt('hstretch'), UserDataModel['general']['displayName'], model.get_value('displayName'))),
+                Left(InputField(Id('physicalDeliveryOfficeName'), Opt('hstretch'), UserDataModel['general']['physicalDeliveryOfficeName'], model.get_value('physicalDeliveryOfficeName'))),
+                Left(InputField(Id('telephoneNumber'), Opt('hstretch'), UserDataModel['general']['telephoneNumber'], model.get_value('telephoneNumber'))),
+                Left(InputField(Id('mail'), Opt('hstretch'), UserDataModel['general']['mail'], model.get_value('mail'))),
+                Left(InputField(Id('wWWHomePage'), Opt('hstretch'), UserDataModel['general']['wWWHomePage'], model.get_value('wWWHomePage')))
             )),
             'data' : UserDataModel['general'],
             'title' : 'General'
@@ -202,11 +202,11 @@ ComputerDataModel = {
 ComputerTabContents = {
         'general' : {
             'content' : (lambda model: VBox(
-                InputField(Id('name'), Opt('disabled'), ComputerDataModel['general']['name'], model.get_value('name')),
-                InputField(Id('dNSHostName'), Opt('disabled'), ComputerDataModel['general']['name'], model.get_value('dNSHostName')),
+                InputField(Id('name'), Opt('disabled', 'hstretch'), ComputerDataModel['general']['name'], model.get_value('name')),
+                InputField(Id('dNSHostName'), Opt('disabled', 'hstretch'), ComputerDataModel['general']['name'], model.get_value('dNSHostName')),
                 # #TODO find out what attribute site is
-                InputField(Id('idontknow'), Opt('disabled'), ComputerDataModel['general']['idontknow'], "Workstation or server"),
-                InputField(Id('description'), ComputerDataModel['general']['description'], model.get_value('description')))),
+                InputField(Id('idontknow'), Opt('disabled', 'hstretch'), ComputerDataModel['general']['idontknow'], "Workstation or server"),
+                InputField(Id('description'), Opt('hstretch'), ComputerDataModel['general']['description'], model.get_value('description')))),
 
             'data' : ComputerDataModel['general'],
             'title': 'General'
@@ -214,15 +214,15 @@ ComputerTabContents = {
 
         'operating_system' : {
             'content' : (lambda model: VBox(
-                  InputField(Id('operatingSystem'), Opt('disabled'), ComputerDataModel['operating_system']['operatingSystem'], model.get_value('operatingSystem')),
-                  InputField(Id('operatingSystemVersion'), Opt('disabled'),ComputerDataModel['operating_system']['operatingSystemVersion'], model.get_value('operatingSystemVersion')),
-                  InputField(Id('operatingSystemServicePack'), Opt('disabled'), ComputerDataModel['operating_system']['operatingSystemServicePack'], model.get_value('operatingSystemServicePack')))),
+                  InputField(Id('operatingSystem'), Opt('disabled', 'hstretch'), ComputerDataModel['operating_system']['operatingSystem'], model.get_value('operatingSystem')),
+                  InputField(Id('operatingSystemVersion'), Opt('disabled', 'hstretch'),ComputerDataModel['operating_system']['operatingSystemVersion'], model.get_value('operatingSystemVersion')),
+                  InputField(Id('operatingSystemServicePack'), Opt('disabled', 'hstretch'), ComputerDataModel['operating_system']['operatingSystemServicePack'], model.get_value('operatingSystemServicePack')))),
             'data' : ComputerDataModel['operating_system'],
             'title': 'Operating System'
             },
         'location' : {
             'content' : (lambda model: VBox(
-                TextEntry(Id('location'), ComputerDataModel['location']['location'], model.get_value('location')))),
+                TextEntry(Id('location'), Opt('hstretch'), ComputerDataModel['location']['location'], model.get_value('location')))),
             'data' : ComputerDataModel['location'],
             'title': 'Location'
             }
