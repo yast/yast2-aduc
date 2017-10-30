@@ -331,6 +331,16 @@ class ADUC:
                 else:
                     edit = UserProps(self.conn, currentItem)
                 edit.Show()
+            elif str(ret) == 'user_items':
+                currentItemName = UI.QueryWidget('user_items', 'CurrentItem')
+                currentItem = self.__find_by_name(self.users, currentItemName)
+                edit = UserProps(self.conn, currentItem)
+                edit.Show()
+            elif str(ret) == 'comp_items':
+                currentItemName = UI.QueryWidget('comp_items', 'CurrentItem')
+                currentItem = self.__find_by_name(self.computers, currentItemName)
+                edit = ComputerProps(self.conn, currentItem)
+                edit.Show()
 
         return ret
 
@@ -345,11 +355,11 @@ class ADUC:
         return None 
     def __users_tab(self):
         items = [Item(user[1]['cn'][-1], user[1]['objectClass'][-1].title(), user[1]['description'][-1] if 'description' in user[1] else '') for user in self.users]
-        return Table(Id('user_items'), Header('Name', 'Type', 'Description'), items)
+        return Table(Id('user_items'), Opt('notify'), Header('Name', 'Type', 'Description'), items)
 
     def __computer_tab(self):
         items = [Item(comp[1]['cn'][-1], comp[1]['objectClass'][-1].title(), comp[1]['description'][-1] if 'description' in comp[1] else '') for comp in self.computers]
-        return Table(Id('comp_items'), Header('Name', 'Type', 'Description'), items)
+        return Table(Id('comp_items'), Opt('notify'), Header('Name', 'Type', 'Description'), items)
 
     def __aduc_tree(self):
         return Tree(Id('aduc_tree'), Opt('notify'), 'Active Directory Users and Computers', [
