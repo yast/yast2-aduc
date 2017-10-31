@@ -88,7 +88,6 @@ class TabModel:
     def apply_changes(self, conn):
         if self.is_modified():
             modattr = {}
-            addattr = {}
             for key in self.props_map.keys():
                 # filter out temporary placeholder keys  (like idontknow)
                 if key.startswith('idontknow'):
@@ -98,9 +97,10 @@ class TabModel:
                         print 'attribute %s changed.. old %s -> new %s'%(key, self.props_orig.get(key, [""])[-1], self.get_value(key))
                         modattr[key] = self.props_map[key]
                 else:
-                    addattr[key] = self.props_map[key]
+                    print 'attribute was added %s ->%s<-'%(key, self.props_map[key])
+                    modattr[key] = self.props_map[key]
 
-            conn.update(self.props_map['distinguishedName'][-1], self.props_orig, modattr, addattr)
+            conn.update(self.props_map['distinguishedName'][-1], self.props_orig, modattr, {})
 
             
 class TabProps(object):

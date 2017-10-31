@@ -53,13 +53,18 @@ class Connection:
 
     def update(self, dn, orig_map, modattr, addattr):
         try:
-            print '##### attempting mod %s'%modattr
-            oldattr = {}
-            for key in modattr:
-                oldattr[key] = orig_map[key]
-            self.l.modify_s(dn, modlist(oldattr, modattr))
+            if len(modattr):
+                oldattr = {}
+                for key in modattr:
+                    oldattr[key] = orig_map.get(key, [])
+                print '##### attempting mod %s'%modattr
+                self.l.modify_s(dn, modlist(oldattr, modattr))
+                print '##### appeared to work mod %s with %s'%(dn,modattr)
+            if len(addattr):
+                print '##### attempting add %s'%addattr
+                self.l.add_s(dn, addlist(addattr))
+                print '##### appeared to work add %s with %s'%(dn,addattr)
         except Exception as e:
             print '##### exception %s'%e
             return
-        print '##### appeared to work modify %s with %s'%(dn,modattr)
 
