@@ -48,17 +48,10 @@ if __name__ == "__main__":
 
     from dialogs import ADUC
     from yast import UISequencer
-    from yast import startup_yuicomponent, shutdown_yuicomponent
-    component_started = False
     try:
-        startup_yuicomponent()
-        component_started = True
         s = UISequencer(lp, creds)
         funcs = [(lambda lp, creds: ADUC(lp, creds).Show())]
         s.run(funcs)
     except:
         traceback.print_exc(file=sys.stdout)
-
-    if component_started:
-        shutdown_yuicomponent()
 
