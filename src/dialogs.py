@@ -120,6 +120,7 @@ class TabProps(object):
     def Show(self):
         UI.OpenDialog(self.multitab())
         next_tab = self.initial_tab
+        UI.ChangeWidget('multitab', 'CurrentItem', Id(next_tab))
         self.current_tab = next_tab
         while True:
             ret = UI.UserInput()
@@ -233,20 +234,10 @@ class ComputerProps(TabProps):
         TabProps.__init__(self, conn, obj, ComputerTabContents, 'general')
 
     def multitab(self):
-        # 2 problems here,
-        #  * ComputerTabContents.keys() doesn't return
-        #    the tabs in the desired order (that's just because of the way
-        #    python sorts the keys)
-        #  * We can't set the initial tab that is selected, we fake
-        #    this by making sure 'general' (which is the desired initial_tab)
-        #    is the first tab. This seems a problem with the bindings
-        TabOrder = ('general', 'operating_system', 'location')
-
         multi = VBox(
           DumbTab(Id('multitab'),
             [
-#               Item(Id(key), ComputerTabContents[key]['title']) for key in ComputerTabContents.keys()
-               Item(Id(key), ComputerTabContents[key]['title']) for key in TabOrder 
+               Item(Id(key), ComputerTabContents[key]['title']) for key in ComputerTabContents.keys() 
             ],
             Left(
                 Top(
@@ -261,6 +252,7 @@ class ComputerProps(TabProps):
           HBox(PushButton(Id('ok'), "OK"), PushButton(Id('cancel'), "Cancel"),
               PushButton(Id('apply'), "Apply"))
         )
+
         return multi
 
 class ADUC:
