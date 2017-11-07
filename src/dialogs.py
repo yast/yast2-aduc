@@ -271,10 +271,22 @@ class ADUC:
         self.creds = creds
         try:
             self.conn = Connection(lp, creds)
-            self.users = self.conn.user_group_list()
-            self.computers = self.conn.computer_list()
         except Exception as e:
           syslog(LOG_EMERG, str(e))
+    def users(self): 
+        users = {}
+        try:
+            users = self.conn.user_group_list()
+        except Exception as e:
+            syslog(LOG_EMERG, str(e))
+        return users
+    def computers(self):
+        computers = {}
+        try:
+            computers = self.conn.computer_list()
+        except Exception as e:
+            syslog(LOG_EMERG, str(e))
+        return computers
 
     def __get_creds(self, creds):
         if not creds.get_username() or not creds.get_password():
@@ -321,24 +333,37 @@ class ADUC:
                 currentItemName = None
                 if choice == 'Users':
                     currentItemName = UI.QueryWidget('user_items', 'CurrentItem')
-                    searchList = self.users
-                elif choice == 'Computers':
-                    searchList = self.computers
-                    currentItemName = UI.QueryWidget('comp_items', 'CurrentItem')
-                currentItem = self.__find_by_name(searchList, currentItemName)
-                if choice == 'Computers':
-                    edit = ComputerProps(self.conn, currentItem)
-                else:
+                    searchList = self.users()
+                    currentItem = self.__find_by_name(searchList, currentItemName)
                     edit = UserProps(self.conn, currentItem)
+                elif choice == 'Computers':
+                    searchList = self.computers()
+                    currentItemName = UI.QueryWidget('comp_items', 'CurrentItem')
+                    currentItem = self.__find_by_name(searchList, currentItemName)
+                    edit = ComputerProps(self.conn, currentItem)
+
+
                 edit.Show()
+
+                # update after property sheet closes
+                if edit.tabModel.is_modified():
+                    if choice == 'Users':
+                        UI.ReplaceWidget('rightPane', self.__users_tab())
+                        UI.ChangeWidget('user_items', 'CurrentItem', currentItemName)
+                    elif choice == 'Computers':
+                        UI.ReplaceWidget('rightPane', self.__computer_tab())
+                        UI.ChangeWidget('comp_items', 'CurrentItem', currentItemName)
+                    else:
+                        UI.ReplaceWidget('rightPane', Empty())
+
             elif str(ret) == 'user_items':
                 currentItemName = UI.QueryWidget('user_items', 'CurrentItem')
-                currentItem = self.__find_by_name(self.users, currentItemName)
+                currentItem = self.__find_by_name(self.users(), currentItemName)
                 edit = UserProps(self.conn, currentItem)
                 edit.Show()
             elif str(ret) == 'comp_items':
                 currentItemName = UI.QueryWidget('comp_items', 'CurrentItem')
-                currentItem = self.__find_by_name(self.computers, currentItemName)
+                currentItem = self.__find_by_name(self.computers(), currentItemName)
                 edit = ComputerProps(self.conn, currentItem)
                 edit.Show()
 
@@ -354,11 +379,11 @@ class ADUC:
                     return item
         return None 
     def __users_tab(self):
-        items = [Item(user[1]['cn'][-1], user[1]['objectClass'][-1].title(), user[1]['description'][-1] if 'description' in user[1] else '') for user in self.users]
+        items = [Item(user[1]['cn'][-1], user[1]['objectClass'][-1].title(), user[1]['description'][-1] if 'description' in user[1] else '') for user in self.users()]
         return Table(Id('user_items'), Opt('notify'), Header('Name', 'Type', 'Description'), items)
 
     def __computer_tab(self):
-        items = [Item(comp[1]['cn'][-1], comp[1]['objectClass'][-1].title(), comp[1]['description'][-1] if 'description' in comp[1] else '') for comp in self.computers]
+        items = [Item(comp[1]['cn'][-1], comp[1]['objectClass'][-1].title(), comp[1]['description'][-1] if 'description' in comp[1] else '') for comp in self.computers()]
         return Table(Id('comp_items'), Opt('notify'), Header('Name', 'Type', 'Description'), items)
 
     def __aduc_tree(self):
