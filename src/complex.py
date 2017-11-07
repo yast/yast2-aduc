@@ -66,5 +66,6 @@ class Connection:
                 print '##### appeared to work add %s with %s'%(dn,addattr)
         except Exception as e:
             print '##### exception %s'%e
-            return
+            return False
+        return True
 

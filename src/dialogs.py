@@ -21,6 +21,7 @@ UserDataModel = {
         'initials' : 'Initials:',
         'sn' : 'Last name:',
         'displayName' : 'Display name:',
+        'description' : 'Description:',
         'physicalDeliveryOfficeName' : 'Office:',
         'telephoneNumber' : 'Telephone number:',
         'mail' : 'E-mail:',
@@ -53,6 +54,7 @@ UserTabContents = {
                 InputField(Id('initials'), Opt('hstretch'), UserDataModel['general']['initials'], model.get_value('initials')))),
                 Left(InputField(Id('sn'), Opt('hstretch'), UserDataModel['general']['sn'], model.get_value('sn'))),
                 Left(InputField(Id('displayName'), Opt('hstretch'), UserDataModel['general']['displayName'], model.get_value('displayName'))),
+                Left(InputField(Id('description'), Opt('hstretch'), UserDataModel['general']['description'], model.get_value('description'))),
                 Left(InputField(Id('physicalDeliveryOfficeName'), Opt('hstretch'), UserDataModel['general']['physicalDeliveryOfficeName'], model.get_value('physicalDeliveryOfficeName'))),
                 Left(InputField(Id('telephoneNumber'), Opt('hstretch'), UserDataModel['general']['telephoneNumber'], model.get_value('telephoneNumber'))),
                 Left(InputField(Id('mail'), Opt('hstretch'), UserDataModel['general']['mail'], model.get_value('mail'))),
@@ -94,15 +96,27 @@ class TabModel:
                     continue
                 if key in self.props_orig.keys():
                     if self.props_map[key] != self.props_orig[key]:
-                        print 'attribute %s changed.. old %s -> new %s'%(key, self.props_orig.get(key, [""])[-1], self.get_value(key))
-                        modattr[key] = self.props_map[key]
+                        print 'attribute %s changed.. old %s -> new %s'%(key, self.props_orig.get(key, [])[-1], self.get_value(key))
+                        if len(self.props_map[key]):
+                            print "deleting %s"%key
+                            modattr[key] = []
+                        else:
+                            modattr[key] = self.props_map[key]
                 else:
                     print 'attribute was added %s ->%s<-'%(key, self.props_map[key])
                     modattr[key] = self.props_map[key]
 
-            conn.update(self.props_map['distinguishedName'][-1], self.props_orig, modattr, {})
+            if conn.update(self.props_map['distinguishedName'][-1], self.props_orig, modattr, {}):
+                # sync attributes with succsessful ldap commit
+                for key in modattr:
+                    # modified
+                    if len(modattr[key]):
+                        self.props_orig[key] = modattr[key]
+                    # deleted
+                    else:
+                        self.props_orig.pop(key, None)
+                        self.props_map.pop(key, None)
 
-            
 class TabProps(object):
     def __init__(self, conn, obj, contents, start_tab):
         self.obj = obj   
@@ -304,6 +318,33 @@ class ADUC:
             ))
         ))
 
+    def __show_properties(self, prop_sheet_name):
+        searchList = []
+        currentItemName = None
+        if prop_sheet_name == 'Users':
+            currentItemName = UI.QueryWidget('user_items', 'CurrentItem')
+            searchList = self.users()
+            currentItem = self.__find_by_name(searchList, currentItemName)
+            edit = UserProps(self.conn, currentItem)
+        elif prop_sheet_name == 'Computers':
+            searchList = self.computers()
+            currentItemName = UI.QueryWidget('comp_items', 'CurrentItem')
+            currentItem = self.__find_by_name(searchList, currentItemName)
+            edit = ComputerProps(self.conn, currentItem)
+
+        edit.Show()
+
+        # update after property sheet closes
+        if edit.tabModel.is_modified():
+            if prop_sheet_name == 'Users':
+                UI.ReplaceWidget('rightPane', self.__users_tab())
+                UI.ChangeWidget('user_items', 'CurrentItem', currentItemName)
+            elif prop_sheet_name == 'Computers':
+                UI.ReplaceWidget('rightPane', self.__computer_tab())
+                UI.ChangeWidget('comp_items', 'CurrentItem', currentItemName)
+            else:
+                UI.ReplaceWidget('rightPane', Empty())
+
     def Show(self):
         Wizard.SetContentsButtons('Active Directory Users and Computers', self.__aduc_page(), self.__help(), 'Back', 'Edit')
         Wizard.DisableBackButton()
@@ -321,43 +362,11 @@ class ADUC:
                 else:
                     UI.ReplaceWidget('rightPane', Empty())
             elif str(ret) == 'next':
-                searchList = []
-                currentItemName = None
-                if choice == 'Users':
-                    currentItemName = UI.QueryWidget('user_items', 'CurrentItem')
-                    searchList = self.users()
-                    currentItem = self.__find_by_name(searchList, currentItemName)
-                    edit = UserProps(self.conn, currentItem)
-                elif choice == 'Computers':
-                    searchList = self.computers()
-                    currentItemName = UI.QueryWidget('comp_items', 'CurrentItem')
-                    currentItem = self.__find_by_name(searchList, currentItemName)
-                    edit = ComputerProps(self.conn, currentItem)
-
-
-                edit.Show()
-
-                # update after property sheet closes
-                if edit.tabModel.is_modified():
-                    if choice == 'Users':
-                        UI.ReplaceWidget('rightPane', self.__users_tab())
-                        UI.ChangeWidget('user_items', 'CurrentItem', currentItemName)
-                    elif choice == 'Computers':
-                        UI.ReplaceWidget('rightPane', self.__computer_tab())
-                        UI.ChangeWidget('comp_items', 'CurrentItem', currentItemName)
-                    else:
-                        UI.ReplaceWidget('rightPane', Empty())
-
+                self.__show_properties(choice)
             elif str(ret) == 'user_items':
-                currentItemName = UI.QueryWidget('user_items', 'CurrentItem')
-                currentItem = self.__find_by_name(self.users(), currentItemName)
-                edit = UserProps(self.conn, currentItem)
-                edit.Show()
+                self.__show_properties('Users')
             elif str(ret) == 'comp_items':
-                currentItemName = UI.QueryWidget('comp_items', 'CurrentItem')
-                currentItem = self.__find_by_name(self.computers(), currentItemName)
-                edit = ComputerProps(self.conn, currentItem)
-                edit.Show()
+                self.__show_properties('Computers')
 
         return ret
 
