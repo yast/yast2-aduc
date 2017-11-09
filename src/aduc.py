@@ -8,6 +8,8 @@ import os, sys, traceback
 
 sys.path.append(sys.path[0]+"/../include/aduc")
 
+from wizards import ADUCSequence
+
 if __name__ == "__main__":
     parser = optparse.OptionParser('aduc [options]')
     # Yast command line args
@@ -46,13 +48,8 @@ if __name__ == "__main__":
         creds.set_named_ccache(opts.krb5_ccache)
     creds.guess(lp)
 
-    from dialogs import ADUC
-    from yast import UISequencer
-    component_started = False
     try:
-        s = UISequencer(lp, creds)
-        funcs = [(lambda lp, creds: ADUC(lp, creds).Show())]
-        s.run(funcs)
+        ADUCSequence(lp, creds)
     except:
         traceback.print_exc(file=sys.stdout)
 
