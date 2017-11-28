@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 from dialogs import ADUC
+from yast import import_module
+import_module('Wizard')
+import_module('UI')
+import_module('Sequencer')
 from yast import Wizard, UI, Sequencer, Code, Symbol
 
 def ADUCSequence(lp, creds):
