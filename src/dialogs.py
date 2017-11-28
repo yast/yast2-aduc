@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 from complex import Connection
+from yast import import_module
+import_module('Wizard')
+import_module('UI')
 from yast import *
 
 from syslog import syslog, LOG_INFO, LOG_ERR, LOG_DEBUG, LOG_EMERG, LOG_ALERT
