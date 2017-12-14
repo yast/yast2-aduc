@@ -16,7 +16,7 @@ X-SuSE-YaST-SortKey=
 X-SuSE-YaST-AutoInstResource=aduc
 
 Icon=yast-aduc
-Exec=/usr/bin/xdg-su -c '@CLIENTDIR@/aduc.py'
+Exec=/usr/bin/xdg-su -c 'yast2 aduc qt'
 
 Name=Active Directory Users and Computers
 GenericName=Manage Active Directory Users and Computers
