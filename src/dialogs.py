@@ -512,6 +512,7 @@ class ADUC:
             else:
                 raise Exception('ID not found in response %s' % str(event))
             choice = UI.QueryWidget('aduc_tree', 'Value')
+            print ("input is %s choice is %s"%(ret,choice))
             if str(ret) == 'abort' or str(ret) == 'cancel':
                 break
             elif str(ret) == 'aduc_tree':
@@ -569,13 +570,23 @@ class ADUC:
     def __aduc_tree(self):
         tree_containers = self.conn.containers()
         items = [Item(Id(c[0]), c[1], True) for c in tree_containers]
-        return Tree(Id('aduc_tree'), Opt('notify', 'immediate', 'notifyContextMenu'), 'Active Directory Users and Computers', [
-            Item(self.realm.lower(), True, items),
-        ])
+        return VBox(
+            Tree(Id('aduc_tree'), Opt('notify', 'immediate', 'notifyContextMenu'), 'Active Directory Users and Computers', [
+                Item(self.realm.lower(), True, items),
+            ]),
+            HBox(PushButton(Id('new'), "New"), PushButton(Id('delete'), "Delete"))
+        )
 
     def __aduc_page(self):
         return HBox(
             HWeight(1, self.__aduc_tree()),
             HWeight(2, ReplacePoint(Id('rightPane'), Empty()))
         )
+    def __new_user(self):
+        return VBox(
+                Left(Left(HBox(
+                InputField(Id('givenName'), Opt('hstretch'), UserDataModel['general']['givenName'], model.get_value('givenName')),
+                InputField(Id('initials'), Opt('hstretch'), UserDataModel['general']['initials'], model.get_value('initials')))),
+                Left(InputField(Id('sn'), Opt('hstretch'), UserDataModel['general']['sn'], model.get_value('sn')))))
+
 
