@@ -521,8 +521,14 @@ class ADUC:
                 elif 'DC=' in choice:
                     current_container = choice
                     self.__refresh(current_container)
+                    UI.ReplaceWidget('new_but',  MenuButton(Id('new'), "New", [
+                        Item(Id('new_user'), 'User'),
+                        Item(Id('new_group'), 'Group'),
+                        Item(Id('new_comp'), 'Computer')
+                    ]))
                 else:
                     UI.ReplaceWidget('rightPane', Empty())
+                    UI.ReplaceWidget('new_but',  MenuButton(Id('new'), "New", []))
             elif str(ret) == 'next':
                 return Symbol('abort')
             elif str(ret) == 'items':
@@ -542,13 +548,8 @@ class ADUC:
                 if computer:
                     self.conn.add_computer(computer, current_container)
                     self.__refresh(current_container, computer['name'])
-            elif str(ret) == 'new':
-                if choice == 'Users':
-                    UI.OpenDialog(self.__new_user())
-                    while True:
-                        subret = UI.UserInput()
-                        UI.CloseDialog()
-                        break;
+            elif str(ret) == 'new_user':
+                NewUser(self.conn, self.realm).Show()
 
         return ret
 
@@ -581,7 +582,7 @@ class ADUC:
             Tree(Id('aduc_tree'), Opt('notify', 'immediate', 'notifyContextMenu'), 'Active Directory Users and Computers', [
                 Item(self.realm.lower(), True, items),
             ]),
-            HBox(PushButton(Id('new'), "New"), PushButton(Id('delete'), "Delete"))
+            HBox(ReplacePoint(Id('new_but'), MenuButton(Id('new'), "New", [])), PushButton(Id('delete'), "Delete"))
         )
 
     def __aduc_page(self):
@@ -589,7 +590,13 @@ class ADUC:
             HWeight(1, self.__aduc_tree()),
             HWeight(2, ReplacePoint(Id('rightPane'), Empty()))
         )
-    def __new_user(self):
+
+
+class NewUser:
+    def __init__(self, conn, realm):
+        self.conn = conn
+        self.realm = realm
+    def __content(self):
         return VBox(
                 Left(Left(HBox(
                 InputField(Id('givenName'), Opt('hstretch'), UserDataModel['general']['givenName']),
@@ -598,8 +605,14 @@ class ADUC:
                 Left(InputField(Id('displayName'), Opt('hstretch'), 'Full name:')),
                 Left(Left(HBox(InputField(Id('sAMAccountName'), Opt('hstretch'), 'User Logon name:'), InputField(Id('domainName'), Opt('hstretch'), 'Domain', '@%s'%self.realm)))),
                 Right(
-                    HBox( PushButton(Id('creds_ok'), 'OK'),
-                        PushButton(Id('creds_cancel'), 'Cancel'))),
+                    HBox( PushButton(Id('newuser_ok'), 'OK'),
+                        PushButton(Id('newuser_cancel'), 'Cancel'))),
             )
 
+    def Show(self):
+        UI.OpenDialog(self.__content())
+        while True:
+            subret = UI.UserInput()
+            UI.CloseDialog()
+            break;
 
