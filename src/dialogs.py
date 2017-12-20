@@ -528,7 +528,7 @@ class ADUC:
                     ]))
                 else:
                     UI.ReplaceWidget('rightPane', Empty())
-                    UI.ReplaceWidget('new_but',  MenuButton(Id('new'), "New", []))
+                    UI.ReplaceWidget('new_but',  MenuButton(Id('new'), Opt('disabled'), "New", []))
             elif str(ret) == 'next':
                 return Symbol('abort')
             elif str(ret) == 'items':
@@ -582,7 +582,7 @@ class ADUC:
             Tree(Id('aduc_tree'), Opt('notify', 'immediate', 'notifyContextMenu'), 'Active Directory Users and Computers', [
                 Item(self.realm.lower(), True, items),
             ]),
-            HBox(ReplacePoint(Id('new_but'), MenuButton(Id('new'), "New", [])), PushButton(Id('delete'), "Delete"))
+            HBox(ReplacePoint(Id('new_but'), MenuButton(Id('new'), Opt('disabled'), "New", [])), PushButton(Id('delete'), "Delete"))
         )
 
     def __aduc_page(self):
