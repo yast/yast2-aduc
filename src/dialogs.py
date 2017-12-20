@@ -128,7 +128,7 @@ class TabProps(object):
         self.tabModel = TabModel(self.props_map)
         self.contents = contents
         self.initial_tab = start_tab
-        dump(obj)
+        #dump(obj)
 
     def __multitab(self):
         raise NotImplementedError()
@@ -542,6 +542,13 @@ class ADUC:
                 if computer:
                     self.conn.add_computer(computer, current_container)
                     self.__refresh(current_container, computer['name'])
+            elif str(ret) == 'new':
+                if choice == 'Users':
+                    UI.OpenDialog(self.__new_user())
+                    while True:
+                        subret = UI.UserInput()
+                        UI.CloseDialog()
+                        break;
 
         return ret
 
@@ -585,8 +592,14 @@ class ADUC:
     def __new_user(self):
         return VBox(
                 Left(Left(HBox(
-                InputField(Id('givenName'), Opt('hstretch'), UserDataModel['general']['givenName'], model.get_value('givenName')),
-                InputField(Id('initials'), Opt('hstretch'), UserDataModel['general']['initials'], model.get_value('initials')))),
-                Left(InputField(Id('sn'), Opt('hstretch'), UserDataModel['general']['sn'], model.get_value('sn')))))
+                InputField(Id('givenName'), Opt('hstretch'), UserDataModel['general']['givenName']),
+                InputField(Id('initials'), Opt('hstretch'), UserDataModel['general']['initials'])))),
+                Left(InputField(Id('sn'), Opt('hstretch'), UserDataModel['general']['sn'])),
+                Left(InputField(Id('displayName'), Opt('hstretch'), 'Full name:')),
+                Left(Left(HBox(InputField(Id('sAMAccountName'), Opt('hstretch'), 'User Logon name:'), InputField(Id('domainName'), Opt('hstretch'), 'Domain', '@%s'%self.realm)))),
+                Right(
+                    HBox( PushButton(Id('creds_ok'), 'OK'),
+                        PushButton(Id('creds_cancel'), 'Cancel'))),
+            )
 
 
