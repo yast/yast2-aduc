@@ -573,10 +573,13 @@ class ADUC:
                     self.conn.add_computer(computer, current_container)
                     self.__refresh(current_container, computer['name'])
             elif str(ret) == 'new_user':
-                prev_list = UI.QueryWidget(Id('user_items'), 'Items')
                 if NewUser(self.conn, self.realm).Show():
                     # Refresh users list if successful
                     UI.ChangeWidget(Id('user_items'), 'Items', self.__users_tab_data())
+            elif str(ret) == 'new_comp':
+                if NewComputer(self.conn, self.realm).Show():
+                    # Refresh users list if successful
+                    UI.ChangeWidget(Id('comp_itemps'), 'Items', self.__computer_tab_data())
             elif str(ret) == 'delete':
                 if choice == 'Users':
                     if self.__delete_selected_user():
@@ -661,6 +664,49 @@ class NewUser:
             if subret == 'ok':
                 if not self.__can_create_new_user():
                     MessageBox("Failed to create new user").Show()
+                    continue
+                success = True
+            break
+        UI.CloseDialog()
+        return success
+
+class NewComputer:
+    def __init__(self, conn, realm):
+        self.conn = conn
+        self.realm = realm
+    def __content(self):
+        return VBox(
+                Left(Left(HBox(
+                InputField(Id('cn'), Opt('hstretch'), 'Computer name:'),
+                InputField(Id('name'), Opt('hstretch'), ComputerDataModel['general']['name'])))),
+                Left(HBox(Bottom(InputField(Id('userorgroup'), Opt('hstretch', 'disabled'), 'User or group:')), Bottom(PushButton(Id('change'), Opt('disabled'), 'Change...')))),
+                Left(CheckBox(Id('prewin2000'), Opt('hstretch'), 'Assign the computer account as a pre-windows 2000 computer')),
+                Right(
+                    HBox( PushButton(Id('ok'), 'OK'),
+                    PushButton(Id('cancel'), 'Cancel'))),
+            )
+
+    def  __can_create_new_computer(self):
+        keys = {'cn', 'name'}
+        new_comp_values = {}
+        has_valid_values = True;
+        for key in keys:
+            new_comp_values[key] = UI.QueryWidget(Id(key), 'Value')
+            if not new_comp_values[key]:
+                print ("no value for %s"%key)
+                has_valid_values = False
+#        if has_valid_values and self.conn.add_new_computer(new_comp_values):
+#            print ('yay! have created new computer'); 
+        return has_valid_values
+
+    def Show(self):
+        UI.OpenDialog(self.__content())
+        success = False
+        while True:
+            subret = UI.UserInput()
+            if subret == 'ok':
+                if not self.__can_create_new_computer():
+                    MessageBox("Failed to create new computer").Show()
                     continue
                 success = True
             break
