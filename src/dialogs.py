@@ -637,24 +637,37 @@ class NewUser:
                 InputField(Id('initials'), Opt('hstretch'), UserDataModel['general']['initials'])))),
                 Left(InputField(Id('sn'), Opt('hstretch'), UserDataModel['general']['sn'])),
                 Left(InputField(Id('displayName'), Opt('hstretch'), 'Full name:')),
-                Left(Left(HBox(InputField(Id('sAMAccountName'), Opt('hstretch'), 'User Logon name:'), InputField(Id('domainName'), Opt('hstretch'), 'Domain', '@%s'%self.realm)))),
+                Left(Left(HBox(InputField(Id('userPrincipalName'), Opt('hstretch'), 'User Logon name:'), InputField(Id('domainName'), Opt('hstretch'), 'Domain', '@%s'%self.realm)))),
+                Left(Left(HBox(InputField(Id('workgroup'), Opt('hstretch'), 'User Logon name (pre-windows 2000):'), InputField(Id('sAMAccountName'), Opt('hstretch'), 'Name')))),
                 Right(
                     HBox( PushButton(Id('ok'), 'OK'),
                         PushButton(Id('cancel'), 'Cancel'))),
             )
 
     def  __can_create_new_user(self):
-        keys = {'givenName', 'sn', 'initials', 'displayName', 'sAMAccountName'}
+        widget_keys = {'givenName', 'sn', 'initials', 'displayName', 'userPrincipalName', 'sAMAccountName'}
+        required_value_keys = {'givenName', 'sn', 'displayName', 'userPrincipalName', 'sAMAccountName'}
         new_user_values = {}
         has_valid_values = True;
-        for key in keys:
-            new_user_values[key] = UI.QueryWidget(Id(key), 'Value')
+        added_user = False
+        for key in widget_keys:
+            if UI.QueryWidget(Id(key), 'Value'):
+                new_user_values[key] = UI.QueryWidget(Id(key), 'Value')
+
+        # check if all required fields are given
+        for key in required_value_keys:
             if not new_user_values[key]:
-                print ("no value for %s"%key)
-                has_valid_values = False
-        if has_valid_values and self.conn.add_new_user(new_user_values):
-            print ('yay! have created new user'); 
-        return has_valid_values
+                print ('missing value for %s'%key)
+                has_valid_values = False;
+
+        if has_valid_values:
+            new_user_values['userPrincipalName'] = '%s@%s' % (new_user_values['userPrincipalName'], UI.QueryWidget(Id('domainName', 'Value')))
+            print ("userPrincipalName %s sAMAccountName %s" %(new_user_values['userPrincipalName'], new_user_values['sAMAccountName']))
+            added_user = self.conn.add_new_user(new_user_values)
+            if added_user:
+                print ('yay! have created new user'); 
+
+        return (has_valid_values and added_user)
 
     def Show(self):
         UI.OpenDialog(self.__content())
