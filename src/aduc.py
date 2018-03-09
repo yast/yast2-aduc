@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import absolute_import, division, print_function, unicode_literals
 import optparse
 from samba.param import LoadParm
 from samba.credentials import Credentials
