@@ -143,15 +143,15 @@ class Connection:
                 oldattr = {}
                 for key in modattr:
                     oldattr[key] = orig_map.get(key, [])
-                print '##### attempting mod %s'%modattr
+                print('##### attempting mod %s'%modattr)
                 ldap_modify(self.l, dn, stringify_ldap(modlist(oldattr, modattr)))
-                print '##### appeared to work mod %s with %s'%(dn,modattr)
+                print('##### appeared to work mod %s with %s'%(dn,modattr))
             if len(addattr):
-                print '##### attempting add %s'%addattr
+                print('##### attempting add %s'%addattr)
                 ldap_add(self.l, dn, addlist(stringify_ldap(addattr)))
-                print '##### appeared to work add %s with %s'%(dn,addattr)
+                print('##### appeared to work add %s with %s'%(dn,addattr))
         except Exception as e:
-            print '##### exception %s'%e
+            print('##### exception %s'%e)
             return False
         return True
 
