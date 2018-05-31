@@ -12,6 +12,7 @@ from syslog import syslog, LOG_INFO, LOG_ERR, LOG_DEBUG, LOG_EMERG, LOG_ALERT
 from ldap.modlist import addModlist as addlist
 from ldap.modlist import modifyModlist as modlist
 import traceback
+from yast import ycpbuiltins
 
 PY3 = sys.version_info[0] == 3
 PY2 = sys.version_info[0] == 2
@@ -48,8 +49,8 @@ def ldap_search(l, *args):
     try:
         return l.search_s(*args)
     except Exception as e:
-        traceback.print_exc(file=sys.stderr)
-        sys.stderr.write('ldap.search_s: %s\n' % _ldap_exc_msg(e))
+        ycpbuiltins.y2error(traceback.format_exc())
+        ycpbuiltins.y2error('ldap.search_s: %s\n' % _ldap_exc_msg(e))
 
 def ldap_add(l, *args):
     try:
@@ -61,15 +62,15 @@ def ldap_modify(l, *args):
     try:
         return l.modify(*args)
     except Exception as e:
-        traceback.print_exc(file=sys.stderr)
-        sys.stderr.write('ldap.modify: %s\n' % _ldap_exc_msg(e))
+        ycpbuiltins.y2error(traceback.format_exc())
+        ycpbuiltins.y2error('ldap.modify: %s\n' % _ldap_exc_msg(e))
 
 def ldap_delete(l, *args):
     try:
         return l.delete_s(*args)
     except Exception as e:
-        traceback.print_exc(file=sys.stderr)
-        sys.stderr.write('ldap.delete_s: %s\n' % _ldap_exc_msg(e))
+        ycpbuiltins.y2error(traceback.format_exc())
+        ycpbuiltins.y2error('ldap.delete_s: %s\n' % _ldap_exc_msg(e))
 
 def stringify_ldap(data):
     if type(data) == dict:
@@ -143,15 +144,16 @@ class Connection:
                 oldattr = {}
                 for key in modattr:
                     oldattr[key] = orig_map.get(key, [])
-                print('##### attempting mod %s'%modattr)
                 ldap_modify(self.l, dn, stringify_ldap(modlist(oldattr, modattr)))
-                print('##### appeared to work mod %s with %s'%(dn,modattr))
             if len(addattr):
-                print('##### attempting add %s'%addattr)
-                ldap_add(self.l, dn, addlist(stringify_ldap(addattr)))
-                print('##### appeared to work add %s with %s'%(dn,addattr))
+                try:
+                    ldap_add(self.l, dn, addlist(stringify_ldap(addattr)))
+                except LdapException as e:
+                    ycpbuiltins.y2error(traceback.format_exc())
+                    ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
         except Exception as e:
-            print('##### exception %s'%e)
+            ycpbuiltins.y2error(traceback.format_exc())
+            ycpbuiltins.y2error(str(e))
             return False
         return True
 

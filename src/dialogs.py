@@ -11,12 +11,12 @@ from yast import *
 from syslog import syslog, LOG_INFO, LOG_ERR, LOG_DEBUG, LOG_EMERG, LOG_ALERT
 
 def dump(obj):
-    print("len obj %d" % len(obj))
+    ycpbuiltins.y2debug("len obj %d" % len(obj))
     i = 0
-    print("cn %s" % obj[0])
+    ycpbuiltins.y2debug("cn %s" % obj[0])
     for key in obj[1].keys():
         value = obj[1][key]
-        print("item[%d] key %s value type %s value ->%s<-" % (i,key, type(value), value))
+        ycpbuiltins.y2debug("item[%d] key %s value type %s value ->%s<-" % (i,key, type(value), value))
         i = i + 1
             
 UserDataModel = {
@@ -100,14 +100,14 @@ class TabModel:
                     continue
                 if key in self.props_orig.keys():
                     if self.props_map[key] != self.props_orig[key]:
-                        print('attribute %s changed.. old %s -> new %s' % (key, self.props_orig.get(key, [])[-1], self.get_value(key)))
+                        ycpbuiltins.y2debug('attribute %s changed.. old %s -> new %s' % (key, self.props_orig.get(key, [])[-1], self.get_value(key)))
                         if len(self.props_map[key]):
-                            print("deleting %s" % key)
+                            ycpbuiltins.y2debug("deleting %s" % key)
                             modattr[key] = []
                         else:
                             modattr[key] = self.props_map[key]
                 else:
-                    print('attribute was added %s ->%s<-'%(key, self.props_map[key]))
+                    ycpbuiltins.y2debug('attribute was added %s ->%s<-'%(key, self.props_map[key]))
                     modattr[key] = self.props_map[key]
 
             if conn.update(self.props_map['distinguishedName'][-1], self.props_orig, modattr, {}):
@@ -142,7 +142,7 @@ class TabProps(object):
         self.current_tab = next_tab
         while True:
             ret = UI.UserInput()
-            print("tab dialog input is %s"%ret)
+            ycpbuiltins.y2debug("tab dialog input is %s"%ret)
             if str(ret) in self.contents.keys():
                 previous_tab = next_tab
                 next_tab = str(ret)
@@ -158,9 +158,9 @@ class TabProps(object):
    # return True (continue processing user input)
    # return False to break out
     def HandleInput(self, ret):
-        print('TabProps.Handleinput %s'%ret)
+        ycpbuiltins.y2debug('TabProps.Handleinput %s'%ret)
         if str(ret) in ('ok', 'cancel', 'apply') :
-            print('updating model from tab view %s'%self.current_tab)
+            ycpbuiltins.y2debug('updating model from tab view %s'%self.current_tab)
             self.tabModel.update_from_view(self.contents[self.current_tab]['data'])
             if str(ret) != 'cancel':
                 self.tabModel.apply_changes(self.conn)
@@ -198,7 +198,7 @@ class UserProps(TabProps):
    # return True (continue processing user input)
    # return False to break out
     def HandleInput(self, ret):
-        print('UserProps.Handleinput %s'%ret)
+        ycpbuiltins.y2debug('UserProps.Handleinput %s'%ret)
         return TabProps.HandleInput(self, ret)
 
 ComputerDataModel = {

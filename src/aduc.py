@@ -52,5 +52,5 @@ if __name__ == "__main__":
     try:
         ADUCSequence(lp, creds)
     except:
-        traceback.print_exc(file=sys.stdout)
+        ycpbuiltins.y2error(traceback.format_exc())
 
