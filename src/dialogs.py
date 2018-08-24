@@ -350,11 +350,18 @@ class ADUC:
                 UI.ReplaceWidget('rightPane', Empty())
 
     def Show(self):
-        Wizard.SetContentsButtons('Active Directory Users and Computers', self.__aduc_page(), self.__help(), 'Back', 'Edit')
-        Wizard.DisableBackButton()
+        Wizard.SetContentsButtons('Active Directory Users and Computers', self.__aduc_page(), self.__help(), 'Back', 'Close')
+        Wizard.HideBackButton()
+        Wizard.HideAbortButton()
         UI.SetFocus('aduc_tree')
         while True:
-            ret = UI.UserInput()
+            event = UI.WaitForEvent()
+            if 'WidgetID' in event:
+                ret = event['WidgetID']
+            elif 'ID' in event:
+                ret = event['ID']
+            else:
+                raise Exception('ID not found in response %s' % str(event))
             choice = UI.QueryWidget('aduc_tree', 'Value')
             if str(ret) == 'abort' or str(ret) == 'cancel':
                 break
@@ -366,7 +373,7 @@ class ADUC:
                 else:
                     UI.ReplaceWidget('rightPane', Empty())
             elif str(ret) == 'next':
-                self.__show_properties(choice)
+                return Symbol('abort')
             elif str(ret) == 'user_items':
                 self.__show_properties('Users')
             elif str(ret) == 'comp_items':
@@ -392,7 +399,7 @@ class ADUC:
         return Table(Id('comp_items'), Opt('notify'), Header('Name', 'Type', 'Description'), items)
 
     def __aduc_tree(self):
-        return Tree(Id('aduc_tree'), Opt('notify'), 'Active Directory Users and Computers', [
+        return Tree(Id('aduc_tree'), Opt('notify', 'immediate'), 'Active Directory Users and Computers', [
             Item(self.realm.lower(), True, [
                 Item('Users', True),
                 Item('Computers', True),
