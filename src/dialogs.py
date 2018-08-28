@@ -510,6 +510,8 @@ class ADUC:
                 self.__show_properties('Computers')
             elif str(ret) == 'context_add_user':
                 user = NewObjDialog(self.conn.realm, 'user').Show()
+                if user:
+                    self.conn.add_user(user)
 
         return ret
 

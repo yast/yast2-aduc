@@ -102,8 +102,8 @@ class Connection:
         self.lp = lp
         self.creds = creds
         self.realm = lp.get('realm')
-        net = Net(creds=creds, lp=lp)
-        cldap_ret = net.finddc(domain=self.realm, flags=(nbt.NBT_SERVER_LDAP | nbt.NBT_SERVER_DS))
+        self.net = Net(creds=creds, lp=lp)
+        cldap_ret = self.net.finddc(domain=self.realm, flags=(nbt.NBT_SERVER_LDAP | nbt.NBT_SERVER_DS))
         self.l = ldap.initialize('ldap://%s' % cldap_ret.pdc_dns_name)
         if self.__kinit_for_gssapi():
             auth_tokens = ldap.sasl.gssapi('')
@@ -137,6 +137,59 @@ class Connection:
 
     def computer_list(self):
         return ldap_search(self.l, self.__well_known_container('computers'), ldap.SCOPE_SUBTREE, '(objectCategory=computer)', [])
+
+    def add_user(self, user_attrs, container=None):
+        if not container:
+            container = self.__well_known_container('users')
+        if user_attrs['userPassword'] != user_attrs['confirm_passwd']:
+            raise Exception('The passwords do not match.')
+        attrs = {}
+
+        attrs['objectClass'] = ['top', 'person', 'organizationalPerson', 'user']
+        attrs['objectCategory'] = 'CN=Person,CN=Schema,CN=Configuration,%s' % self.realm_to_dn(self.realm)
+
+        attrs['displayName'] = user_attrs['cn']
+        attrs['name'] = user_attrs['cn']
+        attrs['cn'] = user_attrs['cn']
+        attrs['sn'] = user_attrs['sn']
+        attrs['givenName'] = user_attrs['givenName']
+        attrs['initials'] = user_attrs['initials']
+        attrs['userPrincipalName'] = '%s@%s' % (user_attrs['logon_name'], self.realm.lower())
+        attrs['loginShell'] = user_attrs['loginShell']
+        attrs['homeDirectory'] = user_attrs['homeDirectory']
+        attrs['uidNumber'] = user_attrs['uidNumber']
+        attrs['gidNumber'] = user_attrs['gidNumber']
+        attrs['sAMAccountName'] = user_attrs['sAMAccountName']
+        attrs['gecos'] = user_attrs['gecos']
+        attrs['userAccountControl'] = ['514']
+        dn = 'CN=%s,%s' % (attrs['cn'], container)
+        attrs['distinguishedName'] = dn
+        if user_attrs['must_change_passwd']:
+            attrs['pwdLastSet'] = '0'
+        else:
+            attrs['pwdLastSet'] = '-1'
+
+        try:
+            ldap_add(self.l, dn, addlist(stringify_ldap(attrs)))
+        except LdapException as e:
+            ycpbuiltins.y2error(traceback.format_exc())
+            ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
+
+        try:
+            self.net.set_password(attrs['sAMAccountName'], self.realm, user_attrs['userPassword'])
+        except Exception as e:
+            ycpbuiltins.y2error(traceback.format_exc())
+            ycpbuiltins.y2error(str(e))
+
+        uac = 0x0200
+        # Direct modification of the cannot change password bit isn't allowed
+        #if user_attrs['cannot_change_passwd'] and not user_attrs['passwd_never_expires']:
+        #    uac |= 0x0040
+        if user_attrs['passwd_never_expires']:
+            uac |= 0x10000
+        if user_attrs['account_disabled']:
+            uac |= 0x0002
+        ldap_modify(self.l, dn, stringify_ldap(modlist({'userAccountControl': attrs['userAccountControl']}, {'userAccountControl': [str(uac)]})))
 
     def update(self, dn, orig_map, modattr, addattr):
         try:
