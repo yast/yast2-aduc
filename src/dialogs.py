@@ -273,6 +273,115 @@ class ComputerProps(TabProps):
 
         return multi
 
+user_dialog = [
+    [VBox(
+        HBox(
+            TextEntry(Id('givenName'), 'First name:'),
+            TextEntry(Id('initials'), 'Initials:'),
+        ),
+        TextEntry(Id('sn'), 'Last name:'),
+        TextEntry(Id('cn'), 'Full name:'),
+        TextEntry(Id('logon_name'), 'User logon name:'),
+        TextEntry(Id('sAMAccountName'), 'User logon name (pre-Windows 2000):'),
+        Bottom(Right(HBox(
+            PushButton(Id('back'), Opt('disabled'), '< Back'),
+            PushButton(Id('next'), 'Next >'),
+            PushButton(Id('cancel'), 'Cancel'),
+        ))),
+    ), ['givenName', 'initials', 'sn', 'cn', 'logon_name', 'sAMAccountName']],
+    [VBox(
+        TextEntry(Id('uidNumber'), 'UID number:'),
+        TextEntry(Id('gidNumber'), 'GID number:'),
+        TextEntry(Id('gecos'), 'GECOS:'),
+        TextEntry(Id('homeDirectory'), 'Home directory:'),
+        TextEntry(Id('loginShell'), 'Login shell:'),
+        Bottom(Right(HBox(
+            PushButton(Id('back'), '< Back'),
+            PushButton(Id('next'), 'Next >'),
+            PushButton(Id('cancel'), 'Cancel'),
+        ))),
+    ), ['uidNumber', 'gidNumber', 'gecos', 'homeDirectory', 'loginShell']],
+    [VBox(
+        Left(Password(Id('userPassword'), 'Password:')),
+        Left(Password(Id('confirm_passwd'), 'Confirm password:')),
+        Left(CheckBox(Id('must_change_passwd'), 'User must change password at next logon', True)),
+        Left(CheckBox(Id('cannot_change_passwd'), 'User cannot change password')),
+        Left(CheckBox(Id('passwd_never_expires'), 'Password never expires')),
+        Left(CheckBox(Id('account_disabled'), 'Account is disabled')),
+        Bottom(Right(HBox(
+            PushButton(Id('back'), '< Back'),
+            PushButton(Id('finish'), 'Finish'),
+            PushButton(Id('cancel'), 'Cancel')
+        ))),
+    ), ['userPassword', 'confirm_passwd', 'must_change_passwd', 'cannot_change_passwd', 'passwd_never_expires', 'account_disabled']],
+]
+
+group_dialog = [
+    [Empty(), []]
+]
+
+computer_dialog = [
+    [Empty(), []]
+]
+
+class NewObjDialog:
+    def __init__(self, realm, obj_type):
+        self.realm = realm
+        self.obj = {}
+        self.obj['type'] = obj_type
+        self.dialog_seq = 0
+
+    def __new(self):
+        pane = self.__fetch_pane()
+        return MinSize(56, 22, HBox(HSpacing(3), VBox(
+                VSpacing(1),
+                Label('Create in:\t%s/Users' % self.realm),
+                ReplacePoint(Id('new_pane'), pane),
+                VSpacing(1),
+            ), HSpacing(3)))
+
+    def __fetch_pane(self):
+        if self.obj['type'] == 'user':
+            pane = user_dialog[self.dialog_seq][0]
+        elif self.obj['type'] == 'group':
+            pane = group_dialog[self.dialog_seq][0]
+        elif self.obj['type'] == 'computer':
+            pane = computer_dialog[self.dialog_seq][0]
+        return pane
+
+    def __fetch_values(self):
+        if self.obj['type'] == 'user':
+            keys = user_dialog[self.dialog_seq][1]
+        elif self.obj['type'] == 'group':
+            keys = group_dialog[self.dialog_seq][1]
+        elif self.obj['type'] == 'computer':
+            keys = computer_dialog[self.dialog_seq][1]
+        for key in keys:
+            value = UI.QueryWidget(key, 'Value')
+            self.obj[key] = value
+
+    def Show(self):
+        UI.OpenDialog(self.__new())
+        while True:
+            ret = UI.UserInput()
+            if str(ret) == 'abort' or str(ret) == 'cancel':
+                ret = None
+                break
+            elif str(ret) == 'next':
+                self.__fetch_values()
+                self.dialog_seq += 1
+                UI.ReplaceWidget('new_pane', self.__fetch_pane())
+            elif str(ret) == 'back':
+                self.__fetch_values()
+                self.dialog_seq -= 1;
+                UI.ReplaceWidget('new_pane', self.__fetch_pane())
+            elif str(ret) == 'finish':
+                self.__fetch_values()
+                ret = self.obj
+                break
+        UI.CloseDialog()
+        return ret
+
 class ADUC:
     def __init__(self, lp, creds):
         self.__get_creds(creds)
@@ -400,7 +509,7 @@ class ADUC:
             elif str(ret) == 'comp_items':
                 self.__show_properties('Computers')
             elif str(ret) == 'context_add_user':
-                pass
+                user = NewObjDialog(self.conn.realm, 'user').Show()
 
         return ret
 
