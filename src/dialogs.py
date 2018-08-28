@@ -349,6 +349,25 @@ class ADUC:
             else:
                 UI.ReplaceWidget('rightPane', Empty())
 
+    def __objs_context_menu(self):
+        return Term('menu', [
+            #Item(Id('context_delegate_control'), 'Delegate Control...'),
+            Item(Id('context_find'), 'Find...'),
+            Term('menu', 'New', [
+                    Item(Id('context_add_computer'), 'Computer'),
+                    #Item(Id('context_add_contact'), 'Contact'),
+                    Item(Id('context_add_group'), 'Group'),
+                    #Item(Id('context_add_inetorgperson'), 'InetOrgPerson'),
+                    #Item(Id('context_add_msmq_queue_alias'), 'MSMQ Queue Alias'),
+                    #Item(Id('context_add_printer'), 'Printer'),
+                    Item(Id('context_add_user'), 'User'),
+                    #Item(Id('context_add_shared_folder'), 'Shared Folder')
+                ]),
+            #Item(Id('context_refresh'), 'Refresh'),
+            #Item(Id('context_properties'), 'Properties'),
+            #Item(Id('context_help'), 'Help'),
+            ])
+
     def Show(self):
         Wizard.SetContentsButtons('Active Directory Users and Computers', self.__aduc_page(), self.__help(), 'Back', 'Close')
         Wizard.HideBackButton()
@@ -366,7 +385,9 @@ class ADUC:
             if str(ret) == 'abort' or str(ret) == 'cancel':
                 break
             elif str(ret) == 'aduc_tree':
-                if choice == 'Users':
+                if event['EventReason'] == 'ContextMenuActivated':
+                    UI.OpenContextMenu(self.__objs_context_menu())
+                elif choice == 'Users':
                     UI.ReplaceWidget('rightPane', self.__users_tab())
                 elif choice == 'Computers':
                     UI.ReplaceWidget('rightPane', self.__computer_tab())
@@ -378,6 +399,8 @@ class ADUC:
                 self.__show_properties('Users')
             elif str(ret) == 'comp_items':
                 self.__show_properties('Computers')
+            elif str(ret) == 'context_add_user':
+                pass
 
         return ret
 
@@ -399,7 +422,7 @@ class ADUC:
         return Table(Id('comp_items'), Opt('notify'), Header('Name', 'Type', 'Description'), items)
 
     def __aduc_tree(self):
-        return Tree(Id('aduc_tree'), Opt('notify', 'immediate'), 'Active Directory Users and Computers', [
+        return Tree(Id('aduc_tree'), Opt('notify', 'immediate', 'notifyContextMenu'), 'Active Directory Users and Computers', [
             Item(self.realm.lower(), True, [
                 Item('Users', True),
                 Item('Computers', True),
