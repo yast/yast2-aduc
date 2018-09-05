@@ -315,7 +315,27 @@ user_dialog = [
 ]
 
 group_dialog = [
-    [Empty(), []]
+    [VBox(
+        TextEntry(Id('name'), 'Group name:'),
+        TextEntry(Id('sAMAccountName'), 'Group name (pre-Windows 2000):'),
+        HBox(
+            Top(RadioButtonGroup(Id('group_scope'), VBox(
+                Left(Label('Group scope')),
+                Left(RadioButton(Id('domain_local'), 'Domain local')),
+                Left(RadioButton(Id('global'), 'Global', True)),
+                Left(RadioButton(Id('universal'), 'Universal')),
+            ))),
+            Top(RadioButtonGroup(Id('group_type'), VBox(
+                Left(Label('Group type')),
+                Left(RadioButton(Id('security'), 'Security', True)),
+                Left(RadioButton(Id('distribution'), 'Distribution')),
+            )))
+        ),
+        Bottom(Right(HBox(
+            PushButton(Id('finish'), 'OK'),
+            PushButton(Id('cancel'), 'Cancel'),
+        ))),
+    ), ['name', 'sAMAccountName', 'domain_local', 'global', 'universal', 'security', 'distribution']],
 ]
 
 computer_dialog = [
@@ -524,6 +544,8 @@ class ADUC:
                 user = NewObjDialog(self.conn.realm, 'user').Show()
                 if user:
                     self.conn.add_user(user)
+            elif str(ret) == 'context_add_group':
+                group = NewObjDialog(self.conn.realm, 'group').Show()
 
         return ret
 
