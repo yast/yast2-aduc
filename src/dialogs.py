@@ -8,8 +8,6 @@ import_module('Wizard')
 import_module('UI')
 from yast import *
 
-from syslog import syslog, LOG_INFO, LOG_ERR, LOG_DEBUG, LOG_EMERG, LOG_ALERT
-
 def dump(obj):
     ycpbuiltins.y2debug("len obj %d" % len(obj))
     i = 0
@@ -402,14 +400,15 @@ class ADUC:
         try:
             users = self.conn.user_group_list()
         except Exception as e:
-            syslog(LOG_EMERG, str(e))
+            ycpbuiltins.y2error(str(e))
         return users
+
     def computers(self):
         computers = {}
         try:
             computers = self.conn.computer_list()
         except Exception as e:
-            syslog(LOG_EMERG, str(e))
+            ycpbuiltins.y2error(str(e))
         return computers
 
     def __get_creds(self, creds):
