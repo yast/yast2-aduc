@@ -384,14 +384,19 @@ class NewObjDialog:
 
 class ADUC:
     def __init__(self, lp, creds):
-        self.__get_creds(creds)
         self.realm = lp.get('realm')
         self.lp = lp
         self.creds = creds
-        try:
-            self.conn = Connection(lp, creds)
-        except Exception as e:
-          syslog(LOG_EMERG, str(e))
+        self.got_creds = self.__get_creds(creds)
+        while self.got_creds:
+            try:
+                self.conn = Connection(lp, creds)
+                break
+            except Exception as e:
+                ycpbuiltins.y2error(str(e))
+                creds.set_password('')
+                self.got_creds = self.__get_creds(creds)
+
     def users(self): 
         users = {}
         try:
@@ -408,22 +413,28 @@ class ADUC:
         return computers
 
     def __get_creds(self, creds):
-        if not creds.get_username() or not creds.get_password():
-            UI.OpenDialog(self.__password_prompt(creds.get_username(), creds.get_password()))
+        if not creds.get_password():
+            UI.OpenDialog(self.__password_prompt(creds.get_username()))
             while True:
                 subret = UI.UserInput()
                 if str(subret) == 'creds_ok':
                     user = UI.QueryWidget('username_prompt', 'Value')
                     password = UI.QueryWidget('password_prompt', 'Value')
+                    UI.CloseDialog()
+                    if not password:
+                        return False
                     creds.set_username(user)
                     creds.set_password(password)
-                if str(subret) == 'creds_cancel' or str(subret) == 'creds_ok':
+                    return True
+                if str(subret) == 'creds_cancel':
                     UI.CloseDialog()
-                    break
+                    return False
+        return True
 
-    def __password_prompt(self, user, password):
+    def __password_prompt(self, user):
         return MinWidth(30, VBox(
-            Left(TextEntry(Id('username_prompt'), Opt('hstretch'), 'Username')),
+            Left(Label('To continue, type an administrator password')),
+            Left(TextEntry(Id('username_prompt'), Opt('hstretch'), 'Username', user)),
             Left(Password(Id('password_prompt'), Opt('hstretch'), 'Password')),
             Right(HBox(
                 PushButton(Id('creds_ok'), 'OK'),
@@ -478,6 +489,8 @@ class ADUC:
             ])
 
     def Show(self):
+        if not self.got_creds:
+            return Symbol('abort')
         Wizard.SetContentsButtons('Active Directory Users and Computers', self.__aduc_page(), self.__help(), 'Back', 'Close')
         Wizard.HideBackButton()
         Wizard.HideAbortButton()
