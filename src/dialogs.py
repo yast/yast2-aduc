@@ -305,7 +305,7 @@ user_dialog = [
         Left(Password(Id('userPassword'), 'Password:')),
         Left(Password(Id('confirm_passwd'), 'Confirm password:')),
         Left(CheckBox(Id('must_change_passwd'), 'User must change password at next logon', True)),
-        Left(CheckBox(Id('cannot_change_passwd'), 'User cannot change password')),
+        Left(CheckBox(Id('cannot_change_passwd'), Opt('disabled'), 'User cannot change password')),
         Left(CheckBox(Id('passwd_never_expires'), 'Password never expires')),
         Left(CheckBox(Id('account_disabled'), 'Account is disabled')),
         Bottom(Right(HBox(
