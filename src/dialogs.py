@@ -565,6 +565,9 @@ class ADUC:
                     self.__refresh(current_tab)
             elif str(ret) == 'context_add_computer':
                 computer = NewObjDialog(self.conn.realm, 'computer').Show()
+                if computer:
+                    self.conn.add_computer(computer)
+                    self.__refresh(current_tab)
 
         return ret
 

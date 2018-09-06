@@ -223,6 +223,31 @@ class Connection:
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
 
+    def add_computer(self, computer_attrs, container=None):
+        if not container:
+            container = self.__well_known_container('computers')
+
+        attrs = {}
+        attrs['objectClass'] = ['top', 'person', 'organizationalPerson', 'user', 'computer']
+        attrs['name'] = computer_attrs['name']
+        attrs['cn'] = computer_attrs['name']
+        attrs['sAMAccountName'] = '%s$' % computer_attrs['sAMAccountName']
+        attrs['displayName'] = attrs['sAMAccountName']
+        dn = 'CN=%s,%s' % (attrs['name'], container)
+        attrs['distinguishedName'] = dn
+        attrs['objectCategory'] = 'CN=Computer,CN=Schema,CN=Configuration,%s' % self.realm_to_dn(self.realm)
+        attrs['instanceType'] = '4'
+        attrs['userAccountControl'] = '4096'
+        attrs['accountExpires'] = '0'
+        attrs['dNSHostName'] = '.'.join([attrs['name'], self.realm])
+        attrs['servicePrincipalName'] = ['HOST/%s' % attrs['name'], 'HOST/%s' % attrs['dNSHostName']]
+
+        try:
+            ldap_add(self.l, dn, addlist(stringify_ldap(attrs)))
+        except LdapException as e:
+            ycpbuiltins.y2error(traceback.format_exc())
+            ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
+
     def update(self, dn, orig_map, modattr, addattr):
         try:
             if len(modattr):
