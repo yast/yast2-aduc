@@ -340,7 +340,17 @@ group_dialog = [
 ]
 
 computer_dialog = [
-    [Empty(), []]
+    [VBox(
+        TextEntry(Id('name'), 'Computer name:'),
+        TextEntry(Id('sAMAccountName'), 'Computer name (pre-Windows 2000):'),
+        Left(Label(Opt('disabled'), 'The following user or group can join this computer to a domain.')),
+        TextEntry(Id('join_id'), Opt('disabled'), 'User or group:', 'Default: Domain Admins'),
+        CheckBox(Id('pre_win2k'), Opt('disabled'), 'Assign this computer account as a pre-Windows 2000 computer'),
+        Bottom(Right(HBox(
+            PushButton(Id('finish'), 'OK'),
+            PushButton(Id('cancel'), 'Cancel'),
+        ))),
+    ), ['name', 'sAMAccountName', 'join_id', 'pre_win2k']],
 ]
 
 class NewObjDialog:
@@ -549,6 +559,8 @@ class ADUC:
                 group = NewObjDialog(self.conn.realm, 'group').Show()
                 if group:
                     self.conn.add_group(group)
+            elif str(ret) == 'context_add_computer':
+                computer = NewObjDialog(self.conn.realm, 'computer').Show()
 
         return ret
 
