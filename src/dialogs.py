@@ -220,7 +220,7 @@ ComputerTabContents = {
         'general' : {
             'content' : (lambda model: MinSize(50, 30, VBox(
                 InputField(Id('name'), Opt('disabled', 'hstretch'), ComputerDataModel['general']['name'], model.get_value('name')),
-                InputField(Id('dNSHostName'), Opt('disabled', 'hstretch'), ComputerDataModel['general']['name'], model.get_value('dNSHostName')),
+                InputField(Id('dNSHostName'), Opt('disabled', 'hstretch'), ComputerDataModel['general']['dNSHostName'], model.get_value('dNSHostName')),
                 # #TODO find out what attribute site is
                 InputField(Id('idontknow'), Opt('disabled', 'hstretch'), ComputerDataModel['general']['idontknow'], "Workstation or server"),
                 InputField(Id('description'), Opt('hstretch'), ComputerDataModel['general']['description'], model.get_value('description'))))),
