@@ -525,6 +525,7 @@ class ADUC:
         Wizard.HideBackButton()
         Wizard.HideAbortButton()
         UI.SetFocus('aduc_tree')
+        current_tab = None
         while True:
             event = UI.WaitForEvent()
             if 'WidgetID' in event:
@@ -537,6 +538,7 @@ class ADUC:
             if str(ret) == 'abort' or str(ret) == 'cancel':
                 break
             elif str(ret) == 'aduc_tree':
+                current_tab = choice
                 if event['EventReason'] == 'ContextMenuActivated':
                     UI.OpenContextMenu(self.__objs_context_menu())
                 elif choice == 'Users':
@@ -555,14 +557,22 @@ class ADUC:
                 user = NewObjDialog(self.conn.realm, 'user').Show()
                 if user:
                     self.conn.add_user(user)
+                    self.__refresh(current_tab)
             elif str(ret) == 'context_add_group':
                 group = NewObjDialog(self.conn.realm, 'group').Show()
                 if group:
                     self.conn.add_group(group)
+                    self.__refresh(current_tab)
             elif str(ret) == 'context_add_computer':
                 computer = NewObjDialog(self.conn.realm, 'computer').Show()
 
         return ret
+
+    def __refresh(self, current_tab):
+        if current_tab == 'Users':
+            UI.ReplaceWidget('rightPane', self.__users_tab())
+        elif current_tab == 'Computers':
+            UI.ReplaceWidget('rightPane', self.__computer_tab())
 
     def __help(self):
         return ''
