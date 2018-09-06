@@ -94,6 +94,11 @@ class Connection:
             self.wellKnownObjects = {v.split(':')[2]: v.split(':')[-1] for v in self.l.entries[0].wellKnownObjects.values}
         return self.wellKnownObjects[wkguiduc]
 
+    def containers(self):
+        search = '(|(objectClass=organizationalUnit)(objectCategory=Container))'
+        self.l.search(self.realm_to_dn(self.realm), search, search_scope='LEVEL', attributes=['name', 'distinguishedName'])
+        return [(e['distinguishedName'].value, e['name'].value) for e in self.l.entries]
+
     def user_group_list(self):
         wku_container = self.__well_known_container('users')
         ret = []
