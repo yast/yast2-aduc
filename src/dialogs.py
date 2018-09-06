@@ -318,6 +318,7 @@ group_dialog = [
     [VBox(
         TextEntry(Id('name'), 'Group name:'),
         TextEntry(Id('sAMAccountName'), 'Group name (pre-Windows 2000):'),
+        TextEntry(Id('gidNumber'), 'GID number:'),
         HBox(
             Top(RadioButtonGroup(Id('group_scope'), VBox(
                 Left(Label('Group scope')),
@@ -335,7 +336,7 @@ group_dialog = [
             PushButton(Id('finish'), 'OK'),
             PushButton(Id('cancel'), 'Cancel'),
         ))),
-    ), ['name', 'sAMAccountName', 'domain_local', 'global', 'universal', 'security', 'distribution']],
+    ), ['name', 'sAMAccountName', 'gidNumber', 'domain_local', 'global', 'universal', 'security']],
 ]
 
 computer_dialog = [
@@ -546,6 +547,8 @@ class ADUC:
                     self.conn.add_user(user)
             elif str(ret) == 'context_add_group':
                 group = NewObjDialog(self.conn.realm, 'group').Show()
+                if group:
+                    self.conn.add_group(group)
 
         return ret
 

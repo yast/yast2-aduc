@@ -191,6 +191,38 @@ class Connection:
             uac |= 0x0002
         ldap_modify(self.l, dn, stringify_ldap(modlist({'userAccountControl': attrs['userAccountControl']}, {'userAccountControl': [str(uac)]})))
 
+    def add_group(self, group_attrs, container=None):
+        if not container:
+            container = self.__well_known_container('users')
+
+        attrs = {}
+        attrs['objectClass'] = ['top', 'group']
+        attrs['name'] = group_attrs['name']
+        attrs['sAMAccountName'] = group_attrs['sAMAccountName']
+        dn = 'CN=%s,%s' % (attrs['name'], container)
+        attrs['distinguishedName'] = dn
+        attrs['instanceType'] = '4'
+        attrs['gidNumber'] = group_attrs['gidNumber']
+        attrs['msSFU30Name'] = attrs['name']
+        attrs['msSFU30NisDomain'] = self.realm.split('.')[0]
+
+        groupType = 0
+        if group_attrs['domain_local']:
+            groupType |= 0x00000004
+        elif group_attrs['global']:
+            groupType |= 0x00000002
+        elif group_attrs['universal']:
+            groupType |= 0x00000008
+        if group_attrs['security']:
+            groupType |= 0x80000000
+        attrs['groupType'] = [str(groupType)]
+
+        try:
+            ldap_add(self.l, dn, addlist(stringify_ldap(attrs)))
+        except LdapException as e:
+            ycpbuiltins.y2error(traceback.format_exc())
+            ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
+
     def update(self, dn, orig_map, modattr, addattr):
         try:
             if len(modattr):
