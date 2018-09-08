@@ -95,7 +95,7 @@ class Connection:
         return self.wellKnownObjects[wkguiduc]
 
     def containers(self):
-        search = '(|(objectClass=organizationalUnit)(objectCategory=Container))'
+        search = '(|(objectClass=organizationalUnit)(objectCategory=Container)(objectClass=builtinDomain))'
         self.l.search(self.realm_to_dn(self.realm), search, search_scope='LEVEL', attributes=['name', 'distinguishedName'])
         return [(e['distinguishedName'].value, e['name'].value) for e in self.l.entries]
 
