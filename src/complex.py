@@ -99,18 +99,13 @@ class Connection:
         self.l.search(self.realm_to_dn(self.realm), search, search_scope='LEVEL', attributes=['name', 'distinguishedName'])
         return [(e['distinguishedName'].value, e['name'].value) for e in self.l.entries]
 
-    def user_group_list(self):
-        wku_container = self.__well_known_container('users')
-        ret = []
-        self.l.search(wku_container, '(objectCategory=person)', attributes=ldap3.ALL_ATTRIBUTES)
-        ret.extend(self.l.entries)
-        self.l.search(wku_container, '(objectCategory=group)', attributes=ldap3.ALL_ATTRIBUTES)
-        ret.extend(self.l.entries)
-        return [(i.distinguishedName.value, i.entry_raw_attributes) for i in ret]
-
-    def computer_list(self):
-        self.l.search(self.__well_known_container('computers'), '(objectCategory=computer)', attributes=ldap3.ALL_ATTRIBUTES)
-        return [(i.distinguishedName.value, i.entry_raw_attributes) for i in self.l.entries]
+    def objects_list(self, container):
+        try:
+            self.l.search(container, '(|(objectCategory=person)(objectCategory=group)(objectCategory=computer))', attributes=ldap3.ALL_ATTRIBUTES)
+            return [(i.distinguishedName.value, i.entry_raw_attributes) for i in self.l.entries]
+        except Exception as e:
+            ycpbuiltins.y2error(traceback.format_exc())
+            ycpbuiltins.y2error(str(e))
 
     def add_user(self, user_attrs, container=None):
         if not container:

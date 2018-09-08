@@ -426,21 +426,6 @@ class ADUC:
                 creds.set_password('')
                 self.got_creds = self.__get_creds(creds)
 
-    def users(self): 
-        users = {}
-        try:
-            users = self.conn.user_group_list()
-        except Exception as e:
-            ycpbuiltins.y2error(str(e))
-        return users
-
-    def computers(self):
-        computers = {}
-        try:
-            computers = self.conn.computer_list()
-        except Exception as e:
-            ycpbuiltins.y2error(str(e))
-        return computers
 
     def __get_creds(self, creds):
         if not creds.get_password():
@@ -472,32 +457,24 @@ class ADUC:
             ))
         ))
 
-    def __show_properties(self, prop_sheet_name):
+    def __show_properties(self, container):
         searchList = []
         currentItemName = None
-        if prop_sheet_name == 'Users':
-            currentItemName = UI.QueryWidget('user_items', 'CurrentItem')
-            searchList = self.users()
-            currentItem = self.__find_by_name(searchList, currentItemName)
-            edit = UserProps(self.conn, currentItem)
-        elif prop_sheet_name == 'Computers':
-            searchList = self.computers()
-            currentItemName = UI.QueryWidget('comp_items', 'CurrentItem')
-            currentItem = self.__find_by_name(searchList, currentItemName)
+        currentItemName = UI.QueryWidget('items', 'CurrentItem')
+        searchList = self.conn.objects_list(container)
+        currentItem = self.__find_by_name(searchList, currentItemName)
+        if 'computer' in currentItem[1]['objectClass']:
             edit = ComputerProps(self.conn, currentItem)
+        elif 'user' in currentItem[1]['objectClass']:
+            edit = UserProps(self.conn, currentItem)
+        else:
+            return
 
         edit.Show()
 
         # update after property sheet closes
         if edit.tabModel.is_modified():
-            if prop_sheet_name == 'Users':
-                UI.ReplaceWidget('rightPane', self.__users_tab())
-                UI.ChangeWidget('user_items', 'CurrentItem', currentItemName)
-            elif prop_sheet_name == 'Computers':
-                UI.ReplaceWidget('rightPane', self.__computer_tab())
-                UI.ChangeWidget('comp_items', 'CurrentItem', currentItemName)
-            else:
-                UI.ReplaceWidget('rightPane', Empty())
+            self.__refresh(container, currentItemName)
 
     def __objs_context_menu(self):
         return Term('menu', [
@@ -525,7 +502,7 @@ class ADUC:
         Wizard.HideBackButton()
         Wizard.HideAbortButton()
         UI.SetFocus('aduc_tree')
-        current_tab = None
+        current_container = None
         while True:
             event = UI.WaitForEvent()
             if 'WidgetID' in event:
@@ -538,68 +515,62 @@ class ADUC:
             if str(ret) == 'abort' or str(ret) == 'cancel':
                 break
             elif str(ret) == 'aduc_tree':
-                current_tab = choice
                 if event['EventReason'] == 'ContextMenuActivated':
                     UI.OpenContextMenu(self.__objs_context_menu())
-                elif choice == 'Users':
-                    UI.ReplaceWidget('rightPane', self.__users_tab())
-                elif choice == 'Computers':
-                    UI.ReplaceWidget('rightPane', self.__computer_tab())
+                elif 'DC=' in choice:
+                    current_container = choice
+                    self.__refresh(current_container)
                 else:
                     UI.ReplaceWidget('rightPane', Empty())
             elif str(ret) == 'next':
                 return Symbol('abort')
-            elif str(ret) == 'user_items':
-                self.__show_properties('Users')
-            elif str(ret) == 'comp_items':
-                self.__show_properties('Computers')
+            elif str(ret) == 'items':
+                self.__show_properties(current_container)
             elif str(ret) == 'context_add_user':
                 user = NewObjDialog(self.conn.realm, 'user').Show()
                 if user:
-                    self.conn.add_user(user)
-                    self.__refresh(current_tab)
+                    self.conn.add_user(user, current_container)
+                    self.__refresh(current_container, user['cn'])
             elif str(ret) == 'context_add_group':
                 group = NewObjDialog(self.conn.realm, 'group').Show()
                 if group:
-                    self.conn.add_group(group)
-                    self.__refresh(current_tab)
+                    self.conn.add_group(group, current_container)
+                    self.__refresh(current_container, group['name'])
             elif str(ret) == 'context_add_computer':
                 computer = NewObjDialog(self.conn.realm, 'computer').Show()
                 if computer:
-                    self.conn.add_computer(computer)
-                    self.__refresh(current_tab)
+                    self.conn.add_computer(computer, current_container)
+                    self.__refresh(current_container, computer['name'])
 
         return ret
 
-    def __refresh(self, current_tab):
-        if current_tab == 'Users':
-            UI.ReplaceWidget('rightPane', self.__users_tab())
-        elif current_tab == 'Computers':
-            UI.ReplaceWidget('rightPane', self.__computer_tab())
+    def __refresh(self, current_container, obj_id=None):
+        if current_container:
+            UI.ReplaceWidget('rightPane', self.__objects_tab('items', current_container))
+            if obj_id:
+                UI.ChangeWidget('items', 'CurrentItem', obj_id)
+        else:
+            UI.ReplaceWidget('rightPane', Empty())
 
     def __help(self):
         return ''
+
     def __find_by_name(self, alist, name):
         if name:
             for item in alist:
-                
                 if item[1]['cn'][-1] == name:
                     return item
         return None 
-    def __users_tab(self):
-        items = [Item(user[1]['cn'][-1], user[1]['objectClass'][-1].title(), user[1]['description'][-1] if 'description' in user[1] else '') for user in self.users()]
-        return Table(Id('user_items'), Opt('notify'), Header('Name', 'Type', 'Description'), items)
 
-    def __computer_tab(self):
-        items = [Item(comp[1]['cn'][-1], comp[1]['objectClass'][-1].title(), comp[1]['description'][-1] if 'description' in comp[1] else '') for comp in self.computers()]
-        return Table(Id('comp_items'), Opt('notify'), Header('Name', 'Type', 'Description'), items)
+    def __objects_tab(self, oid, container):
+        items = [Item(obj[1]['cn'][-1], obj[1]['objectClass'][-1].title(), obj[1]['description'][-1] if 'description' in obj[1] else '') for obj in self.conn.objects_list(container)]
+        return Table(Id(oid), Opt('notify'), Header('Name', 'Type', 'Description'), items)
 
     def __aduc_tree(self):
+        tree_containers = self.conn.containers()
+        items = [Item(Id(c[0]), c[1], True) for c in tree_containers]
         return Tree(Id('aduc_tree'), Opt('notify', 'immediate', 'notifyContextMenu'), 'Active Directory Users and Computers', [
-            Item(self.realm.lower(), True, [
-                Item('Users', True),
-                Item('Computers', True),
-            ]),
+            Item(self.realm.lower(), True, items),
         ])
 
     def __aduc_page(self):
