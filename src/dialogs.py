@@ -9,6 +9,7 @@ import_module('Wizard')
 import_module('UI')
 from yast import *
 import six
+from ldap.filter import filter_format
 
 def have_x():
     from subprocess import Popen, PIPE
@@ -668,6 +669,109 @@ class NewObjDialog:
         UI.CloseDialog()
         return ret
 
+class SearchDialog:
+    def __init__(self, lp, conn, container):
+        self.lp = lp
+        self.conn = conn
+        self.container = container
+
+        self.realm = self.lp.get('realm')
+        realm_dn = ','.join(['DC=%s' % part for part in self.realm.lower().split('.')])
+        loc_dn = container[:container.lower().find(realm_dn.lower())-1]
+        self.location = '/'.join([i[3:] for i in reversed(loc_dn.split(','))])
+
+    def __show_properties(self, dn):
+        currentItem = self.conn.obj(dn)
+        if six.b('computer') in currentItem[1]['objectClass']:
+            edit = ComputerProps(self.conn, currentItem)
+        elif six.b('user') in currentItem[1]['objectClass']:
+            edit = UserProps(self.conn, currentItem)
+        elif six.b('group') in currentItem[1]['objectClass']:
+            edit = GroupProps(self.conn, currentItem)
+        else:
+            return
+
+        edit.Show()
+
+    def Show(self):
+        UI.OpenDialog(self.__dialog())
+        while True:
+            ret = UI.UserInput()
+            if str(ret) == 'abort' or str(ret) == 'cancel':
+                ret = None
+                break
+            elif str(ret) == 'find':
+                location = UI.QueryWidget('obj_container', 'Value')
+                if location == self.location:
+                    location = self.container
+                elif location == self.realm:
+                    location = self.realm
+                obj_type = UI.QueryWidget('obj_type', 'Value')
+                name = UI.QueryWidget('name', 'Value')
+                desc = UI.QueryWidget('description', 'Value')
+                if obj_type == 'Users, Contacts, and Groups':
+                    query = filter_format('(&(name=%s)(|(objectClass=person)(objectClass=group)))', (name,))
+                    results = self.conn.search(query, location, ['name', 'description', 'objectClass'])
+                elif obj_type == 'Computers':
+                    query = filter_format('(&(name=%s)(objectCategory=computer))', (name,))
+                    results = self.conn.search(query, location, ['name', 'description', 'objectClass'])
+                UI.ReplaceWidget('search_results', self.search_results(results))
+            elif str(ret) == 'results_table':
+                dn = UI.QueryWidget('results_table', 'Value')
+                self.__show_properties(dn)
+        UI.CloseDialog()
+        return ret
+
+    def __search_buttons(self):
+        return VBox(
+            PushButton(Id('find'), 'Find Now'),
+            PushButton(Id('cancel'), 'Cancel'),
+        )
+
+    def __user_search(self):
+        return Frame('Users, Contacts, and Groups',
+            VBox(VSpacing(1), HBox(
+                VBox(
+                    Left(Label('Name:')),
+                    Left(Label('Description:')),
+                ),
+                VBox(
+                    Left(TextEntry(Id('name'), '')),
+                    Left(TextEntry(Id('description'), '')),
+                ),
+                self.__search_buttons()
+            ))
+        )
+
+    def search_results(self, results):
+        if not results or len(results) < 1:
+            return Empty()
+        items = [Item(Id(r[0]), r[-1]['name'][-1], r[-1]['objectClass'][-1].title(), r[-1]['description'][-1] if 'description' in r[-1] else '') for r in results]
+        return VBox(
+            Left(Label('Search results:')),
+            VSpacing(.3),
+            MinHeight(10,
+                Table(Id('results_table'), Opt('notify'), Header('Name', 'Type', 'Description'), items),
+            ),
+            VSpacing(.3),
+        )
+
+    def __dialog(self):
+        return MinSize(50, 10, HBox(HSpacing(3), VBox(VSpacing(.3),
+            Left(HBox(
+                Label('Find:'),
+                ComboBox(Id('obj_type'), '', [Item('Users, Contacts, and Groups', True), 'Computers']),
+                Label('In:'),
+                ComboBox(Id('obj_container'), '', [Item(self.location, True), self.realm.lower()])
+            )),
+            VSpacing(1),
+            Left(
+                self.__user_search()
+            ),
+            ReplacePoint(Id('search_results'), Empty()),
+            VSpacing(.3)
+        ), HSpacing(3)))
+
 class ADUC:
     def __init__(self, lp, creds):
         self.realm = lp.get('realm')
@@ -746,7 +850,7 @@ class ADUC:
     def __objs_context_menu(self):
         return Term('menu', [
             #Item(Id('context_delegate_control'), 'Delegate Control...'),
-            #Item(Id('context_find'), 'Find...'),
+            Item(Id('find'), 'Find...'),
             Term('menu', 'New', [
                     Item(Id('context_add_computer'), 'Computer'),
                     #Item(Id('context_add_contact'), 'Contact'),
@@ -804,12 +908,14 @@ class ADUC:
                             Item(Id('context_add_group'), 'Group'),
                             Item(Id('context_add_computer'), 'Computer')
                         ]))
+                        UI.ChangeWidget(Id('find'), 'Enabled', True)
                         UI.ChangeWidget(Id('delete'), "Enabled", True)
                 else:
                     current_container = None
                     UI.ReplaceWidget('rightPane', Empty())
                     if not have_advanced_gui:
                         UI.ReplaceWidget('new_but',  MenuButton(Id('new'), Opt('disabled'), "New", []))
+                        UI.ChangeWidget(Id('find'), 'Enabled', False)
                         UI.ChangeWidget(Id('delete'), "Enabled", False)
             elif str(ret) == 'next':
                 return Symbol('abort')
@@ -838,6 +944,8 @@ class ADUC:
             elif str(ret) == 'delete':
                 self.__delete_selected_obj(current_container)
                 self.__refresh(current_container)
+            elif str(ret) == 'find':
+                SearchDialog(self.lp, self.conn, current_container).Show()
         return ret
 
     def __refresh(self, current_container, obj_id=None):
@@ -866,8 +974,11 @@ class ADUC:
         tree_containers = self.conn.containers()
         items = [Item(Id(c[0]), c[1], True) for c in tree_containers]
         if not have_advanced_gui:
-            menu = HBox(ReplacePoint(Id('new_but'),
-                MenuButton(Id('new'), Opt('disabled'), "New", [])),
+            menu = HBox(
+                PushButton(Id('find'),  Opt('disabled'), 'Find'),
+                ReplacePoint(Id('new_but'),
+                    MenuButton(Id('new'), Opt('disabled'), "New", [])
+                ),
                 PushButton(Id('delete'), Opt('disabled'), "Delete")
             )
         else:

@@ -165,6 +165,9 @@ class Connection:
             dn = dn.decode('utf-8')
         return ldap_search(self.l, dn, ldap.SCOPE_BASE, '(objectClass=*)', attrs)[-1]
 
+    def search(self, query, container, attrs=[]):
+        return ldap_search_s(self.l, container, ldap.SCOPE_SUBTREE, query, attrs)
+
     def objects_list(self, container):
         return ldap_search_s(self.l, container, ldap.SCOPE_SUBTREE, '(|(objectCategory=person)(objectCategory=group)(objectCategory=computer))', [])
 
