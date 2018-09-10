@@ -31,6 +31,7 @@ Requires:       samba-python
 Requires:       yast2
 Requires:       yast2-python-bindings >= 4.0.0
 Requires:       python2-ldap3
+Requires:       python2-gssapi
 BuildRequires:  autoconf
 BuildRequires:  automake
 BuildRequires:  perl-XML-Writer
