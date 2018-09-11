@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import absolute_import, division, print_function, unicode_literals
+import ldap, ldap.modlist, ldap.sasl
 import os.path, sys
 from samba.net import Net
 from samba.dcerpc import nbt
@@ -8,28 +9,86 @@ import uuid
 import re
 from subprocess import Popen, PIPE
 from syslog import syslog, LOG_INFO, LOG_ERR, LOG_DEBUG, LOG_EMERG, LOG_ALERT
+from ldap.modlist import addModlist as addlist
+from ldap.modlist import modifyModlist as modlist
 import traceback
 from yast import ycpbuiltins
-import ldap3, ssl
 
 PY3 = sys.version_info[0] == 3
 PY2 = sys.version_info[0] == 2
 
-def modlist(old_entry, new_entry):
-    ret = {}
-    for key, val in new_entry.items():
-        if type(val) != list:
-            val = [val]
-        if key in old_entry:
-            ret[key] = (ldap3.MODIFY_REPLACE, val)
+class LdapException(Exception):
+    def __init__(self, *args, **kwargs):
+        Exception.__init__(self, *args, **kwargs)
+        if len(self.args) > 0:
+            self.msg = self.args[0]
         else:
-            ret[key] = (ldap3.MODIFY_ADD, val)
-    for key, val in old_entry.items():
-        if not key in new_entry:
-            if type(val) != list:
-                val = [val]
-            ret[key] = (ldap3.MODIFY_DELETE, val)
-    return ret
+            self.msg = None
+        if len(self.args) > 1:
+            self.info = self.args[1]
+        else:
+            self.info = None
+
+def _ldap_exc_msg(e):
+    if len(e.args) > 0 and \
+      type(e.args[-1]) is dict and \
+      'desc' in e.args[-1]:
+        return e.args[-1]['desc']
+    else:
+        return str(e)
+
+def _ldap_exc_info(e):
+    if len(e.args) > 0 and \
+      type(e.args[-1]) is dict and \
+      'info' in e.args[-1]:
+        return e.args[-1]['info']
+    else:
+        return ''
+
+def ldap_search_s(l, *args):
+    try:
+        return l.search_s(*args)
+    except Exception as e:
+        ycpbuiltins.y2error(traceback.format_exc())
+        ycpbuiltins.y2error('ldap.search_s: %s\n' % _ldap_exc_msg(e))
+
+def ldap_search(l, *args):
+    result = []
+    try:
+        res_id = l.search(*args)
+        while 1:
+            t, d = l.result(res_id, 0)
+            if d == []:
+                break
+            else:
+                if t == ldap.RES_SEARCH_ENTRY:
+                    result.append(d[0])
+    except ldap.LDAPError:
+        pass
+    except Exception as e:
+        ycpbuiltins.y2error(traceback.format_exc())
+        ycpbuiltins.y2error('ldap.search: %s\n' % _ldap_exc_msg(e))
+    return result
+
+def ldap_add(l, *args):
+    try:
+        return l.add_s(*args)
+    except Exception as e:
+        raise LdapException(_ldap_exc_msg(e), _ldap_exc_info(e))
+
+def ldap_modify(l, *args):
+    try:
+        return l.modify(*args)
+    except Exception as e:
+        ycpbuiltins.y2error(traceback.format_exc())
+        ycpbuiltins.y2error('ldap.modify: %s\n' % _ldap_exc_msg(e))
+
+def ldap_delete(l, *args):
+    try:
+        return l.delete_s(*args)
+    except Exception as e:
+        ycpbuiltins.y2error(traceback.format_exc())
+        ycpbuiltins.y2error('ldap.delete_s: %s\n' % _ldap_exc_msg(e))
 
 def stringify_ldap(data):
     if type(data) == dict:
@@ -63,15 +122,12 @@ class Connection:
         self.realm = lp.get('realm')
         self.net = Net(creds=creds, lp=lp)
         cldap_ret = self.net.finddc(domain=self.realm, flags=(nbt.NBT_SERVER_LDAP | nbt.NBT_SERVER_DS))
+        self.l = ldap.initialize('ldap://%s' % cldap_ret.pdc_dns_name)
         if self.__kinit_for_gssapi():
-            server = ldap3.Server(cldap_ret.pdc_dns_name)
-            self.l = ldap3.Connection(server, authentication=ldap3.SASL, sasl_mechanism=ldap3.KERBEROS)
-            self.l.bind()
-            ycpbuiltins.y2debug('Connected to ldap server %s via GSSAPI' % cldap_ret.pdc_dns_name)
+            auth_tokens = ldap.sasl.gssapi('')
+            self.l.sasl_interactive_bind_s('', auth_tokens)
         else:
-            self.l = ldap3.Connection(cldap_ret.pdc_dns_name, user='%s\\%s' % (lp.get('workgroup'), creds.get_username()), password=creds.get_password(), authentication=ldap3.NTLM, auto_bind=True)
-            ycpbuiltins.y2debug('Connected to ldap server %s via NTLM' % cldap_ret.pdc_dns_name)
-        self.wellKnownObjects = None
+            self.l.bind_s('%s@%s' % (creds.get_username(), self.realm) if not self.realm in creds.get_username() else creds.get_username(), creds.get_password())
 
     def __kinit_for_gssapi(self):
         p = Popen(['kinit', '%s@%s' % (self.creds.get_username(), self.realm) if not self.realm in self.creds.get_username() else self.creds.get_username()], stdin=PIPE, stdout=PIPE)
@@ -90,25 +146,17 @@ class Connection:
             wkguiduc = 'A361B2FFFFD211D1AA4B00C04FD7D83A'
         elif container == 'users':
             wkguiduc = 'A9D1CA15768811D1ADED00C04FD8D5CD'
-        if not self.wellKnownObjects and self.l.search(self.realm_to_dn(self.realm), '(objectClass=domain)', search_scope='BASE', attributes=['wellKnownObjects']):
-            self.wellKnownObjects = {v.split(':')[2]: v.split(':')[-1] for v in self.l.entries[0].wellKnownObjects.values}
-        return self.wellKnownObjects[wkguiduc]
+        result = ldap_search_s(self.l, '<WKGUID=%s,%s>' % (wkguiduc, self.realm_to_dn(self.realm)), ldap.SCOPE_SUBTREE, '(objectClass=container)', stringify_ldap(['distinguishedName']))
+        if result and len(result) > 0 and len(result[0]) > 1 and 'distinguishedName' in result[0][1] and len(result[0][1]['distinguishedName']) > 0:
+            return result[0][1]['distinguishedName'][-1]
 
     def containers(self):
         search = '(&(|(objectClass=organizationalUnit)(objectCategory=Container)(objectClass=builtinDomain))(!(|(cn=System)(cn=Program Data))))'
-        try:
-            self.l.search(self.realm_to_dn(self.realm), search, search_scope='LEVEL', attributes=['name', 'distinguishedName'])
-        except Exception as e:
-            print(str(e))
-        return [(e['distinguishedName'].value, e['name'].value) for e in self.l.entries]
+        ret = ldap_search(self.l, self.realm_to_dn(self.realm), ldap.SCOPE_ONELEVEL, search, ['name', 'distinguishedName'])
+        return [(e[0], e[1]['name'][-1]) for e in ret]
 
     def objects_list(self, container):
-        try:
-            self.l.search(container, '(|(objectCategory=person)(objectCategory=group)(objectCategory=computer))', attributes=ldap3.ALL_ATTRIBUTES)
-            return [(i.distinguishedName.value, i.entry_raw_attributes) for i in self.l.entries]
-        except Exception as e:
-            ycpbuiltins.y2error(traceback.format_exc())
-            ycpbuiltins.y2error(str(e))
+        return ldap_search_s(self.l, container, ldap.SCOPE_SUBTREE, '(|(objectCategory=person)(objectCategory=group)(objectCategory=computer))', [])
 
     def add_user(self, user_attrs, container=None):
         if not container:
@@ -141,14 +189,17 @@ class Connection:
         else:
             attrs['pwdLastSet'] = '-1'
 
-        self.l.add(dn, attributes=stringify_ldap(attrs))
+        try:
+            ldap_add(self.l, dn, addlist(stringify_ldap(attrs)))
+        except LdapException as e:
+            ycpbuiltins.y2error(traceback.format_exc())
+            ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
 
         try:
             self.net.set_password(attrs['sAMAccountName'], self.realm, user_attrs['userPassword'])
         except Exception as e:
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error(str(e))
-        # self.l.extend.microsoft.modify_password(user=dn, new_password=user_attrs['userPassword'])
 
         uac = 0x0200
         # Direct modification of the cannot change password bit isn't allowed
@@ -158,7 +209,7 @@ class Connection:
             uac |= 0x10000
         if user_attrs['account_disabled']:
             uac |= 0x0002
-        self.l.modify(dn, stringify_ldap(modlist({'userAccountControl': attrs['userAccountControl']}, {'userAccountControl': [str(uac)]})))
+        ldap_modify(self.l, dn, stringify_ldap(modlist({'userAccountControl': attrs['userAccountControl']}, {'userAccountControl': [str(uac)]})))
 
     def add_group(self, group_attrs, container=None):
         if not container:
@@ -186,7 +237,11 @@ class Connection:
             groupType |= 0x80000000
         attrs['groupType'] = [str(groupType)]
 
-        self.l.add(dn, attributes=stringify_ldap(attrs))
+        try:
+            ldap_add(self.l, dn, addlist(stringify_ldap(attrs)))
+        except LdapException as e:
+            ycpbuiltins.y2error(traceback.format_exc())
+            ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
 
     def add_computer(self, computer_attrs, container=None):
         if not container:
@@ -207,7 +262,11 @@ class Connection:
         attrs['dNSHostName'] = '.'.join([attrs['name'], self.realm])
         attrs['servicePrincipalName'] = ['HOST/%s' % attrs['name'], 'HOST/%s' % attrs['dNSHostName']]
 
-        self.l.add(dn, attributes=stringify_ldap(attrs))
+        try:
+            ldap_add(self.l, dn, addlist(stringify_ldap(attrs)))
+        except LdapException as e:
+            ycpbuiltins.y2error(traceback.format_exc())
+            ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
 
     def update(self, dn, orig_map, modattr, addattr):
         try:
@@ -215,9 +274,13 @@ class Connection:
                 oldattr = {}
                 for key in modattr:
                     oldattr[key] = orig_map.get(key, [])
-                self.l.modify(dn, modlist(oldattr, modattr))
+                ldap_modify(self.l, dn, stringify_ldap(modlist(oldattr, modattr)))
             if len(addattr):
-                self.l.add(dn, attributes=stringify_ldap(addattr))
+                try:
+                    ldap_add(self.l, dn, addlist(stringify_ldap(addattr)))
+                except LdapException as e:
+                    ycpbuiltins.y2error(traceback.format_exc())
+                    ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
         except Exception as e:
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error(str(e))
