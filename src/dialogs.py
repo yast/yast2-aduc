@@ -287,123 +287,136 @@ class ComputerProps(TabProps):
 
         return multi
 
-user_dialog = [
-    [VBox(
-        HBox(
-            TextEntry(Id('givenName'), 'First name:'),
-            TextEntry(Id('initials'), 'Initials:'),
-        ),
-        TextEntry(Id('sn'), 'Last name:'),
-        TextEntry(Id('cn'), 'Full name:'),
-        TextEntry(Id('logon_name'), 'User logon name:'),
-        TextEntry(Id('sAMAccountName'), 'User logon name (pre-Windows 2000):'),
-        Bottom(Right(HBox(
-            PushButton(Id('back'), Opt('disabled'), '< Back'),
-            PushButton(Id('next'), 'Next >'),
-            PushButton(Id('cancel'), 'Cancel'),
-        ))),
-    ), ['givenName', 'initials', 'sn', 'cn', 'logon_name', 'sAMAccountName']],
-    [VBox(
-        TextEntry(Id('uidNumber'), 'UID number:'),
-        TextEntry(Id('gidNumber'), 'GID number:'),
-        TextEntry(Id('gecos'), 'GECOS:'),
-        TextEntry(Id('homeDirectory'), 'Home directory:'),
-        TextEntry(Id('loginShell'), 'Login shell:'),
-        Bottom(Right(HBox(
-            PushButton(Id('back'), '< Back'),
-            PushButton(Id('next'), 'Next >'),
-            PushButton(Id('cancel'), 'Cancel'),
-        ))),
-    ), ['uidNumber', 'gidNumber', 'gecos', 'homeDirectory', 'loginShell']],
-    [VBox(
-        Left(Password(Id('userPassword'), 'Password:')),
-        Left(Password(Id('confirm_passwd'), 'Confirm password:')),
-        Left(CheckBox(Id('must_change_passwd'), 'User must change password at next logon', True)),
-        Left(CheckBox(Id('cannot_change_passwd'), Opt('disabled'), 'User cannot change password')),
-        Left(CheckBox(Id('passwd_never_expires'), 'Password never expires')),
-        Left(CheckBox(Id('account_disabled'), 'Account is disabled')),
-        Bottom(Right(HBox(
-            PushButton(Id('back'), '< Back'),
-            PushButton(Id('finish'), 'Finish'),
-            PushButton(Id('cancel'), 'Cancel')
-        ))),
-    ), ['userPassword', 'confirm_passwd', 'must_change_passwd', 'cannot_change_passwd', 'passwd_never_expires', 'account_disabled']],
-]
-
-group_dialog = [
-    [VBox(
-        TextEntry(Id('name'), 'Group name:'),
-        TextEntry(Id('sAMAccountName'), 'Group name (pre-Windows 2000):'),
-        TextEntry(Id('gidNumber'), 'GID number:'),
-        HBox(
-            Top(RadioButtonGroup(Id('group_scope'), VBox(
-                Left(Label('Group scope')),
-                Left(RadioButton(Id('domain_local'), 'Domain local')),
-                Left(RadioButton(Id('global'), 'Global', True)),
-                Left(RadioButton(Id('universal'), 'Universal')),
-            ))),
-            Top(RadioButtonGroup(Id('group_type'), VBox(
-                Left(Label('Group type')),
-                Left(RadioButton(Id('security'), 'Security', True)),
-                Left(RadioButton(Id('distribution'), 'Distribution')),
-            )))
-        ),
-        Bottom(Right(HBox(
-            PushButton(Id('finish'), 'OK'),
-            PushButton(Id('cancel'), 'Cancel'),
-        ))),
-    ), ['name', 'sAMAccountName', 'gidNumber', 'domain_local', 'global', 'universal', 'security']],
-]
-
-computer_dialog = [
-    [VBox(
-        TextEntry(Id('name'), 'Computer name:'),
-        TextEntry(Id('sAMAccountName'), 'Computer name (pre-Windows 2000):'),
-        Left(Label(Opt('disabled'), 'The following user or group can join this computer to a domain.')),
-        TextEntry(Id('join_id'), Opt('disabled'), 'User or group:', 'Default: Domain Admins'),
-        CheckBox(Id('pre_win2k'), Opt('disabled'), 'Assign this computer account as a pre-Windows 2000 computer'),
-        Bottom(Right(HBox(
-            PushButton(Id('finish'), 'OK'),
-            PushButton(Id('cancel'), 'Cancel'),
-        ))),
-    ), ['name', 'sAMAccountName', 'join_id', 'pre_win2k']],
-]
-
 class NewObjDialog:
-    def __init__(self, realm, obj_type):
-        self.realm = realm
+    def __init__(self, lp, obj_type, location):
+        self.lp = lp
         self.obj = {}
         self.obj['type'] = obj_type
         self.dialog_seq = 0
+        self.dialog = None
+        self.realm = self.lp.get('realm')
+        realm_dn = ','.join(['DC=%s' % part for part in self.realm.lower().split('.')])
+        loc_dn = location[:location.lower().find(realm_dn.lower())-1]
+        self.location = '/'.join([i[3:] for i in reversed(loc_dn.split(','))])
 
     def __new(self):
         pane = self.__fetch_pane()
         return MinSize(56, 22, HBox(HSpacing(3), VBox(
                 VSpacing(1),
-                Label('Create in:\t%s/Users' % self.realm),
+                Label('Create in:\t%s/%s' % (self.realm, self.location)),
                 ReplacePoint(Id('new_pane'), pane),
                 VSpacing(1),
             ), HSpacing(3)))
 
     def __fetch_pane(self):
-        if self.obj['type'] == 'user':
-            pane = user_dialog[self.dialog_seq][0]
-        elif self.obj['type'] == 'group':
-            pane = group_dialog[self.dialog_seq][0]
-        elif self.obj['type'] == 'computer':
-            pane = computer_dialog[self.dialog_seq][0]
-        return pane
+        if not self.dialog:
+            if self.obj['type'] == 'user':
+                self.dialog = self.__user_dialog()
+            elif self.obj['type'] == 'group':
+                self.dialog = self.__group_dialog()
+            elif self.obj['type'] == 'computer':
+                self.dialog = self.__computer_dialog()
+        return self.dialog[self.dialog_seq][0]
+
+    def __user_dialog(self):
+        self.required_value_keys = ['givenName', 'sn', 'displayName', 'userPrincipalName', 'sAMAccountName', 'userPassword', 'confirm_passwd']
+        return [
+            [VBox(
+                HBox(
+                    TextEntry(Id('givenName'), UserDataModel['general']['givenName']),
+                    TextEntry(Id('initials'), UserDataModel['general']['initials']),
+                ),
+                TextEntry(Id('sn'), UserDataModel['general']['sn']),
+                TextEntry(Id('cn'), 'Full name:'),
+                Left(Bottom(Label('User Logon name:'))),
+                Left(Left(HBox(InputField(Id('logon_name'), Opt('hstretch'), ''), InputField(Id('domainName'), Opt('hstretch', 'disabled'), '', '@%s' % self.realm)))),
+                Left(Bottom(Label('User Logon name (pre-windows 2000):'))),
+                Left(Left(HBox(InputField(Opt('hstretch', 'disabled'), '', '%s\\' % self.lp.get('workgroup')), InputField(Id('sAMAccountName'), Opt('hstretch'), '')))),
+                Bottom(Right(HBox(
+                    PushButton(Id('back'), Opt('disabled'), '< Back'),
+                    PushButton(Id('next'), 'Next >'),
+                    PushButton(Id('cancel'), 'Cancel'),
+                ))),
+            ), ['givenName', 'initials', 'sn', 'cn', 'logon_name', 'sAMAccountName']],
+            [VBox(
+                TextEntry(Id('uidNumber'), 'UID number:'),
+                TextEntry(Id('gidNumber'), 'GID number:'),
+                TextEntry(Id('gecos'), 'GECOS:'),
+                TextEntry(Id('homeDirectory'), 'Home directory:'),
+                TextEntry(Id('loginShell'), 'Login shell:'),
+                Bottom(Right(HBox(
+                    PushButton(Id('back'), '< Back'),
+                    PushButton(Id('next'), 'Next >'),
+                    PushButton(Id('cancel'), 'Cancel'),
+                ))),
+            ), ['uidNumber', 'gidNumber', 'gecos', 'homeDirectory', 'loginShell']],
+            [VBox(
+                Left(Password(Id('userPassword'), 'Password:')),
+                Left(Password(Id('confirm_passwd'), 'Confirm password:')),
+                Left(CheckBox(Id('must_change_passwd'), 'User must change password at next logon', True)),
+                Left(CheckBox(Id('cannot_change_passwd'), Opt('disabled'), 'User cannot change password')),
+                Left(CheckBox(Id('passwd_never_expires'), 'Password never expires')),
+                Left(CheckBox(Id('account_disabled'), 'Account is disabled')),
+                Bottom(Right(HBox(
+                    PushButton(Id('back'), '< Back'),
+                    PushButton(Id('finish'), 'Finish'),
+                    PushButton(Id('cancel'), 'Cancel')
+                ))),
+            ), ['userPassword', 'confirm_passwd', 'must_change_passwd', 'cannot_change_passwd', 'passwd_never_expires', 'account_disabled']],
+        ]
+
+    def __group_dialog(self):
+        self.required_value_keys = ['name', 'sAMAccountName']
+        return [
+            [VBox(
+                TextEntry(Id('name'), 'Group name:'),
+                TextEntry(Id('sAMAccountName'), 'Group name (pre-Windows 2000):'),
+                TextEntry(Id('gidNumber'), 'GID number:'),
+                HBox(
+                    Top(RadioButtonGroup(Id('group_scope'), VBox(
+                        Left(Label('Group scope')),
+                        Left(RadioButton(Id('domain_local'), 'Domain local')),
+                        Left(RadioButton(Id('global'), 'Global', True)),
+                        Left(RadioButton(Id('universal'), 'Universal')),
+                    ))),
+                    Top(RadioButtonGroup(Id('group_type'), VBox(
+                        Left(Label('Group type')),
+                        Left(RadioButton(Id('security'), 'Security', True)),
+                        Left(RadioButton(Id('distribution'), 'Distribution')),
+                    )))
+                ),
+                Bottom(Right(HBox(
+                    PushButton(Id('finish'), 'OK'),
+                    PushButton(Id('cancel'), 'Cancel'),
+                ))),
+            ), ['name', 'sAMAccountName', 'gidNumber', 'domain_local', 'global', 'universal', 'security']],
+        ]
+
+    def __computer_dialog(self):
+        self.required_value_keys = ['name', 'sAMAccountName']
+        return [
+            [VBox(
+                TextEntry(Id('name'), 'Computer name:'),
+                TextEntry(Id('sAMAccountName'), 'Computer name (pre-Windows 2000):'),
+                Left(Label(Opt('disabled'), 'The following user or group can join this computer to a domain.')),
+                TextEntry(Id('join_id'), Opt('disabled'), 'User or group:', 'Default: Domain Admins'),
+                CheckBox(Id('pre_win2k'), Opt('disabled'), 'Assign this computer account as a pre-Windows 2000 computer'),
+                Bottom(Right(HBox(
+                    PushButton(Id('finish'), 'OK'),
+                    PushButton(Id('cancel'), 'Cancel'),
+                ))),
+            ), ['name', 'sAMAccountName', 'join_id', 'pre_win2k']],
+        ]
 
     def __fetch_values(self):
-        if self.obj['type'] == 'user':
-            keys = user_dialog[self.dialog_seq][1]
-        elif self.obj['type'] == 'group':
-            keys = group_dialog[self.dialog_seq][1]
-        elif self.obj['type'] == 'computer':
-            keys = computer_dialog[self.dialog_seq][1]
-        for key in keys:
+        for key in self.dialog[self.dialog_seq][1]:
             value = UI.QueryWidget(key, 'Value')
             self.obj[key] = value
+        for key in self.required_value_keys:
+            if key in self.obj and not self.obj[key]:
+                ycpbuiltins.y2error('Missing value for %s' % key)
+                return False
+        return True
 
     def Show(self):
         UI.OpenDialog(self.__new())
@@ -413,17 +426,17 @@ class NewObjDialog:
                 ret = None
                 break
             elif str(ret) == 'next':
-                self.__fetch_values()
-                self.dialog_seq += 1
-                UI.ReplaceWidget('new_pane', self.__fetch_pane())
+                if self.__fetch_values():
+                    self.dialog_seq += 1
+                    UI.ReplaceWidget('new_pane', self.__fetch_pane())
             elif str(ret) == 'back':
                 self.__fetch_values()
                 self.dialog_seq -= 1;
                 UI.ReplaceWidget('new_pane', self.__fetch_pane())
             elif str(ret) == 'finish':
-                self.__fetch_values()
-                ret = self.obj
-                break
+                if self.__fetch_values():
+                    ret = self.obj
+                    break
         UI.CloseDialog()
         return ret
 
@@ -443,11 +456,11 @@ class ADUC:
                 self.got_creds = self.__get_creds(creds)
 
 
-    def __delete_selected_user(self):
-        currentItemName = UI.QueryWidget('user_items', 'CurrentItem')
-        searchList = self.users()
+    def __delete_selected_obj(self, container):
+        currentItemName = UI.QueryWidget('items', 'CurrentItem')
+        searchList = self.conn.objects_list(container)
         currentItem = self.__find_by_name(searchList, currentItemName)
-        return self.conn.delete_user(currentItem[0])
+        return self.conn.delete_obj(currentItem[0])
 
     def __get_creds(self, creds):
         if not creds.get_password():
@@ -544,9 +557,9 @@ class ADUC:
                     current_container = choice
                     self.__refresh(current_container)
                     UI.ReplaceWidget('new_but',  MenuButton(Id('new'), "New", [
-                        Item(Id('new_user'), 'User'),
-                        Item(Id('new_group'), 'Group'),
-                        Item(Id('new_comp'), 'Computer')
+                        Item(Id('context_add_user'), 'User'),
+                        Item(Id('context_add_group'), 'Group'),
+                        Item(Id('context_add_computer'), 'Computer')
                     ]))
                     UI.ChangeWidget(Id('delete'), "Enabled", True)
                 else:
@@ -558,33 +571,24 @@ class ADUC:
             elif str(ret) == 'items':
                 self.__show_properties(current_container)
             elif str(ret) == 'context_add_user':
-                user = NewObjDialog(self.conn.realm, 'user').Show()
+                user = NewObjDialog(self.lp, 'user', current_container).Show()
                 if user:
                     self.conn.add_user(user, current_container)
                     self.__refresh(current_container, user['cn'])
             elif str(ret) == 'context_add_group':
-                group = NewObjDialog(self.conn.realm, 'group').Show()
+                group = NewObjDialog(self.lp, 'group', current_container).Show()
                 if group:
                     self.conn.add_group(group, current_container)
                     self.__refresh(current_container, group['name'])
             elif str(ret) == 'context_add_computer':
-                computer = NewObjDialog(self.conn.realm, 'computer').Show()
+                computer = NewObjDialog(self.lp, 'computer', current_container).Show()
                 if computer:
                     self.conn.add_computer(computer, current_container)
                     self.__refresh(current_container, computer['name'])
-            elif str(ret) == 'new_user':
-                if NewUser(self.conn, self.realm).Show():
-                    # Refresh users list if successful
-                    UI.ChangeWidget(Id('user_items'), 'Items', self.__users_tab_data())
-            elif str(ret) == 'new_comp':
-                if NewComputer(self.conn, self.realm).Show():
-                    # Refresh users list if successful
-                    UI.ChangeWidget(Id('comp_itemps'), 'Items', self.__computer_tab_data())
             elif str(ret) == 'delete':
                 if choice == 'Users':
-                    if self.__delete_selected_user():
-                        # Refresh users list if successful
-                        UI.ChangeWidget(Id('user_items'), 'Items', self.__users_tab_data())
+                    if self.__delete_selected_obj(current_container):
+                        self.__refresh(current_container)
         return ret
 
     def __refresh(self, current_container, obj_id=None):
