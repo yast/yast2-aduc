@@ -171,16 +171,24 @@ class Connection:
         attrs['displayName'] = user_attrs['cn']
         attrs['name'] = user_attrs['cn']
         attrs['cn'] = user_attrs['cn']
-        attrs['sn'] = user_attrs['sn']
-        attrs['givenName'] = user_attrs['givenName']
-        attrs['initials'] = user_attrs['initials']
+        if 'sn' in user_attrs:
+            attrs['sn'] = user_attrs['sn']
+        if 'givenName' in user_attrs:
+            attrs['givenName'] = user_attrs['givenName']
+        if 'initials' in user_attrs:
+            attrs['initials'] = user_attrs['initials']
         attrs['userPrincipalName'] = '%s@%s' % (user_attrs['logon_name'], self.realm.lower())
-        attrs['loginShell'] = user_attrs['loginShell']
-        attrs['homeDirectory'] = user_attrs['homeDirectory']
-        attrs['uidNumber'] = user_attrs['uidNumber']
-        attrs['gidNumber'] = user_attrs['gidNumber']
+        if 'loginShell' in user_attrs:
+            attrs['loginShell'] = user_attrs['loginShell']
+        if 'homeDirectory' in user_attrs:
+            attrs['homeDirectory'] = user_attrs['homeDirectory']
+        if 'uidNumber' in user_attrs:
+            attrs['uidNumber'] = user_attrs['uidNumber']
+        if 'gidNumber' in user_attrs:
+            attrs['gidNumber'] = user_attrs['gidNumber']
         attrs['sAMAccountName'] = user_attrs['sAMAccountName']
-        attrs['gecos'] = user_attrs['gecos']
+        if 'gecos' in user_attrs:
+            attrs['gecos'] = user_attrs['gecos']
         attrs['userAccountControl'] = ['514']
         dn = 'CN=%s,%s' % (attrs['cn'], container)
         attrs['distinguishedName'] = dn
@@ -222,7 +230,8 @@ class Connection:
         dn = 'CN=%s,%s' % (attrs['name'], container)
         attrs['distinguishedName'] = dn
         attrs['instanceType'] = '4'
-        attrs['gidNumber'] = group_attrs['gidNumber']
+        if 'gidNumber' in group_attrs:
+            attrs['gidNumber'] = group_attrs['gidNumber']
         attrs['msSFU30Name'] = attrs['name']
         attrs['msSFU30NisDomain'] = self.realm.split('.')[0]
 
