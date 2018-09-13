@@ -491,7 +491,7 @@ class ADUC:
         currentItemName = UI.QueryWidget('items', 'CurrentItem')
         searchList = self.conn.objects_list(container)
         currentItem = self.__find_by_name(searchList, currentItemName)
-        return self.conn.delete_obj(currentItem[0])
+        self.conn.delete_obj(currentItem[0])
 
     def __get_creds(self, creds):
         if not creds.get_password():
@@ -623,9 +623,8 @@ class ADUC:
                     self.conn.add_computer(computer, current_container)
                     self.__refresh(current_container, computer['name'])
             elif str(ret) == 'delete':
-                if choice == 'Users':
-                    if self.__delete_selected_obj(current_container):
-                        self.__refresh(current_container)
+                self.__delete_selected_obj(current_container)
+                self.__refresh(current_container)
         return ret
 
     def __refresh(self, current_container, obj_id=None):

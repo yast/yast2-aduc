@@ -288,6 +288,5 @@ class Connection:
         return True
 
     def delete_obj(self, dn):
-        result = False
-        return result
+        ldap_delete(self.l, dn)
 
