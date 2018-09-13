@@ -319,7 +319,6 @@ class NewObjDialog:
         return self.dialog[self.dialog_seq][0]
 
     def __user_dialog(self):
-        self.required_value_keys = ['givenName', 'sn', 'displayName', 'userPrincipalName', 'sAMAccountName', 'userPassword', 'confirm_passwd']
         return [
             [VBox(
                 HBox(
@@ -337,7 +336,10 @@ class NewObjDialog:
                     PushButton(Id('next'), 'Next >'),
                     PushButton(Id('cancel'), 'Cancel'),
                 ))),
-            ), ['givenName', 'initials', 'sn', 'cn', 'logon_name', 'sAMAccountName']],
+            ),
+            ['givenName', 'initials', 'sn', 'cn', 'logon_name', 'sAMAccountName'], # known keys
+            ['cn', 'logon_name', 'sAMAccountName'] # required keys
+            ],
             [VBox(
                 TextEntry(Id('uidNumber'), 'UID number:'),
                 TextEntry(Id('gidNumber'), 'GID number:'),
@@ -349,7 +351,10 @@ class NewObjDialog:
                     PushButton(Id('next'), 'Next >'),
                     PushButton(Id('cancel'), 'Cancel'),
                 ))),
-            ), ['uidNumber', 'gidNumber', 'gecos', 'homeDirectory', 'loginShell']],
+            ),
+            ['uidNumber', 'gidNumber', 'gecos', 'homeDirectory', 'loginShell'], # known keys
+            [] # required keys
+            ],
             [VBox(
                 Left(Password(Id('userPassword'), 'Password:')),
                 Left(Password(Id('confirm_passwd'), 'Confirm password:')),
@@ -362,11 +367,13 @@ class NewObjDialog:
                     PushButton(Id('finish'), 'Finish'),
                     PushButton(Id('cancel'), 'Cancel')
                 ))),
-            ), ['userPassword', 'confirm_passwd', 'must_change_passwd', 'cannot_change_passwd', 'passwd_never_expires', 'account_disabled']],
+            ),
+            ['userPassword', 'confirm_passwd', 'must_change_passwd', 'cannot_change_passwd', 'passwd_never_expires', 'account_disabled'], # known keys
+            ['userPassword', 'confirm_passwd'] # required keys
+            ],
         ]
 
     def __group_dialog(self):
-        self.required_value_keys = ['name', 'sAMAccountName']
         return [
             [VBox(
                 TextEntry(Id('name'), 'Group name:'),
@@ -389,11 +396,13 @@ class NewObjDialog:
                     PushButton(Id('finish'), 'OK'),
                     PushButton(Id('cancel'), 'Cancel'),
                 ))),
-            ), ['name', 'sAMAccountName', 'gidNumber', 'domain_local', 'global', 'universal', 'security']],
+            ),
+            ['name', 'sAMAccountName', 'gidNumber', 'domain_local', 'global', 'universal', 'security'], # known keys
+            ['name', 'sAMAccountName'] # required keys
+            ],
         ]
 
     def __computer_dialog(self):
-        self.required_value_keys = ['name', 'sAMAccountName']
         return [
             [VBox(
                 TextEntry(Id('name'), 'Computer name:'),
@@ -405,15 +414,21 @@ class NewObjDialog:
                     PushButton(Id('finish'), 'OK'),
                     PushButton(Id('cancel'), 'Cancel'),
                 ))),
-            ), ['name', 'sAMAccountName', 'join_id', 'pre_win2k']],
+            ),
+            ['name', 'sAMAccountName', 'join_id', 'pre_win2k'], # known keys
+            ['name', 'sAMAccountName'] # required keys
+            ],
         ]
 
-    def __fetch_values(self):
-        for key in self.dialog[self.dialog_seq][1]:
+    def __fetch_values(self, back=False):
+        known_value_keys = self.dialog[self.dialog_seq][1]
+        for key in known_value_keys:
             value = UI.QueryWidget(key, 'Value')
-            self.obj[key] = value
-        for key in self.required_value_keys:
-            if key in self.obj and not self.obj[key]:
+            if value:
+                self.obj[key] = value
+        required_value_keys = self.dialog[self.dialog_seq][2]
+        for key in required_value_keys:
+            if not key in self.obj or not self.obj[key]:
                 ycpbuiltins.y2error('Missing value for %s' % key)
                 return False
         return True
@@ -435,7 +450,7 @@ class NewObjDialog:
                     UI.ReplaceWidget('new_pane', self.__fetch_pane())
                     self.__set_values()
             elif str(ret) == 'back':
-                self.__fetch_values()
+                self.__fetch_values(True)
                 self.dialog_seq -= 1;
                 UI.ReplaceWidget('new_pane', self.__fetch_pane())
                 self.__set_values()
