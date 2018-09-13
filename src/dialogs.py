@@ -563,6 +563,11 @@ class ADUC:
             #Item(Id('context_help'), 'Help'),
             ])
 
+    def __obj_context_menu(self):
+        return Term('menu', [
+            Item(Id('delete'), 'Delete')
+        ])
+
     def Show(self):
         if not self.got_creds:
             return Symbol('abort')
@@ -607,7 +612,10 @@ class ADUC:
             elif str(ret) == 'next':
                 return Symbol('abort')
             elif str(ret) == 'items':
-                self.__show_properties(current_container)
+                if event['EventReason'] == 'ContextMenuActivated':
+                    UI.OpenContextMenu(self.__obj_context_menu())
+                else:
+                    self.__show_properties(current_container)
             elif str(ret) == 'context_add_user':
                 user = NewObjDialog(self.lp, 'user', current_container).Show()
                 if user:
@@ -630,7 +638,7 @@ class ADUC:
 
     def __refresh(self, current_container, obj_id=None):
         if current_container:
-            UI.ReplaceWidget('rightPane', self.__objects_tab('items', current_container))
+            UI.ReplaceWidget('rightPane', self.__objects_tab(current_container))
             if obj_id:
                 UI.ChangeWidget('items', 'CurrentItem', obj_id)
         else:
@@ -646,9 +654,9 @@ class ADUC:
                     return item
         return None 
 
-    def __objects_tab(self, oid, container):
+    def __objects_tab(self, container):
         items = [Item(obj[1]['cn'][-1], obj[1]['objectClass'][-1].title(), obj[1]['description'][-1] if 'description' in obj[1] else '') for obj in self.conn.objects_list(container)]
-        return Table(Id(oid), Opt('notify'), Header('Name', 'Type', 'Description'), items)
+        return Table(Id('items'), Opt('notify', 'notifyContextMenu'), Header('Name', 'Type', 'Description'), items)
 
     def __aduc_tree(self):
         tree_containers = self.conn.containers()
