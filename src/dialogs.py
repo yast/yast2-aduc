@@ -433,7 +433,7 @@ class NewObjDialog:
         known_value_keys = self.dialog[self.dialog_seq][1]
         for key in known_value_keys:
             value = UI.QueryWidget(key, 'Value')
-            if value:
+            if value or type(value) == bool:
                 self.obj[key] = value
         required_value_keys = self.dialog[self.dialog_seq][2]
         for key in required_value_keys:
