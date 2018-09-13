@@ -545,7 +545,7 @@ class ADUC:
     def __objs_context_menu(self):
         return Term('menu', [
             #Item(Id('context_delegate_control'), 'Delegate Control...'),
-            Item(Id('context_find'), 'Find...'),
+            #Item(Id('context_find'), 'Find...'),
             Term('menu', 'New', [
                     Item(Id('context_add_computer'), 'Computer'),
                     #Item(Id('context_add_contact'), 'Contact'),
