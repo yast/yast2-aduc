@@ -553,8 +553,11 @@ class ADUC:
             menu_open = False
             if str(ret) == 'aduc_tree':
                 if event['EventReason'] == 'ContextMenuActivated':
-                    menu_open = True
-                    UI.OpenContextMenu(self.__objs_context_menu())
+                    if 'DC=' in choice:
+                        current_container = choice
+                    if current_container:
+                        menu_open = True
+                        UI.OpenContextMenu(self.__objs_context_menu())
                 elif 'DC=' in choice:
                     current_container = choice
                     self.__refresh(current_container)
@@ -565,6 +568,7 @@ class ADUC:
                     ]))
                     UI.ChangeWidget(Id('delete'), "Enabled", True)
                 else:
+                    current_container = None
                     UI.ReplaceWidget('rightPane', Empty())
                     UI.ReplaceWidget('new_but',  MenuButton(Id('new'), Opt('disabled'), "New", []))
                     UI.ChangeWidget(Id('delete'), "Enabled", False)
