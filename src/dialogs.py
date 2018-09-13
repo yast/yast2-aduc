@@ -548,10 +548,12 @@ class ADUC:
                 raise Exception('ID not found in response %s' % str(event))
             choice = UI.QueryWidget('aduc_tree', 'Value')
             print ("input is %s choice is %s"%(ret,choice))
-            if str(ret) == 'abort' or str(ret) == 'cancel':
+            if str(ret) == 'abort' or (str(ret) == 'cancel' and not menu_open):
                 break
-            elif str(ret) == 'aduc_tree':
+            menu_open = False
+            if str(ret) == 'aduc_tree':
                 if event['EventReason'] == 'ContextMenuActivated':
+                    menu_open = True
                     UI.OpenContextMenu(self.__objs_context_menu())
                 elif 'DC=' in choice:
                     current_container = choice
