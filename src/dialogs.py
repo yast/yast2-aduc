@@ -418,6 +418,10 @@ class NewObjDialog:
                 return False
         return True
 
+    def __set_values(self):
+        for key in self.obj:
+            UI.ChangeWidget(key, 'Value', self.obj[key])
+
     def Show(self):
         UI.OpenDialog(self.__new())
         while True:
@@ -429,10 +433,12 @@ class NewObjDialog:
                 if self.__fetch_values():
                     self.dialog_seq += 1
                     UI.ReplaceWidget('new_pane', self.__fetch_pane())
+                    self.__set_values()
             elif str(ret) == 'back':
                 self.__fetch_values()
                 self.dialog_seq -= 1;
                 UI.ReplaceWidget('new_pane', self.__fetch_pane())
+                self.__set_values()
             elif str(ret) == 'finish':
                 if self.__fetch_values():
                     ret = self.obj
