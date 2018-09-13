@@ -513,15 +513,17 @@ class ADUC:
         return True
 
     def __password_prompt(self, user):
-        return MinWidth(30, VBox(
+        return MinWidth(30, HBox(HSpacing(1), VBox(
+            VSpacing(.5),
             Left(Label('To continue, type an administrator password')),
             Left(TextEntry(Id('username_prompt'), Opt('hstretch'), 'Username', user)),
             Left(Password(Id('password_prompt'), Opt('hstretch'), 'Password')),
             Right(HBox(
                 PushButton(Id('creds_ok'), 'OK'),
                 PushButton(Id('creds_cancel'), 'Cancel'),
-            ))
-        ))
+            )),
+            VSpacing(.5)
+        ), HSpacing(1)))
 
     def __show_properties(self, container):
         searchList = []
