@@ -652,7 +652,7 @@ class ADUC:
         tree_containers = self.conn.containers()
         items = [Item(Id(c[0]), c[1], True) for c in tree_containers]
         return VBox(
-            Tree(Id('aduc_tree'), Opt('notify', 'immediate', 'notifyContextMenu'), 'Active Directory Users and Computers', [
+            Tree(Id('aduc_tree'), Opt('notify', 'immediate', 'notifyContextMenu'), '', [
                 Item(self.realm.lower(), True, items),
             ]),
             HBox(ReplacePoint(Id('new_but'), MenuButton(Id('new'), Opt('disabled'), "New", [])), PushButton(Id('delete'), Opt('disabled'), "Delete"))
