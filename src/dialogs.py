@@ -3,6 +3,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import copy
 from complex import Connection
+from random import randint
 from yast import import_module
 import_module('Wizard')
 import_module('UI')
@@ -325,6 +326,12 @@ class NewObjDialog:
         return self.dialog[self.dialog_seq][0]
 
     def __user_dialog(self):
+        def unix_user_hook():
+            if 'homeDirectory' not in self.obj:
+                homedir = '/home/%s/%s' % (self.lp.get('workgroup'), self.obj['logon_name'])
+                UI.ChangeWidget('homeDirectory', 'Value', homedir)
+            if 'gecos' not in self.obj:
+                UI.ChangeWidget('gecos', 'Value', self.obj['cn'])
         return [
             [VBox(
                 HBox(
@@ -344,14 +351,15 @@ class NewObjDialog:
                 ))),
             ),
             ['givenName', 'initials', 'sn', 'cn', 'logon_name', 'sAMAccountName'], # known keys
-            ['cn', 'logon_name', 'sAMAccountName'] # required keys
+            ['cn', 'logon_name', 'sAMAccountName'], # required keys
+            None, # dialog hook
             ],
             [VBox(
-                TextEntry(Id('uidNumber'), 'UID number:'),
+                TextEntry(Id('uidNumber'), 'UID number:', str(randint(1000, 32767))),
                 TextEntry(Id('gidNumber'), 'GID number:'),
                 TextEntry(Id('gecos'), 'GECOS:'),
                 TextEntry(Id('homeDirectory'), 'Home directory:'),
-                TextEntry(Id('loginShell'), 'Login shell:'),
+                TextEntry(Id('loginShell'), 'Login shell:', '/bin/sh'),
                 Bottom(Right(HBox(
                     PushButton(Id('back'), '< Back'),
                     PushButton(Id('next'), 'Next >'),
@@ -359,7 +367,8 @@ class NewObjDialog:
                 ))),
             ),
             ['uidNumber', 'gidNumber', 'gecos', 'homeDirectory', 'loginShell'], # known keys
-            [] # required keys
+            [], # required keys
+            unix_user_hook, # dialog hook
             ],
             [VBox(
                 Left(Password(Id('userPassword'), 'Password:')),
@@ -375,7 +384,8 @@ class NewObjDialog:
                 ))),
             ),
             ['userPassword', 'confirm_passwd', 'must_change_passwd', 'cannot_change_passwd', 'passwd_never_expires', 'account_disabled'], # known keys
-            ['userPassword', 'confirm_passwd'] # required keys
+            ['userPassword', 'confirm_passwd'], # required keys
+            None, # dialog hook
             ],
         ]
 
@@ -384,7 +394,7 @@ class NewObjDialog:
             [VBox(
                 TextEntry(Id('name'), 'Group name:'),
                 TextEntry(Id('sAMAccountName'), 'Group name (pre-Windows 2000):'),
-                TextEntry(Id('gidNumber'), 'GID number:'),
+                TextEntry(Id('gidNumber'), 'GID number:', str(randint(1000, 32767))),
                 HBox(
                     Top(RadioButtonGroup(Id('group_scope'), VBox(
                         Left(Label('Group scope')),
@@ -404,7 +414,8 @@ class NewObjDialog:
                 ))),
             ),
             ['name', 'sAMAccountName', 'gidNumber', 'domain_local', 'global', 'universal', 'security'], # known keys
-            ['name', 'sAMAccountName'] # required keys
+            ['name', 'sAMAccountName'], # required keys
+            None, # dialog hook
             ],
         ]
 
@@ -422,7 +433,8 @@ class NewObjDialog:
                 ))),
             ),
             ['name', 'sAMAccountName', 'join_id', 'pre_win2k'], # known keys
-            ['name', 'sAMAccountName'] # required keys
+            ['name', 'sAMAccountName'], # required keys
+            None, # dialog hook
             ],
         ]
 
@@ -453,9 +465,15 @@ class NewObjDialog:
         for key in self.obj:
             UI.ChangeWidget(key, 'Value', self.obj[key])
 
+    def __dialog_hook(self):
+        hook = self.dialog[self.dialog_seq][3]
+        if hook:
+            hook()
+
     def Show(self):
         UI.OpenDialog(self.__new())
         while True:
+            self.__dialog_hook()
             ret = UI.UserInput()
             if str(ret) == 'abort' or str(ret) == 'cancel':
                 ret = None
