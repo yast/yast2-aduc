@@ -578,7 +578,6 @@ class ADUC:
             else:
                 raise Exception('ID not found in response %s' % str(event))
             choice = UI.QueryWidget('aduc_tree', 'Value')
-            print ("input is %s choice is %s"%(ret,choice))
             if str(ret) == 'abort' or (str(ret) == 'cancel' and not menu_open):
                 break
             menu_open = False
