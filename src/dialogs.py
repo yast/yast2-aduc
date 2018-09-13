@@ -327,9 +327,9 @@ class NewObjDialog:
                 ),
                 TextEntry(Id('sn'), UserDataModel['general']['sn']),
                 TextEntry(Id('cn'), 'Full name:'),
-                Left(Bottom(Label('User Logon name:'))),
+                Left(Bottom(Label(Id('logon_name_label'), 'User Logon name:'))),
                 Left(Left(HBox(InputField(Id('logon_name'), Opt('hstretch'), ''), InputField(Id('domainName'), Opt('hstretch', 'disabled'), '', '@%s' % self.realm)))),
-                Left(Bottom(Label('User Logon name (pre-windows 2000):'))),
+                Left(Bottom(Label(Id('sAMAccountName_label'), 'User Logon name (pre-windows 2000):'))),
                 Left(Left(HBox(InputField(Opt('hstretch', 'disabled'), '', '%s\\' % self.lp.get('workgroup')), InputField(Id('sAMAccountName'), Opt('hstretch'), '')))),
                 Bottom(Right(HBox(
                     PushButton(Id('back'), Opt('disabled'), '< Back'),
@@ -420,7 +420,16 @@ class NewObjDialog:
             ],
         ]
 
+    def __warn_label(self, key):
+        label = UI.QueryWidget('%s_label' % key, 'Value')
+        if not label:
+            label = UI.QueryWidget(key, 'Label')
+        if label[-2:] != ' *':
+            if not UI.ChangeWidget('%s_label' % key, 'Value', '%s *' % label):
+                UI.ChangeWidget(key, 'Label', '%s *' % label)
+
     def __fetch_values(self, back=False):
+        ret = True
         known_value_keys = self.dialog[self.dialog_seq][1]
         for key in known_value_keys:
             value = UI.QueryWidget(key, 'Value')
@@ -429,9 +438,10 @@ class NewObjDialog:
         required_value_keys = self.dialog[self.dialog_seq][2]
         for key in required_value_keys:
             if not key in self.obj or not self.obj[key]:
+                self.__warn_label(key)
                 ycpbuiltins.y2error('Missing value for %s' % key)
-                return False
-        return True
+                ret = False
+        return ret
 
     def __set_values(self):
         for key in self.obj:
