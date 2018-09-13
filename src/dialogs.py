@@ -8,6 +8,12 @@ import_module('Wizard')
 import_module('UI')
 from yast import *
 
+def have_x():
+    from subprocess import Popen, PIPE
+    p = Popen(['xset', '-q'], stdout=PIPE, stderr=PIPE)
+    return p.wait() == 0
+have_advanced_gui = have_x()
+
 def dump(obj):
     ycpbuiltins.y2debug("len obj %d" % len(obj))
     i = 0
@@ -598,17 +604,19 @@ class ADUC:
                 elif 'DC=' in choice:
                     current_container = choice
                     self.__refresh(current_container)
-                    UI.ReplaceWidget('new_but',  MenuButton(Id('new'), "New", [
-                        Item(Id('context_add_user'), 'User'),
-                        Item(Id('context_add_group'), 'Group'),
-                        Item(Id('context_add_computer'), 'Computer')
-                    ]))
-                    UI.ChangeWidget(Id('delete'), "Enabled", True)
+                    if not have_advanced_gui:
+                        UI.ReplaceWidget('new_but',  MenuButton(Id('new'), "New", [
+                            Item(Id('context_add_user'), 'User'),
+                            Item(Id('context_add_group'), 'Group'),
+                            Item(Id('context_add_computer'), 'Computer')
+                        ]))
+                        UI.ChangeWidget(Id('delete'), "Enabled", True)
                 else:
                     current_container = None
                     UI.ReplaceWidget('rightPane', Empty())
-                    UI.ReplaceWidget('new_but',  MenuButton(Id('new'), Opt('disabled'), "New", []))
-                    UI.ChangeWidget(Id('delete'), "Enabled", False)
+                    if not have_advanced_gui:
+                        UI.ReplaceWidget('new_but',  MenuButton(Id('new'), Opt('disabled'), "New", []))
+                        UI.ChangeWidget(Id('delete'), "Enabled", False)
             elif str(ret) == 'next':
                 return Symbol('abort')
             elif str(ret) == 'items':
@@ -661,11 +669,19 @@ class ADUC:
     def __aduc_tree(self):
         tree_containers = self.conn.containers()
         items = [Item(Id(c[0]), c[1], True) for c in tree_containers]
+        if not have_advanced_gui:
+            menu = HBox(ReplacePoint(Id('new_but'),
+                MenuButton(Id('new'), Opt('disabled'), "New", [])),
+                PushButton(Id('delete'), Opt('disabled'), "Delete")
+            )
+        else:
+            menu = Empty()
+
         return VBox(
             Tree(Id('aduc_tree'), Opt('notify', 'immediate', 'notifyContextMenu'), '', [
                 Item(self.realm.lower(), True, items),
             ]),
-            HBox(ReplacePoint(Id('new_but'), MenuButton(Id('new'), Opt('disabled'), "New", [])), PushButton(Id('delete'), Opt('disabled'), "Delete"))
+            menu
         )
 
     def __aduc_page(self):
