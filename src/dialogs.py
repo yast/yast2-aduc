@@ -97,7 +97,8 @@ class TabModel:
         self.props_map = copy.deepcopy(props_map)
         self.modified = False
     def set_value(self, key, value):
-        oldvalue = self.props_map.get(key, [""])[-1]
+        oldvalue = self.props_map.get(key, [six.b("")])[-1]
+        value = six.b(value) if six.PY3 else value
         if value != oldvalue:
             self.props_map[key] = [value]
             if not self.modified:

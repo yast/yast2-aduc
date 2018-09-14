@@ -215,7 +215,7 @@ class Connection:
             uac |= 0x10000
         if user_attrs['account_disabled']:
             uac |= 0x0002
-        ldap_modify(self.l, dn, stringify_ldap(modlist({'userAccountControl': attrs['userAccountControl']}, {'userAccountControl': [str(uac)]})))
+        ldap_modify(self.l, dn, modlist(stringify_ldap({'userAccountControl': attrs['userAccountControl']}), stringify_ldap({'userAccountControl': [str(uac)]})))
 
     def add_group(self, group_attrs, container=None):
         if not container:
@@ -276,12 +276,13 @@ class Connection:
             ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
 
     def update(self, dn, orig_map, modattr, addattr):
+        dn = dn if isinstance(dn, six.string_types) else dn.decode('utf8')
         try:
             if len(modattr):
                 oldattr = {}
                 for key in modattr:
                     oldattr[key] = orig_map.get(key, [])
-                ldap_modify(self.l, dn, stringify_ldap(modlist(oldattr, modattr)))
+                ldap_modify(self.l, dn, modlist(oldattr, stringify_ldap(modattr)))
             if len(addattr):
                 try:
                     ldap_add(self.l, dn, addlist(stringify_ldap(addattr)))
