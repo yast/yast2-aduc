@@ -124,7 +124,7 @@ class TabModel:
                 if key in self.props_orig.keys():
                     if self.props_map[key] != self.props_orig[key]:
                         ycpbuiltins.y2debug('attribute %s changed.. old %s -> new %s' % (key, self.props_orig.get(key, [])[-1], self.get_value(key)))
-                        if len(self.props_map[key]):
+                        if len(self.props_map[key]) == 0:
                             ycpbuiltins.y2debug("deleting %s" % key)
                             modattr[key] = []
                         else:
