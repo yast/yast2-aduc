@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import optparse
 from samba.param import LoadParm
 from samba.credentials import Credentials
+from yast import ycpbuiltins
 
 import os, sys, traceback
 
