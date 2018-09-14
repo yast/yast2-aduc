@@ -170,7 +170,7 @@ class Connection:
 
         attrs['displayName'] = user_attrs['cn']
         attrs['name'] = user_attrs['cn']
-        attrs['cn'] = user_attrs['cn']
+        attrs['cn'] = user_attrs['cn'].strip()
         if 'sn' in user_attrs:
             attrs['sn'] = user_attrs['sn']
         if 'givenName' in user_attrs:
@@ -226,7 +226,7 @@ class Connection:
 
         attrs = {}
         attrs['objectClass'] = ['top', 'group']
-        attrs['name'] = group_attrs['name']
+        attrs['name'] = group_attrs['name'].strip()
         attrs['sAMAccountName'] = group_attrs['sAMAccountName']
         dn = 'CN=%s,%s' % (attrs['name'], container)
         attrs['distinguishedName'] = dn
@@ -259,7 +259,7 @@ class Connection:
 
         attrs = {}
         attrs['objectClass'] = ['top', 'person', 'organizationalPerson', 'user', 'computer']
-        attrs['name'] = computer_attrs['name']
+        attrs['name'] = computer_attrs['name'].strip()
         attrs['cn'] = computer_attrs['name']
         attrs['sAMAccountName'] = '%s$' % computer_attrs['sAMAccountName']
         attrs['displayName'] = attrs['sAMAccountName']
