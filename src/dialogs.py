@@ -8,6 +8,7 @@ from yast import import_module
 import_module('Wizard')
 import_module('UI')
 from yast import *
+import six
 
 def have_x():
     from subprocess import Popen, PIPE
@@ -555,9 +556,9 @@ class ADUC:
         currentItemName = UI.QueryWidget('items', 'CurrentItem')
         searchList = self.conn.objects_list(container)
         currentItem = self.__find_by_name(searchList, currentItemName)
-        if 'computer' in currentItem[1]['objectClass']:
+        if six.b('computer') in currentItem[1]['objectClass']:
             edit = ComputerProps(self.conn, currentItem)
-        elif 'user' in currentItem[1]['objectClass']:
+        elif six.b('user') in currentItem[1]['objectClass']:
             edit = UserProps(self.conn, currentItem)
         else:
             return
@@ -676,7 +677,8 @@ class ADUC:
     def __find_by_name(self, alist, name):
         if name:
             for item in alist:
-                if item[1]['cn'][-1] == name:
+                key = item[1]['cn'][-1].decode('utf-8') if six.PY3 else item[1]['cn'][-1]
+                if key == name:
                     return item
         return None 
 

@@ -14,8 +14,7 @@ from ldap.modlist import modifyModlist as modlist
 import traceback
 from yast import ycpbuiltins
 
-PY3 = sys.version_info[0] == 3
-PY2 = sys.version_info[0] == 2
+import six
 
 class LdapException(Exception):
     def __init__(self, *args, **kwargs):
@@ -105,13 +104,10 @@ def stringify_ldap(data):
         for item in data:
             new_tuple.append(stringify_ldap(item))
         return tuple(new_tuple)
-    elif PY2 and type(data) == unicode:
+    elif six.PY2 and type(data) == unicode:
         return str(data)
-    elif PY3 and type(data) == bytes:
-        try:
-            return data.decode('utf-8')
-        except UnicodeDecodeError:
-            return data
+    elif six.PY3 and isinstance(data, six.string_types):
+        return data.encode('utf-8') # python3-ldap requires a bytes type
     else:
         return data
 
@@ -131,7 +127,8 @@ class Connection:
 
     def __kinit_for_gssapi(self):
         p = Popen(['kinit', '%s@%s' % (self.creds.get_username(), self.realm) if not self.realm in self.creds.get_username() else self.creds.get_username()], stdin=PIPE, stdout=PIPE)
-        p.stdin.write('%s\n' % self.creds.get_password())
+        p.stdin.write(('%s\n' % self.creds.get_password()).encode())
+        p.stdin.flush()
         return p.wait() == 0
 
     def realm_to_dn(self, realm):
