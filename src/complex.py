@@ -202,6 +202,7 @@ class Connection:
         except LdapException as e:
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
+            return
 
         try:
             self.net.set_password(attrs['sAMAccountName'], self.realm, user_attrs['userPassword'])
