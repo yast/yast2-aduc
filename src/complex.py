@@ -210,7 +210,11 @@ class Connection:
             return
 
         try:
-            self.net.set_password(attrs['sAMAccountName'], self.realm, user_attrs['userPassword'])
+            if six.PY3:
+                name = attrs['sAMAccountName'].decode('utf-8')
+            else:
+                name = attrs['sAMAccountName']
+            self.net.set_password(name, self.realm, user_attrs['userPassword'])
         except Exception as e:
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error(str(e))
