@@ -58,7 +58,10 @@ UserDataModel = {
         'postOfficeBox' : 'P.O. Box:',
         'st' : 'State/province:',
         'postalCode' : 'Zip/Postal Code:',
-        'co' : 'Country/Region:' }
+        'co' : 'Country/Region:' },
+    'account' : {
+        'userPrincipalName' : 'User Logon name:',
+        'sAMAccountName' : 'User Logon name (pre-windows 2000):' }
     }
 
 UserTabContents = {
@@ -88,7 +91,15 @@ UserTabContents = {
             ))),
             'data' : UserDataModel['general'],
             'title' : 'General'
-            }
+            },
+        'account' : {
+            'content' : (lambda model: MinSize(50, 30, VBox(
+                InputField(Id('userPrincipalName'), Opt('hstretch'), UserDataModel['account']['userPrincipalName'], model.get_value('userPrincipalName')),
+                InputField(Id('sAMAccountName'), Opt('hstretch'), UserDataModel['account']['sAMAccountName'], model.get_value('sAMAccountName')),
+            ))),
+            'data' : UserDataModel['account'],
+            'title' : 'Account'
+        }
         }
 
 class TabModel:
