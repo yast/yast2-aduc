@@ -64,6 +64,13 @@ UserDataModel = {
         'sAMAccountName' : 'User Logon name (pre-windows 2000):',
         'pwdLastSet' : 'User must change password at next logon',
         'userAccountControl' : None,
+        },
+    'unix_attrs' : {
+        'uidNumber' : 'UID number:',
+        'gidNumber' : 'GID number:',
+        'gecos' : 'GECOS:',
+        'homeDirectory' : 'Home directory:',
+        'loginShell' : 'Login shell:',
         }
     }
 
@@ -137,6 +144,18 @@ UserTabContents = {
             'data' : UserDataModel['account'],
             'title' : 'Account',
             'hook' : account_hook,
+        },
+        'unix_attrs' : {
+            'content' : (lambda model: MinSize(50, 30, VBox(
+                TextEntry(Id('uidNumber'), UserDataModel['unix_attrs']['uidNumber'], model.get_value('uidNumber')),
+                TextEntry(Id('gidNumber'), UserDataModel['unix_attrs']['gidNumber'], model.get_value('gidNumber')),
+                TextEntry(Id('gecos'), UserDataModel['unix_attrs']['gecos'], model.get_value('gecos')),
+                TextEntry(Id('homeDirectory'), UserDataModel['unix_attrs']['homeDirectory'], model.get_value('homeDirectory')),
+                TextEntry(Id('loginShell'), UserDataModel['unix_attrs']['loginShell'], model.get_value('loginShell')),
+            ))),
+            'data' : UserDataModel['unix_attrs'],
+            'title' : 'Unix Attributes',
+            'hook' : None,
         }
         }
 
@@ -414,11 +433,11 @@ class NewObjDialog:
             None, # dialog hook
             ],
             [VBox(
-                TextEntry(Id('uidNumber'), 'UID number:', str(randint(1000, 32767))),
-                TextEntry(Id('gidNumber'), 'GID number:'),
-                TextEntry(Id('gecos'), 'GECOS:'),
-                TextEntry(Id('homeDirectory'), 'Home directory:'),
-                TextEntry(Id('loginShell'), 'Login shell:', '/bin/sh'),
+                TextEntry(Id('uidNumber'), UserDataModel['unix_attrs']['uidNumber'], str(randint(1000, 32767))),
+                TextEntry(Id('gidNumber'), UserDataModel['unix_attrs']['gidNumber']),
+                TextEntry(Id('gecos'), UserDataModel['unix_attrs']['gecos']),
+                TextEntry(Id('homeDirectory'), UserDataModel['unix_attrs']['homeDirectory']),
+                TextEntry(Id('loginShell'), UserDataModel['unix_attrs']['loginShell'], '/bin/sh'),
                 Bottom(Right(HBox(
                     PushButton(Id('back'), '< Back'),
                     PushButton(Id('next'), 'Next >'),
