@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 import copy
-from complex import Connection
+from complex import Connection, strcmp
 from random import randint
 from yast import import_module
 import_module('Wizard')
@@ -99,7 +99,7 @@ class TabModel:
     def set_value(self, key, value):
         oldvalue = self.props_map.get(key, [six.b("")])[-1]
         value = six.b(value) if six.PY3 else value
-        if value != oldvalue:
+        if not strcmp(value, oldvalue):
             self.props_map[key] = [value]
             if not self.modified:
                 self.modified = True
@@ -122,7 +122,7 @@ class TabModel:
                 if key.startswith('idontknow'):
                     continue
                 if key in self.props_orig.keys():
-                    if self.props_map[key] != self.props_orig[key]:
+                    if not strcmp(self.props_map[key], self.props_orig[key]):
                         ycpbuiltins.y2debug('attribute %s changed.. old %s -> new %s' % (key, self.props_orig.get(key, [])[-1], self.get_value(key)))
                         if len(self.props_map[key]) == 0:
                             ycpbuiltins.y2debug("deleting %s" % key)
@@ -300,7 +300,7 @@ class NewObjDialog:
     def __init__(self, lp, obj_type, location):
         self.lp = lp
         self.obj = {}
-        self.obj['type'] = obj_type
+        self.obj_type = obj_type
         self.dialog_seq = 0
         self.dialog = None
         self.realm = self.lp.get('realm')
@@ -319,11 +319,11 @@ class NewObjDialog:
 
     def __fetch_pane(self):
         if not self.dialog:
-            if self.obj['type'] == 'user':
+            if strcmp(self.obj_type, 'user'):
                 self.dialog = self.__user_dialog()
-            elif self.obj['type'] == 'group':
+            elif strcmp(self.obj_type, 'group'):
                 self.dialog = self.__group_dialog()
-            elif self.obj['type'] == 'computer':
+            elif strcmp(self.obj_type, 'computer'):
                 self.dialog = self.__computer_dialog()
         return self.dialog[self.dialog_seq][0]
 
@@ -678,8 +678,7 @@ class ADUC:
     def __find_by_name(self, alist, name):
         if name:
             for item in alist:
-                key = item[1]['cn'][-1].decode('utf-8') if six.PY3 else item[1]['cn'][-1]
-                if key == name:
+                if strcmp(item[1]['cn'][-1], name):
                     return item
         return None 
 

@@ -16,6 +16,14 @@ from yast import ycpbuiltins
 
 import six
 
+def strcmp(first, second):
+    if six.PY3:
+        if isinstance(first, six.string_types):
+            first = six.binary_type(first, 'utf8')
+        if isinstance(second, six.string_types):
+            second = six.binary_type(second, 'utf8')
+    return first == second
+
 class LdapException(Exception):
     def __init__(self, *args, **kwargs):
         Exception.__init__(self, *args, **kwargs)
@@ -135,13 +143,13 @@ class Connection:
         return ','.join(['DC=%s' % part for part in realm.lower().split('.')])
 
     def __well_known_container(self, container):
-        if container == 'system':
+        if strcmp(container, 'system'):
             wkguiduc = 'AB1D30F3768811D1ADED00C04FD8D5CD'
-        elif container == 'computers':
+        elif strcmp(container, 'computers'):
             wkguiduc = 'AA312825768811D1ADED00C04FD8D5CD'
-        elif container == 'dcs':
+        elif strcmp(container, 'dcs'):
             wkguiduc = 'A361B2FFFFD211D1AA4B00C04FD7D83A'
-        elif container == 'users':
+        elif strcmp(container, 'users'):
             wkguiduc = 'A9D1CA15768811D1ADED00C04FD8D5CD'
         result = ldap_search_s(self.l, '<WKGUID=%s,%s>' % (wkguiduc, self.realm_to_dn(self.realm)), ldap.SCOPE_SUBTREE, '(objectClass=container)', stringify_ldap(['distinguishedName']))
         if result and len(result) > 0 and len(result[0]) > 1 and 'distinguishedName' in result[0][1] and len(result[0][1]['distinguishedName']) > 0:
@@ -158,7 +166,7 @@ class Connection:
     def add_user(self, user_attrs, container=None):
         if not container:
             container = self.__well_known_container('users')
-        if user_attrs['userPassword'] != user_attrs['confirm_passwd']:
+        if not strcmp(user_attrs['userPassword'], user_attrs['confirm_passwd']):
             raise Exception('The passwords do not match.')
         attrs = {}
 
