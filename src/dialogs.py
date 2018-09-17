@@ -99,21 +99,8 @@ def account_hook(key, val):
     return val
 
 UserTabContents = {
-        'address' : {
-            'content' : (lambda model: MinSize(50, 30, VBox(HBox(
-                Label(Id('street'), UserDataModel['address']['streetAddress']),
-                RichText(Id('streetAddress'), model.get_value('streetAddress'))),
-                Left(InputField(Id('postOfficeBox'), Opt('hstretch'), UserDataModel['address']['postOfficeBox'], model.get_value('postOfficeBox'))),
-                Left(InputField(Id('l'), Opt('hstretch'), UserDataModel['address']['l'], model.get_value('l'))),
-                Left(InputField(Id('st'), Opt('hstretch'), UserDataModel['address']['st'], model.get_value('st'))),
-                Left(InputField(Id('postalCode'), Opt('hstretch'), UserDataModel['address']['postalCode'], model.get_value('postalCode',))),
-                Left(InputField(Id('co'), Opt('hstretch'), UserDataModel['address']['co'], model.get_value('co')))))),
-            'data' : UserDataModel['address'],
-            'title' : 'Address',
-            'hook' : None,
-            },
         'general' : {
-            'content' : (lambda model: MinSize(50, 30, VBox(Left(HBox(
+            'content' : (lambda model: MinSize(50, 27, VBox(Left(HBox(
                 InputField(Id('givenName'), Opt('hstretch'), UserDataModel['general']['givenName'], model.get_value('givenName')),
                 InputField(Id('initials'), Opt('hstretch'), UserDataModel['general']['initials'], model.get_value('initials')))),
                 Left(InputField(Id('sn'), Opt('hstretch'), UserDataModel['general']['sn'], model.get_value('sn'))),
@@ -128,8 +115,21 @@ UserTabContents = {
             'title' : 'General',
             'hook' : None,
             },
+        'address' : {
+            'content' : (lambda model: MinSize(50, 27, VBox(
+                Left(MultiLineEdit(Id('streetAddress'), Opt('hstretch'), UserDataModel['address']['streetAddress'], model.get_value('streetAddress'))),
+                Left(InputField(Id('postOfficeBox'), Opt('hstretch'), UserDataModel['address']['postOfficeBox'], model.get_value('postOfficeBox'))),
+                Left(InputField(Id('l'), Opt('hstretch'), UserDataModel['address']['l'], model.get_value('l'))),
+                Left(InputField(Id('st'), Opt('hstretch'), UserDataModel['address']['st'], model.get_value('st'))),
+                Left(InputField(Id('postalCode'), Opt('hstretch'), UserDataModel['address']['postalCode'], model.get_value('postalCode',))),
+                Left(InputField(Id('co'), Opt('hstretch'), UserDataModel['address']['co'], model.get_value('co')))
+            ))),
+            'data' : UserDataModel['address'],
+            'title' : 'Address',
+            'hook' : None,
+            },
         'account' : {
-            'content' : (lambda model: MinSize(50, 30, VBox(
+            'content' : (lambda model: MinSize(50, 27, VBox(
                 Left(Label(UserDataModel['account']['userPrincipalName'])),
                 HBox(
                     InputField(Id('userPrincipalName'), Opt('hstretch'), '', model.get_value('userPrincipalName').split(six.b('@'))[0]),
@@ -146,7 +146,7 @@ UserTabContents = {
             'hook' : account_hook,
         },
         'unix_attrs' : {
-            'content' : (lambda model: MinSize(50, 30, VBox(
+            'content' : (lambda model: MinSize(50, 27, VBox(
                 TextEntry(Id('uidNumber'), UserDataModel['unix_attrs']['uidNumber'], model.get_value('uidNumber')),
                 TextEntry(Id('gidNumber'), UserDataModel['unix_attrs']['gidNumber'], model.get_value('gidNumber')),
                 TextEntry(Id('gecos'), UserDataModel['unix_attrs']['gecos'], model.get_value('gecos')),
@@ -316,7 +316,7 @@ ComputerDataModel = {
 
 ComputerTabContents = {
         'general' : {
-            'content' : (lambda model: MinSize(50, 30, VBox(
+            'content' : (lambda model: MinSize(50, 27, VBox(
                 InputField(Id('name'), Opt('disabled', 'hstretch'), ComputerDataModel['general']['name'], model.get_value('name')),
                 InputField(Id('dNSHostName'), Opt('disabled', 'hstretch'), ComputerDataModel['general']['dNSHostName'], model.get_value('dNSHostName')),
                 # #TODO find out what attribute site is
@@ -329,7 +329,7 @@ ComputerTabContents = {
             },
 
         'operating_system' : {
-            'content' : (lambda model: MinSize(50, 30, VBox(
+            'content' : (lambda model: MinSize(50, 27, VBox(
                   InputField(Id('operatingSystem'), Opt('disabled', 'hstretch'), ComputerDataModel['operating_system']['operatingSystem'], model.get_value('operatingSystem')),
                   InputField(Id('operatingSystemVersion'), Opt('disabled', 'hstretch'),ComputerDataModel['operating_system']['operatingSystemVersion'], model.get_value('operatingSystemVersion')),
                   InputField(Id('operatingSystemServicePack'), Opt('disabled', 'hstretch'), ComputerDataModel['operating_system']['operatingSystemServicePack'], model.get_value('operatingSystemServicePack'))))),
@@ -338,7 +338,7 @@ ComputerTabContents = {
             'hook' : None,
             },
         'location' : {
-            'content' : (lambda model: MinSize(50, 30, VBox(
+            'content' : (lambda model: MinSize(50, 27, VBox(
                 TextEntry(Id('location'), Opt('hstretch'), ComputerDataModel['location']['location'], model.get_value('location'))))),
             'data' : ComputerDataModel['location'],
             'title': 'Location',
