@@ -61,8 +61,35 @@ UserDataModel = {
         'co' : 'Country/Region:' },
     'account' : {
         'userPrincipalName' : 'User Logon name:',
-        'sAMAccountName' : 'User Logon name (pre-windows 2000):' }
+        'sAMAccountName' : 'User Logon name (pre-windows 2000):',
+        'pwdLastSet' : 'User must change password at next logon',
+        'userAccountControl' : None,
+        }
     }
+
+def account_hook(key, val):
+    if strcmp('userPrincipalName', key):
+        urealm = UI.QueryWidget('urealm', 'Value')
+        val = '%s%s' % (val, urealm)
+    elif strcmp('pwdLastSet', key):
+        if val:
+            val = '0'
+        else:
+            val = '-1'
+    elif strcmp('userAccountControl', key):
+        passwd_never_expires = UI.QueryWidget('passwd_never_expires', 'Value')
+        account_disabled = UI.QueryWidget('account_disabled', 'Value')
+        uac = int(val)
+        if passwd_never_expires:
+            uac |= 0x10000
+        else:
+            uac &= 0x10000
+        if account_disabled:
+            uac |= 0x0002
+        else:
+            uac &= 0x0002
+        val = str(uac)
+    return val
 
 UserTabContents = {
         'address' : {
@@ -75,7 +102,8 @@ UserTabContents = {
                 Left(InputField(Id('postalCode'), Opt('hstretch'), UserDataModel['address']['postalCode'], model.get_value('postalCode',))),
                 Left(InputField(Id('co'), Opt('hstretch'), UserDataModel['address']['co'], model.get_value('co')))))),
             'data' : UserDataModel['address'],
-            'title' : 'Address'
+            'title' : 'Address',
+            'hook' : None,
             },
         'general' : {
             'content' : (lambda model: MinSize(50, 30, VBox(Left(HBox(
@@ -90,15 +118,25 @@ UserTabContents = {
                 Left(InputField(Id('wWWHomePage'), Opt('hstretch'), UserDataModel['general']['wWWHomePage'], model.get_value('wWWHomePage')))
             ))),
             'data' : UserDataModel['general'],
-            'title' : 'General'
+            'title' : 'General',
+            'hook' : None,
             },
         'account' : {
             'content' : (lambda model: MinSize(50, 30, VBox(
-                InputField(Id('userPrincipalName'), Opt('hstretch'), UserDataModel['account']['userPrincipalName'], model.get_value('userPrincipalName')),
+                Left(Label(UserDataModel['account']['userPrincipalName'])),
+                HBox(
+                    InputField(Id('userPrincipalName'), Opt('hstretch'), '', model.get_value('userPrincipalName').split(six.b('@'))[0]),
+                    InputField(Id('urealm'), Opt('hstretch', 'disabled'), '', six.b('@%s') % model.get_value('userPrincipalName').split(six.b('@'))[-1])
+                ),
                 InputField(Id('sAMAccountName'), Opt('hstretch'), UserDataModel['account']['sAMAccountName'], model.get_value('sAMAccountName')),
+                Left(Label('Account options:')),
+                Left(CheckBox(Id('pwdLastSet'), UserDataModel['account']['pwdLastSet'], True if strcmp(model.get_value('pwdLastSet'), '0') else False)),
+                Left(CheckBox(Id('passwd_never_expires'), 'Password never expires', True if int(model.get_value('userAccountControl')) & 0x10000 else False)),
+                Left(CheckBox(Id('account_disabled'), 'Account is disabled', True if int(model.get_value('userAccountControl')) & 0x0002 else False)),
             ))),
             'data' : UserDataModel['account'],
-            'title' : 'Account'
+            'title' : 'Account',
+            'hook' : account_hook,
         }
         }
 
@@ -121,10 +159,15 @@ class TabModel:
     def is_modified(self):
         return self.modified
 
-    def update_from_view(self, tabData):
+    def update_from_view(self, tabData, hook):
         for key in tabData.keys():
             value = UI.QueryWidget(key, 'Value')
+            if value is None:
+                value = self.props_orig[key][-1]
+            if hook:
+                value = hook(key, value)
             self.set_value(key, value)
+
     def apply_changes(self, conn):
         if self.is_modified():
             modattr = {}
@@ -182,7 +225,7 @@ class TabProps(object):
                 next_tab = str(ret)
                 if next_tab != previous_tab:
                     # update the model of the tab we are switching away from
-                    self.tabModel.update_from_view(self.contents[previous_tab]['data'])
+                    self.tabModel.update_from_view(self.contents[previous_tab]['data'], self.contents[previous_tab]['hook'])
                     #switch tabs
                     UI.ReplaceWidget('tabContents', self.contents[next_tab]['content'](self.tabModel))
                     self.current_tab = next_tab
@@ -195,7 +238,7 @@ class TabProps(object):
         ycpbuiltins.y2debug('TabProps.Handleinput %s'%ret)
         if str(ret) in ('ok', 'cancel', 'apply') :
             ycpbuiltins.y2debug('updating model from tab view %s'%self.current_tab)
-            self.tabModel.update_from_view(self.contents[self.current_tab]['data'])
+            self.tabModel.update_from_view(self.contents[self.current_tab]['data'], self.contents[self.current_tab]['hook'])
             if str(ret) != 'cancel':
                 self.tabModel.apply_changes(self.conn)
             if str(ret) == 'apply':
@@ -262,7 +305,8 @@ ComputerTabContents = {
                 InputField(Id('description'), Opt('hstretch'), ComputerDataModel['general']['description'], model.get_value('description'))))),
 
             'data' : ComputerDataModel['general'],
-            'title': 'General'
+            'title': 'General',
+            'hook' : None,
             },
 
         'operating_system' : {
@@ -271,13 +315,15 @@ ComputerTabContents = {
                   InputField(Id('operatingSystemVersion'), Opt('disabled', 'hstretch'),ComputerDataModel['operating_system']['operatingSystemVersion'], model.get_value('operatingSystemVersion')),
                   InputField(Id('operatingSystemServicePack'), Opt('disabled', 'hstretch'), ComputerDataModel['operating_system']['operatingSystemServicePack'], model.get_value('operatingSystemServicePack'))))),
             'data' : ComputerDataModel['operating_system'],
-            'title': 'Operating System'
+            'title': 'Operating System',
+            'hook' : None,
             },
         'location' : {
             'content' : (lambda model: MinSize(50, 30, VBox(
                 TextEntry(Id('location'), Opt('hstretch'), ComputerDataModel['location']['location'], model.get_value('location'))))),
             'data' : ComputerDataModel['location'],
-            'title': 'Location'
+            'title': 'Location',
+            'hook' : None,
             }
         }
 
@@ -386,7 +432,7 @@ class NewObjDialog:
             [VBox(
                 Left(Password(Id('userPassword'), 'Password:')),
                 Left(Password(Id('confirm_passwd'), 'Confirm password:')),
-                Left(CheckBox(Id('must_change_passwd'), 'User must change password at next logon', True)),
+                Left(CheckBox(Id('must_change_passwd'), UserDataModel['account']['pwdLastSet'], True)),
                 Left(CheckBox(Id('cannot_change_passwd'), Opt('disabled'), 'User cannot change password')),
                 Left(CheckBox(Id('passwd_never_expires'), 'Password never expires')),
                 Left(CheckBox(Id('account_disabled'), 'Account is disabled')),
