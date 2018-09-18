@@ -132,8 +132,8 @@ UserTabContents = {
             'content' : (lambda model: VBox(
                 Left(Label(UserDataModel['account']['userPrincipalName'])),
                 HBox(
-                    InputField(Id('userPrincipalName'), Opt('hstretch'), '', model.get_value('userPrincipalName').split(six.b('@'))[0]),
-                    InputField(Id('urealm'), Opt('hstretch', 'disabled'), '', six.b('@%s') % model.get_value('userPrincipalName').split(six.b('@'))[-1])
+                    InputField(Id('userPrincipalName'), Opt('hstretch'), '', model.get_value('userPrincipalName').split(six.b('@'))[0] if model.contains('userPrincipalName') else ''),
+                    InputField(Id('urealm'), Opt('hstretch', 'disabled'), '', six.b('@%s') % model.get_value('userPrincipalName').split(six.b('@'))[-1] if model.contains('userPrincipalName') else '')
                 ),
                 InputField(Id('sAMAccountName'), Opt('hstretch'), UserDataModel['account']['sAMAccountName'], model.get_value('sAMAccountName')),
                 Left(Label('Account options:')),
@@ -147,11 +147,11 @@ UserTabContents = {
         },
         'unix_attrs' : {
             'content' : (lambda model: VBox(
-                TextEntry(Id('uidNumber'), Opt('hstretch'), UserDataModel['unix_attrs']['uidNumber'], model.get_value('uidNumber')),
-                TextEntry(Id('gidNumber'), Opt('hstretch'), UserDataModel['unix_attrs']['gidNumber'], model.get_value('gidNumber')),
-                TextEntry(Id('gecos'), Opt('hstretch'), UserDataModel['unix_attrs']['gecos'], model.get_value('gecos')),
-                TextEntry(Id('homeDirectory'), Opt('hstretch'), UserDataModel['unix_attrs']['homeDirectory'], model.get_value('homeDirectory')),
-                TextEntry(Id('loginShell'), Opt('hstretch'), UserDataModel['unix_attrs']['loginShell'], model.get_value('loginShell')),
+                TextEntry(Id('uidNumber'), Opt('hstretch'), UserDataModel['unix_attrs']['uidNumber'], model.get_value('uidNumber') if model.contains('uidNumber') else ''),
+                TextEntry(Id('gidNumber'), Opt('hstretch'), UserDataModel['unix_attrs']['gidNumber'], model.get_value('gidNumber') if model.contains('gidNumber') else ''),
+                TextEntry(Id('gecos'), Opt('hstretch'), UserDataModel['unix_attrs']['gecos'], model.get_value('gecos') if model.contains('gecos') else ''),
+                TextEntry(Id('homeDirectory'), Opt('hstretch'), UserDataModel['unix_attrs']['homeDirectory'], model.get_value('homeDirectory') if model.contains('homeDirectory') else ''),
+                TextEntry(Id('loginShell'), Opt('hstretch'), UserDataModel['unix_attrs']['loginShell'], model.get_value('loginShell') if model.contains('loginShell') else ''),
             )),
             'data' : UserDataModel['unix_attrs'],
             'title' : 'Unix Attributes',
@@ -174,6 +174,9 @@ class TabModel:
     def get_value(self, key):
         value = self.props_map.get(key, [""])[-1]
         return value
+
+    def contains(self, key):
+        return key in self.props_map
 
     def is_modified(self):
         return self.modified
@@ -219,7 +222,7 @@ class TabModel:
 
 class TabProps(object):
     def __init__(self, conn, obj, contents, start_tab):
-        self.obj = obj   
+        self.obj = obj
         self.conn = conn
         self.keys = self.obj[1].keys()
         self.props_map = self.obj[1]
