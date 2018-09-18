@@ -100,7 +100,7 @@ def account_hook(key, val):
 
 UserTabContents = {
         'general' : {
-            'content' : (lambda model: VBox(Left(HBox(
+            'content' : (lambda conn, model: VBox(Left(HBox(
                 InputField(Id('givenName'), Opt('hstretch'), UserDataModel['general']['givenName'], model.get_value('givenName')),
                 InputField(Id('initials'), Opt('hstretch'), UserDataModel['general']['initials'], model.get_value('initials')))),
                 Left(InputField(Id('sn'), Opt('hstretch'), UserDataModel['general']['sn'], model.get_value('sn'))),
@@ -116,7 +116,7 @@ UserTabContents = {
             'hook' : None,
             },
         'address' : {
-            'content' : (lambda model: VBox(
+            'content' : (lambda conn, model: VBox(
                 Left(MultiLineEdit(Id('streetAddress'), Opt('hstretch'), UserDataModel['address']['streetAddress'], model.get_value('streetAddress'))),
                 Left(InputField(Id('postOfficeBox'), Opt('hstretch'), UserDataModel['address']['postOfficeBox'], model.get_value('postOfficeBox'))),
                 Left(InputField(Id('l'), Opt('hstretch'), UserDataModel['address']['l'], model.get_value('l'))),
@@ -129,7 +129,7 @@ UserTabContents = {
             'hook' : None,
             },
         'account' : {
-            'content' : (lambda model: VBox(
+            'content' : (lambda conn, model: VBox(
                 Left(Label(UserDataModel['account']['userPrincipalName'])),
                 HBox(
                     InputField(Id('userPrincipalName'), Opt('hstretch'), '', model.get_value('userPrincipalName').split(six.b('@'))[0] if model.contains('userPrincipalName') else ''),
@@ -146,7 +146,7 @@ UserTabContents = {
             'hook' : account_hook,
         },
         'unix_attrs' : {
-            'content' : (lambda model: VBox(
+            'content' : (lambda conn, model: VBox(
                 TextEntry(Id('uidNumber'), Opt('hstretch'), UserDataModel['unix_attrs']['uidNumber'], model.get_value('uidNumber') if model.contains('uidNumber') else ''),
                 TextEntry(Id('gidNumber'), Opt('hstretch'), UserDataModel['unix_attrs']['gidNumber'], model.get_value('gidNumber') if model.contains('gidNumber') else ''),
                 TextEntry(Id('gecos'), Opt('hstretch'), UserDataModel['unix_attrs']['gecos'], model.get_value('gecos') if model.contains('gecos') else ''),
@@ -172,7 +172,9 @@ class TabModel:
             if not self.modified:
                 self.modified = True
     def get_value(self, key):
-        value = self.props_map.get(key, [""])[-1]
+        value = self.props_map.get(key, [""])
+        if len(value) == 1:
+            value = value[-1]
         return value
 
     def contains(self, key):
@@ -257,7 +259,7 @@ class TabProps(object):
         return multi
 
     def content(self, next_tab):
-        return self.contents[next_tab]['content'](self.tabModel)
+        return self.contents[next_tab]['content'](self.conn, self.tabModel)
 
     def Show(self):
         UI.OpenDialog(self.multitab())
@@ -323,7 +325,7 @@ ComputerDataModel = {
 
 ComputerTabContents = {
         'general' : {
-            'content' : (lambda model: VBox(
+            'content' : (lambda conn, model: VBox(
                 InputField(Id('name'), Opt('disabled', 'hstretch'), ComputerDataModel['general']['name'], model.get_value('name')),
                 InputField(Id('dNSHostName'), Opt('disabled', 'hstretch'), ComputerDataModel['general']['dNSHostName'], model.get_value('dNSHostName')),
                 # #TODO find out what attribute site is
@@ -336,7 +338,7 @@ ComputerTabContents = {
             },
 
         'operating_system' : {
-            'content' : (lambda model: VBox(
+            'content' : (lambda conn, model: VBox(
                   InputField(Id('operatingSystem'), Opt('disabled', 'hstretch'), ComputerDataModel['operating_system']['operatingSystem'], model.get_value('operatingSystem')),
                   InputField(Id('operatingSystemVersion'), Opt('disabled', 'hstretch'),ComputerDataModel['operating_system']['operatingSystemVersion'], model.get_value('operatingSystemVersion')),
                   InputField(Id('operatingSystemServicePack'), Opt('disabled', 'hstretch'), ComputerDataModel['operating_system']['operatingSystemServicePack'], model.get_value('operatingSystemServicePack')))),
@@ -345,7 +347,7 @@ ComputerTabContents = {
             'hook' : None,
             },
         'location' : {
-            'content' : (lambda model: VBox(
+            'content' : (lambda conn, model: VBox(
                 TextEntry(Id('location'), Opt('hstretch'), ComputerDataModel['location']['location'], model.get_value('location')))),
             'data' : ComputerDataModel['location'],
             'title': 'Location',
@@ -365,6 +367,9 @@ GroupDataModel = {
         'description' : 'Description:',
         'mail' : 'E-mail:',
         'groupType' : None,
+    },
+    'members' : {
+        'member' : None,
     }
 }
 
@@ -386,9 +391,29 @@ def group_general_hook(key, val):
         val = str(groupType)
     return val
 
+def group_members_content(conn, members):
+    if type(members) is not list:
+        members = [members]
+    items = []
+    for member in members:
+        if six.PY3:
+            member = member.decode('utf-8')
+        obj = conn.obj(member, attrs=['displayName', 'userPrincipalName'])[-1]
+        realm = obj['userPrincipalName'][-1].split(six.b('@'))[-1]
+        if six.PY3:
+            realm = realm.decode('utf-8')
+        realm_dn = ','.join(['DC=%s' % part for part in realm.lower().split('.')])
+        loc_dn = member[:member.lower().find(realm_dn.lower())-1]
+        location = '/'.join([i[3:] for i in reversed(loc_dn.split(','))])
+        items.append(Item(Id(member), obj['displayName'][-1], location))
+    return VBox(
+        Left(Label('Members:')),
+        Table(Id('members'), Opt('notify'), Header('Name', 'Active Directory Domain Services Folder'), items),
+    )
+
 GroupTabContents = {
     'general' : {
-        'content' : (lambda model: VBox(
+        'content' : (lambda conn, model: VBox(
             TextEntry(Id('sAMAccountName'), Opt('hstretch'), GroupDataModel['general']['sAMAccountName'], model.get_value('sAMAccountName')),
             TextEntry(Id('gidNumber'), Opt('hstretch'), GroupDataModel['general']['gidNumber'], model.get_value('gidNumber')),
             TextEntry(Id('description'), Opt('hstretch'), GroupDataModel['general']['description'], model.get_value('description')),
@@ -410,13 +435,19 @@ GroupTabContents = {
         'data' : GroupDataModel['general'],
         'title' : 'General',
         'hook' : group_general_hook,
+    },
+    'members' : {
+        'content' : (lambda conn, model: group_members_content(conn, model.get_value('member'))),
+        'data' : GroupDataModel['members'],
+        'title' : 'Members',
+        'hook' : None,
     }
 }
 
 class GroupProps(TabProps):
     def __init__(self, conn, obj):
         TabProps.__init__(self, conn, obj, GroupTabContents, 'general')
-        self.dimensions = (60, 19)
+        self.dimensions = (60, 24)
 
 class NewObjDialog:
     def __init__(self, lp, obj_type, location):

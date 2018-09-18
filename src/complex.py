@@ -160,6 +160,11 @@ class Connection:
         ret = ldap_search(self.l, self.realm_to_dn(self.realm), ldap.SCOPE_ONELEVEL, search, ['name', 'distinguishedName'])
         return [(e[0], e[1]['name'][-1]) for e in ret]
 
+    def obj(self, dn, attrs=[]):
+        if six.PY3 and type(dn) is bytes:
+            dn = dn.decode('utf-8')
+        return ldap_search(self.l, dn, ldap.SCOPE_BASE, '(objectClass=*)', attrs)[-1]
+
     def objects_list(self, container):
         return ldap_search_s(self.l, container, ldap.SCOPE_SUBTREE, '(|(objectCategory=person)(objectCategory=group)(objectCategory=computer))', [])
 
