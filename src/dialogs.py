@@ -166,7 +166,7 @@ class TabModel:
         self.modified = False
     def set_value(self, key, value):
         oldvalue = self.props_map.get(key, [six.b("")])[-1]
-        value = six.b(value) if six.PY3 else value
+        value = six.b(value) if six.PY3 and type(value) is not bytes else value
         if not strcmp(value, oldvalue):
             self.props_map[key] = [value]
             if not self.modified:
