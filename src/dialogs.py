@@ -435,8 +435,8 @@ class NewObjDialog:
             unix_user_hook, # dialog hook
             ],
             [VBox(
-                Left(Password(Id('userPassword'), 'Password:')),
-                Left(Password(Id('confirm_passwd'), 'Confirm password:')),
+                Left(Password(Id('userPassword'), Opt('hstretch'), 'Password:')),
+                Left(Password(Id('confirm_passwd'), Opt('hstretch'), 'Confirm password:')),
                 Left(CheckBox(Id('must_change_passwd'), UserDataModel['account']['pwdLastSet'], True)),
                 Left(CheckBox(Id('cannot_change_passwd'), Opt('disabled'), 'User cannot change password')),
                 Left(CheckBox(Id('passwd_never_expires'), 'Password never expires')),
