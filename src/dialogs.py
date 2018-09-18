@@ -650,6 +650,7 @@ class ADUC:
 
     def __obj_context_menu(self):
         return Term('menu', [
+            Item(Id('properties'), 'Properties'),
             Item(Id('delete'), 'Delete')
         ])
 
@@ -703,6 +704,8 @@ class ADUC:
                     UI.OpenContextMenu(self.__obj_context_menu())
                 else:
                     self.__show_properties(current_container)
+            elif str(ret) == 'properties':
+                self.__show_properties(current_container)
             elif str(ret) == 'context_add_user':
                 user = NewObjDialog(self.lp, 'user', current_container).Show()
                 if user:
