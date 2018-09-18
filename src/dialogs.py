@@ -226,10 +226,11 @@ class TabProps(object):
         self.tabModel = TabModel(self.props_map)
         self.contents = contents
         self.initial_tab = start_tab
+        self.dimensions = (60, 33)
         #dump(obj)
 
     def multitab(self):
-        multi = MinSize(60, 33, VBox(
+        multi = MinSize(*self.dimensions, VBox(
           DumbTab(Id('multitab'),
             [
                Item(Id(key), self.contents[key]['title']) for key in self.contents.keys()
@@ -352,6 +353,7 @@ ComputerTabContents = {
 class ComputerProps(TabProps):
     def __init__(self, conn, obj):
         TabProps.__init__(self, conn, obj, ComputerTabContents, 'general')
+        self.dimensions = (60, 19)
 
 class NewObjDialog:
     def __init__(self, lp, obj_type, location):
