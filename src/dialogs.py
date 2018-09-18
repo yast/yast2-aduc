@@ -186,11 +186,12 @@ class TabModel:
     def update_from_view(self, tabData, hook):
         for key in tabData.keys():
             value = UI.QueryWidget(key, 'Value')
-            if value is None:
+            if value is None and key in self.props_orig:
                 value = self.props_orig[key][-1]
             if hook:
                 value = hook(key, value)
-            self.set_value(key, value)
+            if value is not None:
+                self.set_value(key, value)
 
     def apply_changes(self, conn):
         if self.is_modified():
@@ -392,20 +393,27 @@ def group_general_hook(key, val):
     return val
 
 def group_members_content(conn, members):
-    if type(members) is not list:
+    if members and type(members) is not list:
         members = [members]
     items = []
     for member in members:
-        if six.PY3:
+        if six.PY3 and type(member) is bytes:
             member = member.decode('utf-8')
         obj = conn.obj(member, attrs=['displayName', 'userPrincipalName'])[-1]
-        realm = obj['userPrincipalName'][-1].split(six.b('@'))[-1]
-        if six.PY3:
-            realm = realm.decode('utf-8')
-        realm_dn = ','.join(['DC=%s' % part for part in realm.lower().split('.')])
-        loc_dn = member[:member.lower().find(realm_dn.lower())-1]
-        location = '/'.join([i[3:] for i in reversed(loc_dn.split(','))])
-        items.append(Item(Id(member), obj['displayName'][-1], location))
+        if 'userPrincipalName' in obj:
+            realm = obj['userPrincipalName'][-1].split(six.b('@'))[-1]
+            if six.PY3:
+                realm = realm.decode('utf-8')
+            realm_dn = ','.join(['DC=%s' % part for part in realm.lower().split('.')])
+            loc_dn = member[:member.lower().find(realm_dn.lower())-1]
+            location = '/'.join([i[3:] for i in reversed(loc_dn.split(','))])
+        else:
+            location = ''
+        if 'displayName' in obj:
+            displayName = obj['displayName'][-1]
+        else:
+            displayName = member.split(',')[0][3:]
+        items.append(Item(Id(member), displayName, location))
     return VBox(
         Left(Label('Members:')),
         Table(Id('members'), Opt('notify'), Header('Name', 'Active Directory Domain Services Folder'), items),
