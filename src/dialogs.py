@@ -419,10 +419,15 @@ def group_members_content(conn, members):
         else:
             displayName = member.split(',')[0][3:]
         items.append(Item(Id(member), displayName, location))
-    return VBox(
-        Left(Label('Members:')),
-        Table(Id('members'), Opt('notify'), Header('Name', 'Active Directory Domain Services Folder'), items),
-    )
+    return Frame('Members:', VBox(
+        VSpacing(.3),
+        VWeight(8, Table(Id('members'), Opt('notify'), Header('Name', 'Active Directory Domain Services Folder'), items)),
+        VStretch(),
+        VWeight(1, Left(HBox(
+            PushButton(Id('add'), Opt('disabled'), 'Add...'),
+            PushButton(Id('remove'), Opt('disabled'), 'Remove'),
+        )))
+    ))
 
 GroupTabContents = {
     'general' : {
