@@ -358,6 +358,34 @@ class ComputerProps(TabProps):
         TabProps.__init__(self, conn, obj, ComputerTabContents, 'general')
         self.dimensions = (60, 19)
 
+GroupDataModel = {
+    'general' : {
+        'sAMAccountName' : 'Group name (pre-Windows 2000):',
+        'gidNumber' : 'GID number:',
+        'description' : 'Description:',
+        'mail' : 'E-mail:',
+    }
+}
+
+GroupTabContents = {
+    'general' : {
+        'content' : (lambda model: VBox(
+            TextEntry(Id('sAMAccountName'), Opt('hstretch'), GroupDataModel['general']['sAMAccountName'], model.get_value('sAMAccountName')),
+            TextEntry(Id('gidNumber'), Opt('hstretch'), GroupDataModel['general']['gidNumber'], model.get_value('gidNumber')),
+            TextEntry(Id('description'), Opt('hstretch'), GroupDataModel['general']['description'], model.get_value('description')),
+            TextEntry(Id('mail'), Opt('hstretch'), GroupDataModel['general']['mail'], model.get_value('mail')),
+        )),
+        'data' : GroupDataModel['general'],
+        'title' : 'General',
+        'hook' : None,
+    }
+}
+
+class GroupProps(TabProps):
+    def __init__(self, conn, obj):
+        TabProps.__init__(self, conn, obj, GroupTabContents, 'general')
+        self.dimensions = (60, 19)
+
 class NewObjDialog:
     def __init__(self, lp, obj_type, location):
         self.lp = lp
@@ -623,6 +651,8 @@ class ADUC:
             edit = ComputerProps(self.conn, currentItem)
         elif six.b('user') in currentItem[1]['objectClass']:
             edit = UserProps(self.conn, currentItem)
+        elif six.b('group') in currentItem[1]['objectClass']:
+            edit = GroupProps(self.conn, currentItem)
         else:
             return
 
