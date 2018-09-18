@@ -166,7 +166,12 @@ class TabModel:
         self.modified = False
     def set_value(self, key, value):
         oldvalue = self.props_map.get(key, [six.b("")])[-1]
-        value = six.b(value) if six.PY3 and type(value) is not bytes else value
+        try:
+            value = six.b(value) if six.PY3 and type(value) is not bytes else value
+        except UnicodeEncodeError as e:
+            ycpbuiltins.y2error(str(e))
+            ycpbuiltins.y2error('Failed to encode "%s"' % value)
+            return
         if not strcmp(value, oldvalue):
             self.props_map[key] = [value]
             if not self.modified:
