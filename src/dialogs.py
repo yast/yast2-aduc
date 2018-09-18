@@ -364,8 +364,27 @@ GroupDataModel = {
         'gidNumber' : 'GID number:',
         'description' : 'Description:',
         'mail' : 'E-mail:',
+        'groupType' : None,
     }
 }
+
+def group_general_hook(key, val):
+    if strcmp(key, 'groupType'):
+        domain_local = UI.QueryWidget('domain_local', 'Value')
+        global_val = UI.QueryWidget('global', 'Value')
+        universal = UI.QueryWidget('universal', 'Value')
+        security = UI.QueryWidget('security', 'Value')
+        groupType = 0
+        if domain_local:
+            groupType |= 0x00000004
+        elif global_val:
+            groupType |= 0x00000002
+        elif universal:
+            groupType |= 0x00000008
+        if security:
+            groupType |= 0x80000000
+        val = str(groupType)
+    return val
 
 GroupTabContents = {
     'general' : {
@@ -374,10 +393,23 @@ GroupTabContents = {
             TextEntry(Id('gidNumber'), Opt('hstretch'), GroupDataModel['general']['gidNumber'], model.get_value('gidNumber')),
             TextEntry(Id('description'), Opt('hstretch'), GroupDataModel['general']['description'], model.get_value('description')),
             TextEntry(Id('mail'), Opt('hstretch'), GroupDataModel['general']['mail'], model.get_value('mail')),
+            HBox(
+                Top(RadioButtonGroup(Id('group_scope'), VBox(
+                    Left(Label('Group scope')),
+                    Left(RadioButton(Id('domain_local'), Opt('disabled' if int(model.get_value('groupType')) & 0x00000002 else ''), 'Domain local', True if int(model.get_value('groupType')) & 0x00000004 else False)),
+                    Left(RadioButton(Id('global'), Opt('disabled' if int(model.get_value('groupType')) & 0x00000004 else ''), 'Global', True if int(model.get_value('groupType')) & 0x00000002 else False)),
+                    Left(RadioButton(Id('universal'), 'Universal', True if int(model.get_value('groupType')) & 0x00000008 else False)),
+                ))),
+                Top(RadioButtonGroup(Id('group_type'), VBox(
+                    Left(Label('Group type')),
+                    Left(RadioButton(Id('security'), 'Security', True if int(model.get_value('groupType')) & 0x80000000 else False)),
+                    Left(RadioButton(Id('distribution'), 'Distribution', False if int(model.get_value('groupType')) & 0x80000000 else True)),
+                )))
+            ),
         )),
         'data' : GroupDataModel['general'],
         'title' : 'General',
-        'hook' : None,
+        'hook' : group_general_hook,
     }
 }
 
@@ -485,8 +517,8 @@ class NewObjDialog:
         return [
             [VBox(
                 TextEntry(Id('name'), 'Group name:'),
-                TextEntry(Id('sAMAccountName'), 'Group name (pre-Windows 2000):'),
-                TextEntry(Id('gidNumber'), 'GID number:', str(randint(1000, 32767))),
+                TextEntry(Id('sAMAccountName'), GroupDataModel['general']['sAMAccountName']),
+                TextEntry(Id('gidNumber'), GroupDataModel['general']['gidNumber'], str(randint(1000, 32767))),
                 HBox(
                     Top(RadioButtonGroup(Id('group_scope'), VBox(
                         Left(Label('Group scope')),
