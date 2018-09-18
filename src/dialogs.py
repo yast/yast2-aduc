@@ -100,7 +100,7 @@ def account_hook(key, val):
 
 UserTabContents = {
         'general' : {
-            'content' : (lambda model: MinSize(50, 27, VBox(Left(HBox(
+            'content' : (lambda model: VBox(Left(HBox(
                 InputField(Id('givenName'), Opt('hstretch'), UserDataModel['general']['givenName'], model.get_value('givenName')),
                 InputField(Id('initials'), Opt('hstretch'), UserDataModel['general']['initials'], model.get_value('initials')))),
                 Left(InputField(Id('sn'), Opt('hstretch'), UserDataModel['general']['sn'], model.get_value('sn'))),
@@ -110,26 +110,26 @@ UserTabContents = {
                 Left(InputField(Id('telephoneNumber'), Opt('hstretch'), UserDataModel['general']['telephoneNumber'], model.get_value('telephoneNumber'))),
                 Left(InputField(Id('mail'), Opt('hstretch'), UserDataModel['general']['mail'], model.get_value('mail'))),
                 Left(InputField(Id('wWWHomePage'), Opt('hstretch'), UserDataModel['general']['wWWHomePage'], model.get_value('wWWHomePage')))
-            ))),
+            )),
             'data' : UserDataModel['general'],
             'title' : 'General',
             'hook' : None,
             },
         'address' : {
-            'content' : (lambda model: MinSize(50, 27, VBox(
+            'content' : (lambda model: VBox(
                 Left(MultiLineEdit(Id('streetAddress'), Opt('hstretch'), UserDataModel['address']['streetAddress'], model.get_value('streetAddress'))),
                 Left(InputField(Id('postOfficeBox'), Opt('hstretch'), UserDataModel['address']['postOfficeBox'], model.get_value('postOfficeBox'))),
                 Left(InputField(Id('l'), Opt('hstretch'), UserDataModel['address']['l'], model.get_value('l'))),
                 Left(InputField(Id('st'), Opt('hstretch'), UserDataModel['address']['st'], model.get_value('st'))),
                 Left(InputField(Id('postalCode'), Opt('hstretch'), UserDataModel['address']['postalCode'], model.get_value('postalCode',))),
                 Left(InputField(Id('co'), Opt('hstretch'), UserDataModel['address']['co'], model.get_value('co')))
-            ))),
+            )),
             'data' : UserDataModel['address'],
             'title' : 'Address',
             'hook' : None,
             },
         'account' : {
-            'content' : (lambda model: MinSize(50, 27, VBox(
+            'content' : (lambda model: VBox(
                 Left(Label(UserDataModel['account']['userPrincipalName'])),
                 HBox(
                     InputField(Id('userPrincipalName'), Opt('hstretch'), '', model.get_value('userPrincipalName').split(six.b('@'))[0]),
@@ -137,22 +137,22 @@ UserTabContents = {
                 ),
                 InputField(Id('sAMAccountName'), Opt('hstretch'), UserDataModel['account']['sAMAccountName'], model.get_value('sAMAccountName')),
                 Left(Label('Account options:')),
-                Left(CheckBox(Id('pwdLastSet'), UserDataModel['account']['pwdLastSet'], True if strcmp(model.get_value('pwdLastSet'), '0') else False)),
-                Left(CheckBox(Id('passwd_never_expires'), 'Password never expires', True if int(model.get_value('userAccountControl')) & 0x10000 else False)),
-                Left(CheckBox(Id('account_disabled'), 'Account is disabled', True if int(model.get_value('userAccountControl')) & 0x0002 else False)),
-            ))),
+                Left(CheckBox(Id('pwdLastSet'), Opt('hstretch'), UserDataModel['account']['pwdLastSet'], True if strcmp(model.get_value('pwdLastSet'), '0') else False)),
+                Left(CheckBox(Id('passwd_never_expires'), Opt('hstretch'), 'Password never expires', True if int(model.get_value('userAccountControl')) & 0x10000 else False)),
+                Left(CheckBox(Id('account_disabled'), Opt('hstretch'), 'Account is disabled', True if int(model.get_value('userAccountControl')) & 0x0002 else False)),
+            )),
             'data' : UserDataModel['account'],
             'title' : 'Account',
             'hook' : account_hook,
         },
         'unix_attrs' : {
-            'content' : (lambda model: MinSize(50, 27, VBox(
-                TextEntry(Id('uidNumber'), UserDataModel['unix_attrs']['uidNumber'], model.get_value('uidNumber')),
-                TextEntry(Id('gidNumber'), UserDataModel['unix_attrs']['gidNumber'], model.get_value('gidNumber')),
-                TextEntry(Id('gecos'), UserDataModel['unix_attrs']['gecos'], model.get_value('gecos')),
-                TextEntry(Id('homeDirectory'), UserDataModel['unix_attrs']['homeDirectory'], model.get_value('homeDirectory')),
-                TextEntry(Id('loginShell'), UserDataModel['unix_attrs']['loginShell'], model.get_value('loginShell')),
-            ))),
+            'content' : (lambda model: VBox(
+                TextEntry(Id('uidNumber'), Opt('hstretch'), UserDataModel['unix_attrs']['uidNumber'], model.get_value('uidNumber')),
+                TextEntry(Id('gidNumber'), Opt('hstretch'), UserDataModel['unix_attrs']['gidNumber'], model.get_value('gidNumber')),
+                TextEntry(Id('gecos'), Opt('hstretch'), UserDataModel['unix_attrs']['gecos'], model.get_value('gecos')),
+                TextEntry(Id('homeDirectory'), Opt('hstretch'), UserDataModel['unix_attrs']['homeDirectory'], model.get_value('homeDirectory')),
+                TextEntry(Id('loginShell'), Opt('hstretch'), UserDataModel['unix_attrs']['loginShell'], model.get_value('loginShell')),
+            )),
             'data' : UserDataModel['unix_attrs'],
             'title' : 'Unix Attributes',
             'hook' : None,
@@ -228,8 +228,32 @@ class TabProps(object):
         self.initial_tab = start_tab
         #dump(obj)
 
-    def __multitab(self):
-        raise NotImplementedError()
+    def multitab(self):
+        multi = MinSize(60, 33, VBox(
+          DumbTab(Id('multitab'),
+            [
+               Item(Id(key), self.contents[key]['title']) for key in self.contents.keys()
+            ],
+            HBox(HSpacing(1), Left(
+                VBox(
+                    VSpacing(0.3),
+                    Top(
+                        ReplacePoint(Id('tabContents'), self.content(self.initial_tab))
+                    ),
+                    VSpacing(1),
+                    Bottom(
+                        HBox(PushButton(Id('ok'), "OK"), PushButton(Id('cancel'), "Cancel"),
+                        PushButton(Id('apply'), "Apply")),
+                    ),
+                    VSpacing(0.3),
+                ),
+            ),
+          HSpacing(1))),
+        ))
+        return multi
+
+    def content(self, next_tab):
+        return self.contents[next_tab]['content'](self.tabModel)
 
     def Show(self):
         UI.OpenDialog(self.multitab())
@@ -246,7 +270,7 @@ class TabProps(object):
                     # update the model of the tab we are switching away from
                     self.tabModel.update_from_view(self.contents[previous_tab]['data'], self.contents[previous_tab]['hook'])
                     #switch tabs
-                    UI.ReplaceWidget('tabContents', self.contents[next_tab]['content'](self.tabModel))
+                    UI.ReplaceWidget('tabContents', self.content(next_tab))
                     self.current_tab = next_tab
             if self.HandleInput(ret):
                 break
@@ -269,27 +293,6 @@ class TabProps(object):
 class UserProps(TabProps):
     def __init__(self, conn, obj):
         TabProps.__init__(self, conn, obj, UserTabContents, 'general')
-
-    def multitab(self):
-        multi = VBox(
-          DumbTab(Id('multitab'),
-            [
-               Item(Id(key), self.contents[key]['title']) for key in self.contents.keys()
-            ],
-            Left(
-                Top(
-                    VBox(
-                        VSpacing(0.3),
-                        HBox(
-                            HSpacing(1), ReplacePoint(Id('tabContents'), UserTabContents[self.initial_tab]['content'](self.tabModel)))
-                        )
-                    )
-                )
-          ), # true: selected
-          HBox(PushButton(Id('ok'), "OK"), PushButton(Id('cancel'), "Cancel"),
-              PushButton(Id('apply'), "Apply"))
-        )
-        return multi
 
    # return True (continue processing user input)
    # return False to break out
@@ -316,12 +319,12 @@ ComputerDataModel = {
 
 ComputerTabContents = {
         'general' : {
-            'content' : (lambda model: MinSize(50, 27, VBox(
+            'content' : (lambda model: VBox(
                 InputField(Id('name'), Opt('disabled', 'hstretch'), ComputerDataModel['general']['name'], model.get_value('name')),
                 InputField(Id('dNSHostName'), Opt('disabled', 'hstretch'), ComputerDataModel['general']['dNSHostName'], model.get_value('dNSHostName')),
                 # #TODO find out what attribute site is
                 InputField(Id('idontknow'), Opt('disabled', 'hstretch'), ComputerDataModel['general']['idontknow'], "Workstation or server"),
-                InputField(Id('description'), Opt('hstretch'), ComputerDataModel['general']['description'], model.get_value('description'))))),
+                InputField(Id('description'), Opt('hstretch'), ComputerDataModel['general']['description'], model.get_value('description')))),
 
             'data' : ComputerDataModel['general'],
             'title': 'General',
@@ -329,17 +332,17 @@ ComputerTabContents = {
             },
 
         'operating_system' : {
-            'content' : (lambda model: MinSize(50, 27, VBox(
+            'content' : (lambda model: VBox(
                   InputField(Id('operatingSystem'), Opt('disabled', 'hstretch'), ComputerDataModel['operating_system']['operatingSystem'], model.get_value('operatingSystem')),
                   InputField(Id('operatingSystemVersion'), Opt('disabled', 'hstretch'),ComputerDataModel['operating_system']['operatingSystemVersion'], model.get_value('operatingSystemVersion')),
-                  InputField(Id('operatingSystemServicePack'), Opt('disabled', 'hstretch'), ComputerDataModel['operating_system']['operatingSystemServicePack'], model.get_value('operatingSystemServicePack'))))),
+                  InputField(Id('operatingSystemServicePack'), Opt('disabled', 'hstretch'), ComputerDataModel['operating_system']['operatingSystemServicePack'], model.get_value('operatingSystemServicePack')))),
             'data' : ComputerDataModel['operating_system'],
             'title': 'Operating System',
             'hook' : None,
             },
         'location' : {
-            'content' : (lambda model: MinSize(50, 27, VBox(
-                TextEntry(Id('location'), Opt('hstretch'), ComputerDataModel['location']['location'], model.get_value('location'))))),
+            'content' : (lambda model: VBox(
+                TextEntry(Id('location'), Opt('hstretch'), ComputerDataModel['location']['location'], model.get_value('location')))),
             'data' : ComputerDataModel['location'],
             'title': 'Location',
             'hook' : None,
@@ -349,28 +352,6 @@ ComputerTabContents = {
 class ComputerProps(TabProps):
     def __init__(self, conn, obj):
         TabProps.__init__(self, conn, obj, ComputerTabContents, 'general')
-
-    def multitab(self):
-        multi = VBox(
-          DumbTab(Id('multitab'),
-            [
-               Item(Id(key), ComputerTabContents[key]['title']) for key in ComputerTabContents.keys() 
-            ],
-            Left(
-                Top(
-                    VBox(
-                        VSpacing(0.3),
-                        HBox(
-                            HSpacing(1), ReplacePoint(Id('tabContents'), ComputerTabContents[self.initial_tab]['content'](self.tabModel)))
-                        )
-                    )
-                )
-          ), # true: selected
-          HBox(PushButton(Id('ok'), "OK"), PushButton(Id('cancel'), "Cancel"),
-              PushButton(Id('apply'), "Apply"))
-        )
-
-        return multi
 
 class NewObjDialog:
     def __init__(self, lp, obj_type, location):
