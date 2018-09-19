@@ -792,7 +792,8 @@ class ADUC:
         currentItemName = UI.QueryWidget('items', 'CurrentItem')
         searchList = self.conn.objects_list(container)
         currentItem = self.__find_by_name(searchList, currentItemName)
-        self.conn.delete_obj(currentItem[0])
+        if self.__warn_delete(currentItem[-1]['name'][-1]):
+            self.conn.delete_obj(currentItem[0])
 
     def __get_creds(self, creds):
         if not creds.get_password():
@@ -950,6 +951,27 @@ class ADUC:
             elif str(ret) == 'refresh':
                 self.__refresh(current_container)
         return ret
+
+    def __warn_delete(self, name):
+        if six.PY3 and type(name) is bytes:
+            name = name.decode('utf-8')
+        ans = False
+        UI.OpenDialog(Opt('warncolor'), HBox(HSpacing(1), VBox(
+            VSpacing(.3),
+            Label('Are you sure you want to delete \'%s\'?' % name),
+            Right(HBox(
+                PushButton(Id('yes'), 'Yes'),
+                PushButton(Id('no'), 'No')
+            )),
+            VSpacing(.3),
+        ), HSpacing(1)))
+        ret = UI.UserInput()
+        if str(ret) == 'yes':
+            ans = True
+        elif str(ret) == 'no' or str(ret) == 'abort' or str(ret) == 'cancel':
+            ans = False
+        UI.CloseDialog()
+        return ans
 
     def __refresh(self, current_container, obj_id=None):
         if current_container:
