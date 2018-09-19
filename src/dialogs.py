@@ -710,10 +710,10 @@ class SearchDialog:
                 name = UI.QueryWidget('name', 'Value')
                 desc = UI.QueryWidget('description', 'Value')
                 if obj_type == 'Users, Contacts, and Groups':
-                    query = filter_format('(&(name=%s)(|(objectClass=person)(objectClass=group)))', (name,))
+                    query = filter_format('(&(|(name=%s)(cn=%s)(sAMAccountName=%s)(description=%s))(|(objectClass=person)(objectClass=group)))', (name, name, name, desc))
                     results = self.conn.search(query, location, ['name', 'description', 'objectClass'])
                 elif obj_type == 'Computers':
-                    query = filter_format('(&(name=%s)(objectCategory=computer))', (name,))
+                    query = filter_format('(&(|(name=%s)(cn=%s)(sAMAccountName=%s)(description=%s))(objectCategory=computer))', (name, name, name, desc))
                     results = self.conn.search(query, location, ['name', 'description', 'objectClass'])
                 UI.ReplaceWidget('search_results', self.search_results(results))
             elif str(ret) == 'results_table':
