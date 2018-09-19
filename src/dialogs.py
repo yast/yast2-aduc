@@ -403,6 +403,16 @@ def group_general_hook(key, val):
         val = str(groupType)
     return val
 
+def group_members_input(ret, conn, model):
+    members = model.get_value('member')
+    if members and type(members) is not list:
+        members = [members]
+    if str(ret) == 'remove':
+        selected = UI.QueryWidget('members', 'Value')
+        members = [m for m in members if not strcmp(m, selected)]
+        model.set_value('member', members)
+        UI.ReplaceWidget('group_members_tab', group_members_content(conn, members))
+
 def group_members_content(conn, members):
     if members and type(members) is not list:
         members = [members]
@@ -425,15 +435,22 @@ def group_members_content(conn, members):
         else:
             displayName = member.split(',')[0][3:]
         items.append(Item(Id(member), displayName, location))
+    opts = tuple()
+    if len(members) == 0:
+        opts = (Opt('disabled'),)
     return Frame('Members:', VBox(
         VSpacing(.3),
         VWeight(8, Table(Id('members'), Opt('notify'), Header('Name', 'Active Directory Domain Services Folder'), items)),
         VStretch(),
         VWeight(1, Left(HBox(
             PushButton(Id('add'), Opt('disabled'), 'Add...'),
-            PushButton(Id('remove'), Opt('disabled'), 'Remove'),
+            PushButton(Id('remove'), *opts, 'Remove'),
         )))
     ))
+
+def group_members_tab(conn, members):
+    content = group_members_content(conn, members)
+    return ReplacePoint(Id('group_members_tab'), content)
 
 GroupTabContents = {
     'general' : {
@@ -462,11 +479,11 @@ GroupTabContents = {
         'input_hook' : None,
     },
     'members' : {
-        'content' : (lambda conn, model: group_members_content(conn, model.get_value('member'))),
+        'content' : (lambda conn, model: group_members_tab(conn, model.get_value('member'))),
         'data' : GroupDataModel['members'],
         'title' : 'Members',
         'set_hook' : None,
-        'input_hook' : None,
+        'input_hook' : group_members_input,
     }
 }
 
