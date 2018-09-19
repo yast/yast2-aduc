@@ -155,9 +155,11 @@ class Connection:
         if result and len(result) > 0 and len(result[0]) > 1 and 'distinguishedName' in result[0][1] and len(result[0][1]['distinguishedName']) > 0:
             return result[0][1]['distinguishedName'][-1]
 
-    def containers(self):
+    def containers(self, container=None):
+        if not container:
+            container = self.realm_to_dn(self.realm)
         search = '(&(|(objectClass=organizationalUnit)(objectCategory=Container)(objectClass=builtinDomain))(!(|(cn=System)(cn=Program Data))))'
-        ret = ldap_search(self.l, self.realm_to_dn(self.realm), ldap.SCOPE_ONELEVEL, search, ['name', 'distinguishedName'])
+        ret = ldap_search(self.l, container, ldap.SCOPE_ONELEVEL, search, ['name', 'distinguishedName'])
         return [(e[0], e[1]['name'][-1]) for e in ret]
 
     def obj(self, dn, attrs=[]):
@@ -169,7 +171,7 @@ class Connection:
         return ldap_search_s(self.l, container, ldap.SCOPE_SUBTREE, query, attrs)
 
     def objects_list(self, container):
-        return ldap_search_s(self.l, container, ldap.SCOPE_SUBTREE, '(|(objectCategory=person)(objectCategory=group)(objectCategory=computer))', [])
+        return ldap_search_s(self.l, container, ldap.SCOPE_ONELEVEL, '(|(objectCategory=person)(objectCategory=group)(objectCategory=computer))', [])
 
     def add_user(self, user_attrs, container=None):
         if not container:

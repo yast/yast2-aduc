@@ -970,9 +970,13 @@ class ADUC:
         items = [Item(obj[1]['cn'][-1], obj[1]['objectClass'][-1].title(), obj[1]['description'][-1] if 'description' in obj[1] else '') for obj in self.conn.objects_list(container)]
         return Table(Id('items'), Opt('notify', 'notifyContextMenu'), Header('Name', 'Type', 'Description'), items)
 
+    def __sub_tree(self, dn):
+        tree_containers = self.conn.containers(dn)
+        return [Item(Id(c[0]), c[1], False, self.__sub_tree(c[0])) for c in tree_containers]
+
     def __aduc_tree(self):
         tree_containers = self.conn.containers()
-        items = [Item(Id(c[0]), c[1], True) for c in tree_containers]
+        items = [Item(Id(c[0]), c[1], False, self.__sub_tree(c[0])) for c in tree_containers]
         if not have_advanced_gui:
             menu = HBox(
                 PushButton(Id('find'),  Opt('disabled'), 'Find'),
