@@ -861,7 +861,7 @@ class ADUC:
                     Item(Id('context_add_user'), 'User'),
                     #Item(Id('context_add_shared_folder'), 'Shared Folder')
                 ]),
-            #Item(Id('context_refresh'), 'Refresh'),
+            Item(Id('refresh'), 'Refresh'),
             #Item(Id('context_properties'), 'Properties'),
             #Item(Id('context_help'), 'Help'),
             ])
@@ -910,6 +910,7 @@ class ADUC:
                         ]))
                         UI.ChangeWidget(Id('find'), 'Enabled', True)
                         UI.ChangeWidget(Id('delete'), "Enabled", True)
+                        UI.ChangeWidget(Id('refresh'), 'Enabled', True)
                 else:
                     current_container = None
                     UI.ReplaceWidget('rightPane', Empty())
@@ -946,6 +947,8 @@ class ADUC:
                 self.__refresh(current_container)
             elif str(ret) == 'find':
                 SearchDialog(self.lp, self.conn, current_container).Show()
+            elif str(ret) == 'refresh':
+                self.__refresh(current_container)
         return ret
 
     def __refresh(self, current_container, obj_id=None):
@@ -983,7 +986,8 @@ class ADUC:
                 ReplacePoint(Id('new_but'),
                     MenuButton(Id('new'), Opt('disabled'), "New", [])
                 ),
-                PushButton(Id('delete'), Opt('disabled'), "Delete")
+                PushButton(Id('delete'), Opt('disabled'), "Delete"),
+                PushButton(Id('refresh'), Opt('disabled'), 'Refresh')
             )
         else:
             menu = Empty()
