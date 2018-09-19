@@ -307,12 +307,6 @@ class UserProps(TabProps):
     def __init__(self, conn, obj):
         TabProps.__init__(self, conn, obj, UserTabContents, 'general')
 
-   # return True (continue processing user input)
-   # return False to break out
-    def HandleInput(self, ret):
-        ycpbuiltins.y2debug('UserProps.Handleinput %s'%ret)
-        return TabProps.HandleInput(self, ret)
-
 ComputerDataModel = {
         'general' : {
             'name' : 'Computer name (pre-Windows 2000):',
