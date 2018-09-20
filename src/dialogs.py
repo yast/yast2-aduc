@@ -114,7 +114,8 @@ UserTabContents = {
             )),
             'data' : UserDataModel['general'],
             'title' : 'General',
-            'hook' : None,
+            'set_hook' : None,
+            'input_hook' : None,
             },
         'address' : {
             'content' : (lambda conn, model: VBox(
@@ -127,7 +128,8 @@ UserTabContents = {
             )),
             'data' : UserDataModel['address'],
             'title' : 'Address',
-            'hook' : None,
+            'set_hook' : None,
+            'input_hook' : None,
             },
         'account' : {
             'content' : (lambda conn, model: VBox(
@@ -144,7 +146,8 @@ UserTabContents = {
             )),
             'data' : UserDataModel['account'],
             'title' : 'Account',
-            'hook' : account_hook,
+            'set_hook' : account_hook,
+            'input_hook' : None,
         },
         'unix_attrs' : {
             'content' : (lambda conn, model: VBox(
@@ -156,7 +159,8 @@ UserTabContents = {
             )),
             'data' : UserDataModel['unix_attrs'],
             'title' : 'Unix Attributes',
-            'hook' : None,
+            'set_hook' : None,
+            'input_hook' : None,
         }
         }
 
@@ -291,17 +295,20 @@ class TabProps(object):
                 next_tab = str(ret)
                 if next_tab != previous_tab:
                     # update the model of the tab we are switching away from
-                    self.tabModel.update_from_view(self.contents[previous_tab]['data'], self.contents[previous_tab]['hook'])
+                    self.tabModel.update_from_view(self.contents[previous_tab]['data'], self.contents[previous_tab]['set_hook'])
                     #switch tabs
                     UI.ReplaceWidget('tabContents', self.content(next_tab))
                     self.current_tab = next_tab
             if str(ret) in ('ok', 'apply'):
                 ycpbuiltins.y2debug('TabProps.Handleinput %s'%ret)
                 ycpbuiltins.y2debug('updating model from tab view %s'%self.current_tab)
-                self.tabModel.update_from_view(self.contents[self.current_tab]['data'], self.contents[self.current_tab]['hook'])
+                self.tabModel.update_from_view(self.contents[self.current_tab]['data'], self.contents[self.current_tab]['set_hook'])
                 self.tabModel.apply_changes(self.conn)
             if str(ret) in ('ok', 'cancel'):
                 break
+            if self.contents[self.current_tab]['input_hook']:
+                self.contents[self.current_tab]['input_hook'](ret, self.conn, self.tabModel)
+                continue
         UI.CloseDialog()
 
 class UserProps(TabProps):
@@ -336,7 +343,8 @@ ComputerTabContents = {
 
             'data' : ComputerDataModel['general'],
             'title': 'General',
-            'hook' : None,
+            'set_hook' : None,
+            'input_hook' : None,
             },
 
         'operating_system' : {
@@ -346,14 +354,16 @@ ComputerTabContents = {
                   InputField(Id('operatingSystemServicePack'), Opt('disabled', 'hstretch'), ComputerDataModel['operating_system']['operatingSystemServicePack'], model.get_value('operatingSystemServicePack')))),
             'data' : ComputerDataModel['operating_system'],
             'title': 'Operating System',
-            'hook' : None,
+            'set_hook' : None,
+            'input_hook' : None,
             },
         'location' : {
             'content' : (lambda conn, model: VBox(
                 TextEntry(Id('location'), Opt('hstretch'), ComputerDataModel['location']['location'], model.get_value('location')))),
             'data' : ComputerDataModel['location'],
             'title': 'Location',
-            'hook' : None,
+            'set_hook' : None,
+            'input_hook' : None,
             }
         }
 
@@ -448,13 +458,15 @@ GroupTabContents = {
         )),
         'data' : GroupDataModel['general'],
         'title' : 'General',
-        'hook' : group_general_hook,
+        'set_hook' : group_general_hook,
+        'input_hook' : None,
     },
     'members' : {
         'content' : (lambda conn, model: group_members_content(conn, model.get_value('member'))),
         'data' : GroupDataModel['members'],
         'title' : 'Members',
-        'hook' : None,
+        'set_hook' : None,
+        'input_hook' : None,
     }
 }
 
