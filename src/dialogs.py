@@ -202,9 +202,9 @@ class TabModel:
     def update_from_view(self, tabData, hook):
         for key in tabData.keys():
             value = UI.QueryWidget(key, 'Value')
-            if value is None and key in self.props_orig:
-                value = self.props_orig[key][-1]
             if hook:
+                if value is None:
+                    value = self.props_orig[key][-1]
                 value = hook(key, value)
             if value is not None:
                 self.set_value(key, value)
