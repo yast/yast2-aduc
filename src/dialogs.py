@@ -295,23 +295,14 @@ class TabProps(object):
                     #switch tabs
                     UI.ReplaceWidget('tabContents', self.content(next_tab))
                     self.current_tab = next_tab
-            if self.HandleInput(ret):
-                break
-
-   # return True (continue processing user input)
-   # return False to break out
-    def HandleInput(self, ret):
-        ycpbuiltins.y2debug('TabProps.Handleinput %s'%ret)
-        if str(ret) in ('ok', 'cancel', 'apply') :
-            ycpbuiltins.y2debug('updating model from tab view %s'%self.current_tab)
-            self.tabModel.update_from_view(self.contents[self.current_tab]['data'], self.contents[self.current_tab]['hook'])
-            if str(ret) != 'cancel':
+            if str(ret) in ('ok', 'apply'):
+                ycpbuiltins.y2debug('TabProps.Handleinput %s'%ret)
+                ycpbuiltins.y2debug('updating model from tab view %s'%self.current_tab)
+                self.tabModel.update_from_view(self.contents[self.current_tab]['data'], self.contents[self.current_tab]['hook'])
                 self.tabModel.apply_changes(self.conn)
-            if str(ret) == 'apply':
-                return False
-            UI.CloseDialog()
-            return True
-        return False
+            if str(ret) in ('ok', 'cancel'):
+                break
+        UI.CloseDialog()
 
 class UserProps(TabProps):
     def __init__(self, conn, obj):
