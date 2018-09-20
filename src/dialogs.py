@@ -947,7 +947,11 @@ class ADUC:
                 return Symbol('abort')
             elif str(ret) == 'items':
                 if event['EventReason'] == 'ContextMenuActivated':
-                    UI.OpenContextMenu(self.__obj_context_menu())
+                    check = UI.QueryWidget('items', 'CurrentItem')
+                    if check is None:
+                        UI.OpenContextMenu(self.__objs_context_menu())
+                    else:
+                        UI.OpenContextMenu(self.__obj_context_menu())
                 else:
                     self.__show_properties(current_container)
             elif str(ret) == 'properties':
