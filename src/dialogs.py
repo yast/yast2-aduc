@@ -448,6 +448,7 @@ def group_members_input(ret, conn, model):
         while True:
             ret = UI.UserInput()
             if str(ret) == 'abort' or str(ret) == 'select_cancel':
+                selection = None
                 break
             elif str(ret) == 'check_name':
                 name = UI.QueryWidget('name', 'Value')
@@ -459,9 +460,10 @@ def group_members_input(ret, conn, model):
                 selection = UI.QueryWidget('name_list', 'CurrentItem')
                 break
         UI.CloseDialog()
-        members.append(selection)
-        model.set_value('member', members)
-        UI.ReplaceWidget('group_members_tab', group_members_content(conn, members))
+        if selection is not None:
+            members.append(selection)
+            model.set_value('member', members)
+            UI.ReplaceWidget('group_members_tab', group_members_content(conn, members))
     elif str(ret) == 'remove':
         selected = UI.QueryWidget('members', 'Value')
         members = [m for m in members if not strcmp(m, selected)]
