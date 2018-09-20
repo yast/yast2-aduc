@@ -433,7 +433,7 @@ def search_group_member_dialog(conn):
     ), HSpacing(1))
 
 def select_name_list(results):
-    items = [Item(Id(r[0]), '%s (%s)' % (r[-1]['name'][-1], r[-1]['userPrincipalName'][-1]) if 'userPrincipalName' in r[-1] else r[-1]['name'][-1], False, []) for r in results]
+    items = [Item(Id(r[0]), six.b('%s (%s)') % (r[-1]['name'][-1], r[-1]['userPrincipalName'][-1]) if 'userPrincipalName' in r[-1] else r[-1]['name'][-1], False, []) for r in results]
     return Tree(Id('name_list'), '', items)
 
 def group_members_input(ret, conn, model):
