@@ -403,11 +403,66 @@ def group_general_hook(key, val):
         val = str(groupType)
     return val
 
+def search_group_member_dialog(conn):
+    return HBox(HSpacing(1), VBox(
+        VSpacing(.3),
+        Left(Label('Select this object type:')),
+        HBox(
+            TextEntry(Id('obj_type'), Opt('disabled'), '', 'Users, Groups, or Other objects'),
+            PushButton(Id('choose_obj_type'), Opt('disabled'), 'Object Types...'),
+        ),
+        Left(Label('From this location:')),
+        HBox(
+            TextEntry(Id('location'), Opt('disabled'), '', conn.realm_to_dn(conn.realm)),
+            PushButton(Id('choose_location'), Opt('disabled'), 'Locations...'),
+        ),
+        Left(Label('Enter the object name to select:')),
+        HBox(
+            MinSize(10, 3,
+                ReplacePoint(Id('check_name_rp'),
+                    MultiLineEdit(Id('name'), ''),
+                ),
+            ),
+            PushButton(Id('check_name'), 'Check Name')
+        ),
+        Right(HBox(
+            PushButton(Id('select_ok'), 'OK'),
+            PushButton(Id('select_cancel'), 'Cancel')
+        )),
+        VSpacing(.3),
+    ), HSpacing(1))
+
+def select_name_list(results):
+    items = [Item(Id(r[0]), '%s (%s)' % (r[-1]['name'][-1], r[-1]['userPrincipalName'][-1]) if 'userPrincipalName' in r[-1] else r[-1]['name'][-1], False, []) for r in results]
+    return Tree(Id('name_list'), '', items)
+
 def group_members_input(ret, conn, model):
     members = model.get_value('member')
     if members and type(members) is not list:
         members = [members]
-    if str(ret) == 'remove':
+    if not members:
+        members = []
+    if str(ret) == 'add':
+        selection = None
+        UI.OpenDialog(search_group_member_dialog(conn))
+        while True:
+            ret = UI.UserInput()
+            if str(ret) == 'abort' or str(ret) == 'select_cancel':
+                break
+            elif str(ret) == 'check_name':
+                name = UI.QueryWidget('name', 'Value')
+                location = UI.QueryWidget('location', 'Value')
+                query = filter_format('(&(|(name=%s)(cn=%s)(sAMAccountName=%s))(|(objectClass=person)(objectClass=group)))', (name, name, name))
+                results = conn.search(query, location, ['name', 'userPrincipalName'])
+                UI.ReplaceWidget('check_name_rp', select_name_list(results))
+            elif str(ret) == 'select_ok':
+                selection = UI.QueryWidget('name_list', 'CurrentItem')
+                break
+        UI.CloseDialog()
+        members.append(selection)
+        model.set_value('member', members)
+        UI.ReplaceWidget('group_members_tab', group_members_content(conn, members))
+    elif str(ret) == 'remove':
         selected = UI.QueryWidget('members', 'Value')
         members = [m for m in members if not strcmp(m, selected)]
         model.set_value('member', members)
@@ -443,7 +498,7 @@ def group_members_content(conn, members):
         VWeight(8, Table(Id('members'), Opt('notify'), Header('Name', 'Active Directory Domain Services Folder'), items)),
         VStretch(),
         VWeight(1, Left(HBox(
-            PushButton(Id('add'), Opt('disabled'), 'Add...'),
+            PushButton(Id('add'), 'Add...'),
             PushButton(Id('remove'), *opts, 'Remove'),
         )))
     ))

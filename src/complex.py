@@ -168,7 +168,7 @@ class Connection:
         return ldap_search(self.l, dn, ldap.SCOPE_BASE, '(objectClass=*)', attrs)[-1]
 
     def search(self, query, container, attrs=[]):
-        return ldap_search_s(self.l, container, ldap.SCOPE_SUBTREE, query, attrs)
+        return ldap_search(self.l, container, ldap.SCOPE_SUBTREE, query, attrs)
 
     def objects_list(self, container):
         return ldap_search_s(self.l, container, ldap.SCOPE_ONELEVEL, '(|(objectCategory=person)(objectCategory=group)(objectCategory=computer))', [])
