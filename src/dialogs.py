@@ -283,6 +283,7 @@ class TabProps(object):
         return self.contents[next_tab]['content'](self.conn, self.tabModel)
 
     def Show(self):
+        UI.SetApplicationTitle(six.b('%s Properties') % self.tabModel.get_value('name'))
         UI.OpenDialog(self.multitab())
         next_tab = self.initial_tab
         UI.ChangeWidget('multitab', 'CurrentItem', Id(next_tab))
@@ -444,6 +445,7 @@ def group_members_input(ret, conn, model):
         members = []
     if str(ret) == 'add':
         selection = None
+        UI.SetApplicationTitle('Select Users, Contacts, Computers, or Groups')
         UI.OpenDialog(search_group_member_dialog(conn))
         while True:
             ret = UI.UserInput()
@@ -726,6 +728,7 @@ class NewObjDialog:
             hook()
 
     def Show(self):
+        UI.SetApplicationTitle('New Object - %s' % self.obj_type.title())
         UI.OpenDialog(self.__new())
         while True:
             self.__dialog_hook()
@@ -775,6 +778,7 @@ class SearchDialog:
         edit.Show()
 
     def Show(self):
+        UI.SetApplicationTitle('Find Users, Contacts, and Groups')
         UI.OpenDialog(self.__dialog())
         while True:
             ret = UI.UserInput()
@@ -878,6 +882,7 @@ class ADUC:
 
     def __get_creds(self, creds):
         if not creds.get_password():
+            UI.SetApplicationTitle('Authenticate')
             UI.OpenDialog(self.__password_prompt(creds.get_username()))
             while True:
                 subret = UI.UserInput()
@@ -1041,6 +1046,7 @@ class ADUC:
         if six.PY3 and type(name) is bytes:
             name = name.decode('utf-8')
         ans = False
+        UI.SetApplicationTitle('Delete')
         UI.OpenDialog(Opt('warncolor'), HBox(HSpacing(1), VBox(
             VSpacing(.3),
             Label('Are you sure you want to delete \'%s\'?' % name),
