@@ -452,7 +452,7 @@ def group_members_input(ret, conn, model):
             elif str(ret) == 'check_name':
                 name = UI.QueryWidget('name', 'Value')
                 location = UI.QueryWidget('location', 'Value')
-                query = filter_format('(&(|(name=%s)(cn=%s)(sAMAccountName=%s))(|(objectClass=person)(objectClass=group)))', (name, name, name))
+                query = filter_format('(&(|(name=%s*)(cn=%s*)(sAMAccountName=%s*))(|(objectClass=person)(objectClass=group)))', (name, name, name))
                 results = conn.search(query, location, ['name', 'userPrincipalName'])
                 UI.ReplaceWidget('check_name_rp', select_name_list(results))
             elif str(ret) == 'select_ok':
