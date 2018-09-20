@@ -160,23 +160,33 @@ UserTabContents = {
         }
         }
 
+def compare(obj1, obj2):
+    if type(obj1) is list and type(obj2) is list:
+        if len(obj1) == len(obj2):
+            return all([compare(obj1[i], obj2[i]) for i in range(0, len(obj1))])
+    elif type(obj1) is dict and type(obj2) is dict:
+        if compare(sorted(obj1.keys()), sorted(obj2.keys())):
+            return all([compare(obj1[k], obj2[k]) for k in obj1.keys()])
+    elif all([isinstance(val, six.string_types+(bytes,)) for val in (obj1, obj2)]):
+        return strcmp(obj1, obj2)
+    else:
+        return obj1 == obj2
+
 class TabModel:
     def __init__(self, props_map):
         self.props_orig = props_map
         self.props_map = copy.deepcopy(props_map)
         self.modified = False
+
     def set_value(self, key, value):
-        oldvalue = self.props_map.get(key, [six.b("")])[-1]
-        try:
-            value = six.b(value) if six.PY3 and type(value) is not bytes else value
-        except UnicodeEncodeError as e:
-            ycpbuiltins.y2error(str(e))
-            ycpbuiltins.y2error('Failed to encode "%s"' % value)
-            return
-        if not strcmp(value, oldvalue):
-            self.props_map[key] = [value]
+        oldvalue = self.props_map.get(key, [six.b("")])
+        if type(oldvalue) == list and type(value) != list:
+            value = [value]
+        if not compare(oldvalue, value):
+            self.props_map[key] = value
             if not self.modified:
                 self.modified = True
+
     def get_value(self, key):
         value = self.props_map.get(key, [""])
         if len(value) == 1:
