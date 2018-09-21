@@ -13,6 +13,7 @@ from ldap.modlist import addModlist as addlist
 from ldap.modlist import modifyModlist as modlist
 import traceback
 from yast import ycpbuiltins
+from samba.credentials import Credentials, MUST_USE_KERBEROS
 
 import six
 
@@ -23,6 +24,14 @@ def strcmp(first, second):
         if isinstance(second, six.string_types):
             second = six.binary_type(second, 'utf8')
     return first == second
+
+def strcasecmp(first, second):
+    if six.PY3:
+        if isinstance(first, six.string_types):
+            first = six.binary_type(first, 'utf8')
+        if isinstance(second, six.string_types):
+            second = six.binary_type(second, 'utf8')
+    return first.lower() == second.lower()
 
 class LdapException(Exception):
     def __init__(self, *args, **kwargs):
@@ -57,6 +66,21 @@ def stringify_ldap(data):
         return data.encode('utf-8') # python3-ldap requires a bytes type
     else:
         return data
+
+# 09/21/2018 03:48:36  09/21/2018 13:48:36  ldap/win-dw0ohw3xqb9.froggy.suse.de@
+def validate_kinit(creds):
+    out, _ = Popen(['klist'], stdout=PIPE, stderr=PIPE).communicate()
+    m = re.findall(six.b('Default principal:\s*(\w+)@([\w\.]+)'), out)
+    if len(m) == 0:
+        return None
+    user, realm = m[0]
+    if not strcasecmp(user, creds.get_username()):
+        return None
+    if Popen(['klist', '-s'], stdout=PIPE, stderr=PIPE).wait() != 0:
+        return None
+    creds.set_kerberos_state(MUST_USE_KERBEROS)
+
+    return creds
 
 class Connection:
     def __init__(self, lp, creds):
@@ -266,7 +290,7 @@ class Connection:
         self.net = Net(creds=self.creds, lp=self.lp)
         cldap_ret = self.net.finddc(domain=self.realm, flags=(nbt.NBT_SERVER_LDAP | nbt.NBT_SERVER_DS))
         self.l = ldap.initialize('ldap://%s' % cldap_ret.pdc_dns_name)
-        if self.__kinit_for_gssapi():
+        if self.creds.get_kerberos_state() == MUST_USE_KERBEROS or self.__kinit_for_gssapi():
             auth_tokens = ldap.sasl.gssapi('')
             self.l.sasl_interactive_bind_s('', auth_tokens)
         else:

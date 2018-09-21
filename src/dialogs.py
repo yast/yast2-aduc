@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 import copy
-from complex import Connection, strcmp
+from complex import Connection, strcmp, validate_kinit
 from random import randint
 from yast import import_module
 import_module('Wizard')
@@ -11,6 +11,7 @@ from yast import *
 import six
 from ldap.filter import filter_format
 from ldap import SCOPE_SUBTREE as SUBTREE
+from samba.credentials import MUST_USE_KERBEROS
 
 def have_x():
     from subprocess import Popen, PIPE
@@ -927,6 +928,10 @@ class ADUC:
 
     def __get_creds(self, creds):
         if not creds.get_password():
+            if creds.get_username():
+                validate_kinit(self.creds)
+                if self.creds.get_kerberos_state() == MUST_USE_KERBEROS:
+                    return True
             UI.SetApplicationTitle('Authenticate')
             UI.OpenDialog(self.__password_prompt(creds.get_username()))
             while True:
