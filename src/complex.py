@@ -131,7 +131,7 @@ class Connection:
             auth_tokens = ldap.sasl.gssapi('')
             self.l.sasl_interactive_bind_s('', auth_tokens)
         else:
-            self.l.bind_s('%s@%s' % (creds.get_username(), self.realm) if not self.realm in creds.get_username() else creds.get_username(), creds.get_password())
+            ycpbuiltins.y2error('Failed to initialize ldap connection')
 
     def __kinit_for_gssapi(self):
         p = Popen(['kinit', '%s@%s' % (self.creds.get_username(), self.realm) if not self.realm in self.creds.get_username() else self.creds.get_username()], stdin=PIPE, stdout=PIPE)
