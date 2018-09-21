@@ -982,13 +982,7 @@ class ADUC:
                 break
             menu_open = False
             if str(ret) == 'aduc_tree':
-                if event['EventReason'] == 'ContextMenuActivated':
-                    if 'DC=' in choice:
-                        current_container = choice
-                    if current_container:
-                        menu_open = True
-                        UI.OpenContextMenu(self.__objs_context_menu())
-                elif 'DC=' in choice:
+                if 'DC=' in choice:
                     current_container = choice
                     self.__refresh(current_container)
                     if not have_advanced_gui:
@@ -1007,6 +1001,10 @@ class ADUC:
                         UI.ReplaceWidget('new_but',  MenuButton(Id('new'), Opt('disabled'), "New", []))
                         UI.ChangeWidget(Id('find'), 'Enabled', False)
                         UI.ChangeWidget(Id('delete'), "Enabled", False)
+                if event['EventReason'] == 'ContextMenuActivated':
+                    if current_container:
+                        menu_open = True
+                        UI.OpenContextMenu(self.__objs_context_menu())
             elif str(ret) == 'next':
                 return Symbol('abort')
             elif str(ret) == 'items':
