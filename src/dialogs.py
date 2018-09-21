@@ -415,7 +415,7 @@ def search_group_member_dialog(conn):
         Left(Label('From this location:')),
         HBox(
             TextEntry(Id('location'), Opt('disabled'), '', conn.realm_to_dn(conn.realm)),
-            PushButton(Id('choose_location'), Opt('disabled'), 'Locations...'),
+            PushButton(Id('choose_location'), 'Locations...'),
         ),
         Left(Label('Enter the object name to select:')),
         HBox(
@@ -432,6 +432,40 @@ def search_group_member_dialog(conn):
         )),
         VSpacing(.3),
     ), HSpacing(1))
+
+def sub_tree(conn, dn):
+    tree_containers = conn.containers(dn)
+    return [Item(Id(c[0]), c[1], False, sub_tree(conn, c[0])) for c in tree_containers]
+
+def search_group_member_location_dialog(conn):
+    tree_containers = conn.containers()
+    items = [Item(Id(c[0]), c[1], False, sub_tree(conn, c[0])) for c in tree_containers]
+
+    return MinSize(10, 5, HBox(HSpacing(1), VBox(
+        VSpacing(.3),
+        Tree(Id('location_tree'), '', [
+            Item(Id(conn.realm_to_dn(conn.realm)), conn.realm.lower(), True, items),
+        ]),
+        Right(HBox(
+            PushButton(Id('location_ok'), 'OK'),
+            PushButton(Id('location_cancel'), 'Cancel')
+        )),
+        VSpacing(.3),
+    ), HSpacing(1)))
+
+def search_group_member_location_input(conn):
+    UI.SetApplicationTitle('Locations')
+    UI.OpenDialog(search_group_member_location_dialog(conn))
+    location = None
+    while True:
+        ret = UI.UserInput()
+        if str(ret) == 'abort' or str(ret) == 'location_cancel':
+            break
+        elif str(ret) == 'location_ok':
+            location = UI.QueryWidget('location_tree', 'CurrentItem')
+            break
+    UI.CloseDialog()
+    return location
 
 def select_name_list(results):
     items = [Item(Id(r[0]), six.b('%s (%s)') % (r[-1]['name'][-1], r[-1]['userPrincipalName'][-1]) if 'userPrincipalName' in r[-1] else r[-1]['name'][-1], False, []) for r in results]
@@ -461,6 +495,10 @@ def group_members_input(ret, conn, model):
             elif str(ret) == 'select_ok':
                 selection = UI.QueryWidget('name_list', 'CurrentItem')
                 break
+            elif str(ret) == 'choose_location':
+                location = search_group_member_location_input(conn)
+                if location is not None:
+                    UI.ChangeWidget('location', 'Value', location)
         UI.CloseDialog()
         if selection is not None:
             members.append(selection)
