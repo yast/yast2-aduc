@@ -919,6 +919,8 @@ class ADUC:
         currentItemName = UI.QueryWidget('items', 'CurrentItem')
         searchList = self.conn.objects_list(container)
         currentItem = self.__find_by_name(searchList, currentItemName)
+        if currentItem is None:
+            return
         if six.b('computer') in currentItem[1]['objectClass']:
             edit = ComputerProps(self.conn, currentItem)
         elif six.b('user') in currentItem[1]['objectClass']:
