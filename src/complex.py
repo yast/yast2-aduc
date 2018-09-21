@@ -36,67 +36,6 @@ class LdapException(Exception):
         else:
             self.info = None
 
-def _ldap_exc_msg(e):
-    if len(e.args) > 0 and \
-      type(e.args[-1]) is dict and \
-      'desc' in e.args[-1]:
-        return e.args[-1]['desc']
-    else:
-        return str(e)
-
-def _ldap_exc_info(e):
-    if len(e.args) > 0 and \
-      type(e.args[-1]) is dict and \
-      'info' in e.args[-1]:
-        return e.args[-1]['info']
-    else:
-        return ''
-
-def ldap_search_s(l, *args):
-    try:
-        return l.search_s(*args)
-    except Exception as e:
-        ycpbuiltins.y2error(traceback.format_exc())
-        ycpbuiltins.y2error('ldap.search_s: %s\n' % _ldap_exc_msg(e))
-
-def ldap_search(l, *args):
-    result = []
-    try:
-        res_id = l.search(*args)
-        while 1:
-            t, d = l.result(res_id, 0)
-            if d == []:
-                break
-            else:
-                if t == ldap.RES_SEARCH_ENTRY:
-                    result.append(d[0])
-    except ldap.LDAPError:
-        pass
-    except Exception as e:
-        ycpbuiltins.y2error(traceback.format_exc())
-        ycpbuiltins.y2error('ldap.search: %s\n' % _ldap_exc_msg(e))
-    return result
-
-def ldap_add(l, *args):
-    try:
-        return l.add_s(*args)
-    except Exception as e:
-        raise LdapException(_ldap_exc_msg(e), _ldap_exc_info(e))
-
-def ldap_modify(l, *args):
-    try:
-        return l.modify(*args)
-    except Exception as e:
-        ycpbuiltins.y2error(traceback.format_exc())
-        ycpbuiltins.y2error('ldap.modify: %s\n' % _ldap_exc_msg(e))
-
-def ldap_delete(l, *args):
-    try:
-        return l.delete_s(*args)
-    except Exception as e:
-        ycpbuiltins.y2error(traceback.format_exc())
-        ycpbuiltins.y2error('ldap.delete_s: %s\n' % _ldap_exc_msg(e))
-
 def stringify_ldap(data):
     if type(data) == dict:
         for key, value in data.items():
@@ -124,14 +63,7 @@ class Connection:
         self.lp = lp
         self.creds = creds
         self.realm = lp.get('realm')
-        self.net = Net(creds=creds, lp=lp)
-        cldap_ret = self.net.finddc(domain=self.realm, flags=(nbt.NBT_SERVER_LDAP | nbt.NBT_SERVER_DS))
-        self.l = ldap.initialize('ldap://%s' % cldap_ret.pdc_dns_name)
-        if self.__kinit_for_gssapi():
-            auth_tokens = ldap.sasl.gssapi('')
-            self.l.sasl_interactive_bind_s('', auth_tokens)
-        else:
-            ycpbuiltins.y2error('Failed to initialize ldap connection')
+        self.__ldap_connect()
 
     def __kinit_for_gssapi(self):
         p = Popen(['kinit', '%s@%s' % (self.creds.get_username(), self.realm) if not self.realm in self.creds.get_username() else self.creds.get_username()], stdin=PIPE, stdout=PIPE)
@@ -151,7 +83,7 @@ class Connection:
             wkguiduc = 'A361B2FFFFD211D1AA4B00C04FD7D83A'
         elif strcmp(container, 'users'):
             wkguiduc = 'A9D1CA15768811D1ADED00C04FD8D5CD'
-        result = ldap_search_s(self.l, '<WKGUID=%s,%s>' % (wkguiduc, self.realm_to_dn(self.realm)), ldap.SCOPE_SUBTREE, '(objectClass=container)', stringify_ldap(['distinguishedName']))
+        result = self.ldap_search_s('<WKGUID=%s,%s>' % (wkguiduc, self.realm_to_dn(self.realm)), ldap.SCOPE_SUBTREE, '(objectClass=container)', stringify_ldap(['distinguishedName']))
         if result and len(result) > 0 and len(result[0]) > 1 and 'distinguishedName' in result[0][1] and len(result[0][1]['distinguishedName']) > 0:
             return result[0][1]['distinguishedName'][-1]
 
@@ -159,19 +91,16 @@ class Connection:
         if not container:
             container = self.realm_to_dn(self.realm)
         search = '(&(|(objectClass=organizationalUnit)(objectCategory=Container)(objectClass=builtinDomain))(!(|(cn=System)(cn=Program Data))))'
-        ret = ldap_search(self.l, container, ldap.SCOPE_ONELEVEL, search, ['name', 'distinguishedName'])
+        ret = self.ldap_search(container, ldap.SCOPE_ONELEVEL, search, ['name', 'distinguishedName'])
         return [(e[0], e[1]['name'][-1]) for e in ret]
 
     def obj(self, dn, attrs=[]):
         if six.PY3 and type(dn) is bytes:
             dn = dn.decode('utf-8')
-        return ldap_search(self.l, dn, ldap.SCOPE_BASE, '(objectClass=*)', attrs)[-1]
-
-    def search(self, query, container, attrs=[]):
-        return ldap_search(self.l, container, ldap.SCOPE_SUBTREE, query, attrs)
+        return self.ldap_search(dn, ldap.SCOPE_BASE, '(objectClass=*)', attrs)[-1]
 
     def objects_list(self, container):
-        return ldap_search_s(self.l, container, ldap.SCOPE_ONELEVEL, '(|(objectCategory=person)(objectCategory=group)(objectCategory=computer))', [])
+        return self.ldap_search_s(container, ldap.SCOPE_ONELEVEL, '(|(objectCategory=person)(objectCategory=group)(objectCategory=computer))', [])
 
     def add_user(self, user_attrs, container=None):
         if not container:
@@ -213,7 +142,7 @@ class Connection:
             attrs['pwdLastSet'] = '-1'
 
         try:
-            ldap_add(self.l, dn, addlist(stringify_ldap(attrs)))
+            self.ldap_add(dn, addlist(stringify_ldap(attrs)))
         except LdapException as e:
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
@@ -237,7 +166,7 @@ class Connection:
             uac |= 0x10000
         if user_attrs['account_disabled']:
             uac |= 0x0002
-        ldap_modify(self.l, dn, modlist(stringify_ldap({'userAccountControl': attrs['userAccountControl']}), stringify_ldap({'userAccountControl': [str(uac)]})))
+        self.ldap_modify(dn, modlist(stringify_ldap({'userAccountControl': attrs['userAccountControl']}), stringify_ldap({'userAccountControl': [str(uac)]})))
 
     def add_group(self, group_attrs, container=None):
         if not container:
@@ -267,7 +196,7 @@ class Connection:
         attrs['groupType'] = [str(groupType)]
 
         try:
-            ldap_add(self.l, dn, addlist(stringify_ldap(attrs)))
+            self.ldap_add(dn, addlist(stringify_ldap(attrs)))
         except LdapException as e:
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
@@ -292,7 +221,7 @@ class Connection:
         attrs['servicePrincipalName'] = ['HOST/%s' % attrs['name'], 'HOST/%s' % attrs['dNSHostName']]
 
         try:
-            ldap_add(self.l, dn, addlist(stringify_ldap(attrs)))
+            self.ldap_add(dn, addlist(stringify_ldap(attrs)))
         except LdapException as e:
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
@@ -304,10 +233,10 @@ class Connection:
                 oldattr = {}
                 for key in modattr:
                     oldattr[key] = orig_map.get(key, [])
-                ldap_modify(self.l, dn, modlist(oldattr, stringify_ldap(modattr)))
+                self.ldap_modify(dn, modlist(oldattr, stringify_ldap(modattr)))
             if len(addattr):
                 try:
-                    ldap_add(self.l, dn, addlist(stringify_ldap(addattr)))
+                    self.ldap_add(dn, addlist(stringify_ldap(addattr)))
                 except LdapException as e:
                     ycpbuiltins.y2error(traceback.format_exc())
                     ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
@@ -317,6 +246,94 @@ class Connection:
             return False
         return True
 
-    def delete_obj(self, dn):
-        ldap_delete(self.l, dn)
+    def __ldap_exc_msg(self, e):
+        if len(e.args) > 0 and \
+          type(e.args[-1]) is dict and \
+          'desc' in e.args[-1]:
+            return e.args[-1]['desc']
+        else:
+            return str(e)
+
+    def __ldap_exc_info(self, e):
+        if len(e.args) > 0 and \
+          type(e.args[-1]) is dict and \
+          'info' in e.args[-1]:
+            return e.args[-1]['info']
+        else:
+            return ''
+
+    def __ldap_connect(self):
+        self.net = Net(creds=self.creds, lp=self.lp)
+        cldap_ret = self.net.finddc(domain=self.realm, flags=(nbt.NBT_SERVER_LDAP | nbt.NBT_SERVER_DS))
+        self.l = ldap.initialize('ldap://%s' % cldap_ret.pdc_dns_name)
+        if self.__kinit_for_gssapi():
+            auth_tokens = ldap.sasl.gssapi('')
+            self.l.sasl_interactive_bind_s('', auth_tokens)
+        else:
+            ycpbuiltins.y2error('Failed to initialize ldap connection')
+
+    def ldap_search_s(self, *args):
+        try:
+            try:
+                return self.l.search_s(*args)
+            except ldap.SERVER_DOWN:
+                self.__ldap_connect()
+                return self.l.search_s(*args)
+        except Exception as e:
+            ycpbuiltins.y2error(traceback.format_exc())
+            ycpbuiltins.y2error('ldap.search_s: %s\n' % self.__ldap_exc_msg(e))
+
+    def ldap_search(self, *args):
+        result = []
+        try:
+            try:
+                res_id = self.l.search(*args)
+            except ldap.SERVER_DOWN:
+                self.__ldap_connect()
+                res_id = self.l.search(*args)
+            while 1:
+                t, d = self.l.result(res_id, 0)
+                if d == []:
+                    break
+                else:
+                    if t == ldap.RES_SEARCH_ENTRY:
+                        result.append(d[0])
+        except ldap.LDAPError:
+            pass
+        except Exception as e:
+            ycpbuiltins.y2error(traceback.format_exc())
+            ycpbuiltins.y2error('ldap.search: %s\n' % self.__ldap_exc_msg(e))
+        return result
+
+    def ldap_add(self, *args):
+        try:
+            try:
+                return self.l.add_s(*args)
+            except ldap.SERVER_DOWN:
+                self.__ldap_connect()
+                return self.l.add_s(*args)
+        except Exception as e:
+            raise LdapException(self.__ldap_exc_msg(e), self.__ldap_exc_info(e))
+
+    def ldap_modify(self, *args):
+        try:
+            try:
+                return self.l.modify(*args)
+            except ldap.SERVER_DOWN:
+                self.__ldap_connect()
+                return self.l.modify(*args)
+        except Exception as e:
+            ycpbuiltins.y2error(traceback.format_exc())
+            ycpbuiltins.y2error('ldap.modify: %s\n' % self.__ldap_exc_msg(e))
+
+    def ldap_delete(self, *args):
+        try:
+            try:
+                return self.l.delete_s(*args)
+            except ldap.SERVER_DOWN:
+                self.__ldap_connect()
+                return self.l.delete_s(*args)
+        except Exception as e:
+            ycpbuiltins.y2error(traceback.format_exc())
+            ycpbuiltins.y2error('ldap.delete_s: %s\n' % self.__ldap_exc_msg(e))
 

@@ -10,6 +10,7 @@ import_module('UI')
 from yast import *
 import six
 from ldap.filter import filter_format
+from ldap import SCOPE_SUBTREE as SUBTREE
 
 def have_x():
     from subprocess import Popen, PIPE
@@ -490,7 +491,7 @@ def group_members_input(ret, conn, model):
                 name = UI.QueryWidget('name', 'Value')
                 location = UI.QueryWidget('location', 'Value')
                 query = filter_format('(&(|(name=%s*)(cn=%s*)(sAMAccountName=%s*))(|(objectClass=person)(objectClass=group)))', (name, name, name))
-                results = conn.search(query, location, ['name', 'userPrincipalName'])
+                results = conn.ldap_search(location, SUBTREE, query, ['name', 'userPrincipalName'])
                 UI.ReplaceWidget('check_name_rp', select_name_list(results))
             elif str(ret) == 'select_ok':
                 selection = UI.QueryWidget('name_list', 'CurrentItem')
@@ -834,10 +835,10 @@ class SearchDialog:
                 desc = UI.QueryWidget('description', 'Value')
                 if obj_type == 'Users, Contacts, and Groups':
                     query = filter_format('(&(|(name=%s*)(cn=%s*)(sAMAccountName=%s*)(description=%s*))(|(objectClass=person)(objectClass=group)))', (name, name, name, desc))
-                    results = self.conn.search(query, location, ['name', 'description', 'objectClass'])
+                    results = self.conn.ldap_search(location, SUBTREE, query, ['name', 'description', 'objectClass'])
                 elif obj_type == 'Computers':
                     query = filter_format('(&(|(name=%s*)(cn=%s*)(sAMAccountName=%s*)(description=%s*))(objectCategory=computer))', (name, name, name, desc))
-                    results = self.conn.search(query, location, ['name', 'description', 'objectClass'])
+                    results = self.conn.ldap_search(location, SUBTREE, query, ['name', 'description', 'objectClass'])
                 UI.ReplaceWidget('search_results', self.search_results(results))
             elif str(ret) == 'results_table':
                 dn = UI.QueryWidget('results_table', 'Value')
@@ -916,7 +917,7 @@ class ADUC:
         searchList = self.conn.objects_list(container)
         currentItem = self.__find_by_name(searchList, currentItemName)
         if self.__warn_delete(currentItem[-1]['name'][-1]):
-            self.conn.delete_obj(currentItem[0])
+            self.conn.ldap_delete(currentItem[0])
 
     def __get_creds(self, creds):
         if not creds.get_password():
