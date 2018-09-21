@@ -832,12 +832,18 @@ class SearchDialog:
                     location = self.realm
                 obj_type = UI.QueryWidget('obj_type', 'Value')
                 name = UI.QueryWidget('name', 'Value')
+                if name:
+                    name = filter_format('(name=%s*)(cn=%s*)(sAMAccountName=%s*)', (name, name, name))
                 desc = UI.QueryWidget('description', 'Value')
+                if desc:
+                    desc = filter_format('(description=%s*)', (desc,))
+                if not name and not desc:
+                    continue
                 if obj_type == 'Users, Contacts, and Groups':
-                    query = filter_format('(&(|(name=%s*)(cn=%s*)(sAMAccountName=%s*)(description=%s*))(|(objectClass=person)(objectClass=group)))', (name, name, name, desc))
+                    query = '(&(|%s%s)(|(objectClass=person)(objectClass=group)))' % (name, desc)
                     results = self.conn.ldap_search(location, SUBTREE, query, ['name', 'description', 'objectClass'])
                 elif obj_type == 'Computers':
-                    query = filter_format('(&(|(name=%s*)(cn=%s*)(sAMAccountName=%s*)(description=%s*))(objectCategory=computer))', (name, name, name, desc))
+                    query = '(&(|%s%s)(objectCategory=computer))' % (name, desc)
                     results = self.conn.ldap_search(location, SUBTREE, query, ['name', 'description', 'objectClass'])
                 UI.ReplaceWidget('search_results', self.search_results(results))
             elif str(ret) == 'results_table':
