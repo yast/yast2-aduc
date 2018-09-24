@@ -948,13 +948,20 @@ class ADUC:
                 if str(subret) == 'creds_cancel':
                     UI.CloseDialog()
                     return False
+                if str(subret) == 'username_prompt':
+                    user = UI.QueryWidget('username_prompt', 'Value')
+                    creds.set_username(user)
+                    validate_kinit(self.creds)
+                    if self.creds.get_kerberos_state() == MUST_USE_KERBEROS:
+                        UI.CloseDialog()
+                        return True
         return True
 
     def __password_prompt(self, user):
         return MinWidth(30, HBox(HSpacing(1), VBox(
             VSpacing(.5),
             Left(Label('To continue, type an administrator password')),
-            Left(TextEntry(Id('username_prompt'), Opt('hstretch'), 'Username', user)),
+            Left(TextEntry(Id('username_prompt'), Opt('hstretch', 'notify'), 'Username', user)),
             Left(Password(Id('password_prompt'), Opt('hstretch'), 'Password')),
             Right(HBox(
                 PushButton(Id('creds_ok'), 'OK'),
