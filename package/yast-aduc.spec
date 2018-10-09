@@ -17,7 +17,7 @@
 
 
 Name:           yast-aduc
-Version:        1.0
+Version:        1.1
 Release:        0
 Summary:        Active Directory Users and Computers for YaST
 License:        GPL-3.0
@@ -27,15 +27,15 @@ Source:         %{name}-%{version}.tar.bz2
 BuildArch:      noarch
 Requires:       krb5-client
 Requires:       samba-client
-Requires:       samba-python
+Requires:       samba-python3
 Requires:       yast2
-Requires:       yast2-python-bindings >= 4.0.0
-Requires:       python2-ldap3
-Requires:       python2-gssapi
+Requires:       yast2-python3-bindings >= 4.0.0
+Requires:       python3-ldap3
+Requires:       python3-gssapi
 BuildRequires:  autoconf
 BuildRequires:  automake
 BuildRequires:  perl-XML-Writer
-BuildRequires:  python
+BuildRequires:  python3
 BuildRequires:  update-desktop-files
 BuildRequires:  yast2
 BuildRequires:  yast2-devtools
