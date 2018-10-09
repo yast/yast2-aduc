@@ -1,4 +1,23 @@
 -------------------------------------------------------------------
+Tue Oct  9 16:46:25 UTC 2018 - dmulder@suse.com
+
+- Update to 1.1, highlights:
+  * Modification of user/group account and unix attributes
+  * Menus for qt and ncurses for new user/group/computer, search,
+    delete, and refresh.
+  * User/group/computer creation dialogs, which include unix
+    attributes.
+  * Autofill generated unix attributes.
+  * Group memberships add/delete.
+  * Move to python3.
+  * Find dialog for searching ldap tree for objects.
+  * Warn before deleting objects.
+  * Never simple bind, since this is a security risk.
+  * Reconnect the ldap session if it times out.
+  * Enhanced authentication dialog: bypass password if we're already
+    kinit'd for the logged in user, or check if typed user is kinit'd.
+
+-------------------------------------------------------------------
 Mon Jul 17 11:52:27 2017 - dmulder@suse.com
 
 - initial version
