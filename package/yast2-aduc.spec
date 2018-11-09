@@ -1,5 +1,5 @@
 #
-# spec file for package yast-aduc
+# spec file for package yast2-aduc
 #
 # Copyright (c) 2018 SUSE LINUX GmbH, Nuernberg, Germany.
 #
@@ -16,7 +16,7 @@
 #
 
 
-Name:           yast-aduc
+Name:           yast2-aduc
 Version:        1.1
 Release:        0
 Summary:        Active Directory Users and Computers for YaST
@@ -40,6 +40,8 @@ BuildRequires:  update-desktop-files
 BuildRequires:  yast2
 BuildRequires:  yast2-devtools
 BuildRequires:  yast2-testsuite
+Provides:       yast-aduc = %{version}
+Obsoletes:      yast-aduc < %{version}
 
 %description
 The Active Directory Users and Computers for YaST module provides tools for
