@@ -23,7 +23,7 @@ Summary:        Active Directory Users and Computers for YaST
 License:        GPL-3.0
 Group:          Productivity/Networking/Samba
 Url:            http://www.github.com/dmulder/yast-aduc
-Source:         %{name}-%{version}.tar.bz2
+Source:         %{name}-v%{version}.tar.bz2
 BuildArch:      noarch
 Requires:       krb5-client
 Requires:       samba-client
@@ -48,11 +48,11 @@ The Active Directory Users and Computers for YaST module provides tools for
 creating and modifying Users, Groups, and Computer objects in Active Directory.
 
 %prep
-%setup -q
+%setup -q -n %{name}-v%{version}
 
 %build
 autoreconf -if
-%configure --prefix=%{_prefix}
+%configure
 make
 
 %install
