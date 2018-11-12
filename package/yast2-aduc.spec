@@ -53,13 +53,10 @@ creating and modifying Users, Groups, and Computer objects in Active Directory.
 %build
 autoreconf -if
 %configure
-make
+make %{?_smp_mflags}
 
 %install
-make DESTDIR=$RPM_BUILD_ROOT install
-
-%clean
-%{__rm} -rf $RPM_BUILD_ROOT
+%make_install
 
 %files
 %defattr(-,root,root)
