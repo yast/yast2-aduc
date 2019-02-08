@@ -22,8 +22,8 @@ Release:        0
 Summary:        Active Directory Users and Computers for YaST
 License:        GPL-3.0
 Group:          Productivity/Networking/Samba
-Url:            http://www.github.com/dmulder/yast-aduc
-Source:         %{name}-v%{version}.tar.bz2
+Url:            http://www.github.com/yast-samba/yast-aduc
+Source:         %{name}-%{version}.tar.bz2
 BuildArch:      noarch
 Requires:       krb5-client
 Requires:       samba-client
@@ -48,26 +48,21 @@ The Active Directory Users and Computers for YaST module provides tools for
 creating and modifying Users, Groups, and Computer objects in Active Directory.
 
 %prep
-%setup -q -n %{name}-v%{version}
+%setup -q
 
 %build
-autoreconf -if
-%configure
-make %{?_smp_mflags}
+%yast_build
 
 %install
-%make_install
+%yast_install
 
 %files
 %defattr(-,root,root)
-%dir %{_datadir}/YaST2/include/aduc
-%{_datadir}/YaST2/clients/aduc.py
-%{_datadir}/YaST2/include/aduc/complex.py
-%{_datadir}/YaST2/include/aduc/dialogs.py
-%{_datadir}/YaST2/include/aduc/wizards.py
-%{_datadir}/YaST2/include/aduc/defaults.py
-%{_datadir}/applications/YaST2/aduc.desktop
-%dir %{_datadir}/doc/yast2-aduc
-%{_datadir}/doc/yast2-aduc/COPYING
+%dir %{yast_yncludedir}/aduc
+%{yast_clientdir}/*.py
+%{yast_yncludedir}/aduc/*
+%{yast_desktopdir}/aduc.desktop
+%doc %{yast_docdir}
+%license COPYING
 
 %changelog

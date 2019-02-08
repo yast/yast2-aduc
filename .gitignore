@@ -108,4 +108,9 @@ configure
 install-sh
 missing
 aduc.desktop
-
+/Makefile.am
+/Makefile.am.common
+*.ami
+config.guess
+config.sub
+configure.ac
