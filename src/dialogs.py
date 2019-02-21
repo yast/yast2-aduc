@@ -12,7 +12,7 @@ from yast import *
 import six
 from ldap.filter import filter_format
 from adcommon.yldap import SCOPE_SUBTREE as SUBTREE
-from adcommon.creds import YCreds
+from adcommon.creds import YCreds, switch_domains
 from adcommon.ui import CreateMenu, DeleteButtonBox
 
 def have_x():
@@ -931,6 +931,7 @@ class ADUC:
 
     def __setup_menus(self, container=False, obj=False):
         menus = [{'title': '&File', 'id': 'file', 'type': 'Menu'},
+                 {'title': 'Change domain...', 'id': 'change_domain', 'type': 'MenuEntry', 'parent': 'file'},
                  {'title': 'Exit', 'id': 'abort', 'type': 'MenuEntry', 'parent': 'file'},
                  {'title': 'Action', 'id': 'action', 'type': 'Menu'}]
         if container:
@@ -1000,6 +1001,11 @@ class ADUC:
             Item(Id('delete'), 'Delete')
         ])
 
+    def __dom_context_menu(self):
+        return Term('menu', [
+            Item(Id('change_domain'), 'Change Domain...'),
+        ])
+
     def Show(self):
         if not self.got_creds:
             return Symbol('abort')
@@ -1032,6 +1038,9 @@ class ADUC:
                     if current_container:
                         menu_open = True
                         UI.OpenContextMenu(self.__objs_context_menu())
+                    elif choice == self.realm.lower():
+                        menu_open = True
+                        UI.OpenContextMenu(self.__dom_context_menu())
             elif str(ret) == 'next':
                 return Symbol('abort')
             elif str(ret) == 'items':
@@ -1069,6 +1078,21 @@ class ADUC:
                 SearchDialog(self.lp, self.conn, current_container).Show()
             elif str(ret) == 'refresh':
                 self.__refresh(current_container)
+            elif str(ret) == 'change_domain':
+                realm = switch_domains(self.realm)
+                if realm:
+                    self.lp.set('realm', realm.upper())
+                    self.realm = realm.upper()
+                    ycred = YCreds(self.creds)
+                    self.got_creds = True
+                    while self.got_creds:
+                        try:
+                            self.conn = Connection(self.lp, self.creds)
+                            Wizard.SetContents('Active Directory Users and Computers', self.__aduc_page(), '', False, False)
+                            break
+                        except Exception as e:
+                            ycpbuiltins.y2error(str(e))
+                            self.got_creds = ycred.get_creds()
             UI.SetApplicationTitle('Active Directory Users and Computers')
         return Symbol(ret)
 
