@@ -13,6 +13,7 @@ import six
 from ldap.filter import filter_format
 from adcommon.yldap import SCOPE_SUBTREE as SUBTREE
 from adcommon.creds import YCreds
+from adcommon.ui import CreateMenu, DeleteButtonBox
 
 def have_x():
     from subprocess import Popen, PIPE
@@ -798,12 +799,17 @@ class SearchDialog:
     def __init__(self, lp, conn, container):
         self.lp = lp
         self.conn = conn
-        self.container = container
 
         self.realm = self.lp.get('realm')
         realm_dn = ','.join(['DC=%s' % part for part in self.realm.lower().split('.')])
-        loc_dn = container[:container.lower().find(realm_dn.lower())-1]
-        self.location = '/'.join([i[3:] for i in reversed(loc_dn.split(','))])
+        if container:
+            loc_dn = container[:container.lower().find(realm_dn.lower())-1]
+            self.container = container
+            self.location = '/'.join([i[3:] for i in reversed(loc_dn.split(','))])
+        else:
+            loc_dn = realm_dn
+            self.container = self.realm
+            self.location = self.realm.lower()
 
     def __show_properties(self, dn):
         currentItem = self.conn.obj(dn)
@@ -889,12 +895,15 @@ class SearchDialog:
         )
 
     def __dialog(self):
+        containers = [Item(self.location, True)]
+        if self.location != self.realm.lower():
+            containers.append(self.realm.lower())
         return MinSize(50, 10, HBox(HSpacing(3), VBox(VSpacing(.3),
             Left(HBox(
                 Label('Find:'),
                 ComboBox(Id('obj_type'), '', [Item('Users, Contacts, and Groups', True), 'Computers']),
                 Label('In:'),
-                ComboBox(Id('obj_container'), '', [Item(self.location, True), self.realm.lower()])
+                ComboBox(Id('obj_container'), '', containers)
             )),
             VSpacing(1),
             Left(
@@ -909,6 +918,7 @@ class ADUC:
         self.realm = lp.get('realm')
         self.lp = lp
         self.creds = creds
+        self.__setup_menus()
         ycred = YCreds(creds)
         self.got_creds = ycred.get_creds()
         while self.got_creds:
@@ -918,6 +928,22 @@ class ADUC:
             except Exception as e:
                 ycpbuiltins.y2error(str(e))
                 self.got_creds = ycred.get_creds()
+
+    def __setup_menus(self, container=False, obj=False):
+        menus = [{'title': '&File', 'id': 'file', 'type': 'Menu'},
+                 {'title': 'Exit', 'id': 'abort', 'type': 'MenuEntry', 'parent': 'file'},
+                 {'title': 'Action', 'id': 'action', 'type': 'Menu'}]
+        if container:
+            menus.append({'title': 'Find...', 'id': 'find', 'type': 'MenuEntry', 'parent': 'action'})
+            menus.append({'title': 'New', 'id': 'new_but', 'type': 'SubMenu', 'parent': 'action'})
+            menus.append({'title': 'User', 'id': 'context_add_user', 'type': 'MenuEntry', 'parent': 'new_but'})
+            menus.append({'title': 'Group', 'id': 'context_add_group', 'type': 'MenuEntry', 'parent': 'new_but'})
+            menus.append({'title': 'Computer', 'id': 'context_add_computer', 'type': 'MenuEntry', 'parent': 'new_but'})
+            menus.append({'title': 'Refresh', 'id': 'refresh', 'type': 'MenuEntry', 'parent': 'action'})
+        elif obj:
+            menus.append({'title': 'Delete', 'id': 'delete', 'type': 'MenuEntry', 'parent': 'action'})
+            menus.append({'title': 'Properties', 'id': 'properties', 'type': 'MenuEntry', 'parent': 'action'})
+        CreateMenu(menus)
 
     def __delete_selected_obj(self, container):
         currentItemName = UI.QueryWidget('items', 'CurrentItem')
@@ -978,8 +1004,8 @@ class ADUC:
         if not self.got_creds:
             return Symbol('abort')
         Wizard.SetContentsButtons('Active Directory Users and Computers', self.__aduc_page(), self.__help(), 'Back', 'Close')
-        Wizard.HideBackButton()
-        Wizard.HideAbortButton()
+        menu_open = False
+        DeleteButtonBox()
         UI.SetFocus('aduc_tree')
         current_container = None
         while True:
@@ -993,27 +1019,15 @@ class ADUC:
             choice = UI.QueryWidget('aduc_tree', 'Value')
             if str(ret) == 'abort' or (str(ret) == 'cancel' and not menu_open):
                 break
-            menu_open = False
             if str(ret) == 'aduc_tree':
                 if 'DC=' in choice:
                     current_container = choice
                     self.__refresh(current_container)
-                    if not have_advanced_gui:
-                        UI.ReplaceWidget('new_but',  MenuButton(Id('new'), "New", [
-                            Item(Id('context_add_user'), 'User'),
-                            Item(Id('context_add_group'), 'Group'),
-                            Item(Id('context_add_computer'), 'Computer')
-                        ]))
-                        UI.ChangeWidget(Id('find'), 'Enabled', True)
-                        UI.ChangeWidget(Id('delete'), "Enabled", True)
-                        UI.ChangeWidget(Id('refresh'), 'Enabled', True)
+                    self.__setup_menus(container=True)
                 else:
                     current_container = None
                     UI.ReplaceWidget('rightPane', Empty())
-                    if not have_advanced_gui:
-                        UI.ReplaceWidget('new_but',  MenuButton(Id('new'), Opt('disabled'), "New", []))
-                        UI.ChangeWidget(Id('find'), 'Enabled', False)
-                        UI.ChangeWidget(Id('delete'), "Enabled", False)
+                    self.__setup_menus()
                 if event['EventReason'] == 'ContextMenuActivated':
                     if current_container:
                         menu_open = True
@@ -1027,7 +1041,9 @@ class ADUC:
                         UI.OpenContextMenu(self.__objs_context_menu())
                     else:
                         UI.OpenContextMenu(self.__obj_context_menu())
-                else:
+                elif event['EventReason'] == 'SelectionChanged':
+                    self.__setup_menus(obj=True)
+                elif event['EventReason'] == 'Activated':
                     self.__show_properties(current_container)
             elif str(ret) == 'properties':
                 self.__show_properties(current_container)
@@ -1053,7 +1069,8 @@ class ADUC:
                 SearchDialog(self.lp, self.conn, current_container).Show()
             elif str(ret) == 'refresh':
                 self.__refresh(current_container)
-        return ret
+            UI.SetApplicationTitle('Active Directory Users and Computers')
+        return Symbol(ret)
 
     def __warn_delete(self, name):
         if six.PY3 and type(name) is bytes:
@@ -1097,7 +1114,7 @@ class ADUC:
 
     def __objects_tab(self, container):
         items = [Item(obj[1]['cn'][-1], obj[1]['objectClass'][-1].title(), obj[1]['description'][-1] if 'description' in obj[1] else '') for obj in self.conn.objects_list(container)]
-        return Table(Id('items'), Opt('notify', 'notifyContextMenu'), Header('Name', 'Type', 'Description'), items)
+        return Table(Id('items'), Opt('notify', 'immediate', 'notifyContextMenu'), Header('Name', 'Type', 'Description'), items)
 
     def __sub_tree(self, dn):
         tree_containers = self.conn.containers(dn)
@@ -1106,23 +1123,11 @@ class ADUC:
     def __aduc_tree(self):
         tree_containers = self.conn.containers()
         items = [Item(Id(c[0]), c[1], False, self.__sub_tree(c[0])) for c in tree_containers]
-        if not have_advanced_gui:
-            menu = HBox(
-                PushButton(Id('find'),  Opt('disabled'), 'Find'),
-                ReplacePoint(Id('new_but'),
-                    MenuButton(Id('new'), Opt('disabled'), "New", [])
-                ),
-                PushButton(Id('delete'), Opt('disabled'), "Delete"),
-                PushButton(Id('refresh'), Opt('disabled'), 'Refresh')
-            )
-        else:
-            menu = Empty()
 
         return VBox(
             Tree(Id('aduc_tree'), Opt('notify', 'immediate', 'notifyContextMenu'), '', [
                 Item(self.realm.lower(), True, items),
             ]),
-            menu
         )
 
     def __aduc_page(self):
