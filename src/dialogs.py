@@ -919,15 +919,16 @@ class ADUC:
         self.lp = lp
         self.creds = creds
         self.__setup_menus()
-        ycred = YCreds(creds)
-        self.got_creds = ycred.get_creds()
-        while self.got_creds:
+        def cred_valid():
             try:
                 self.conn = Connection(lp, creds)
-                break
+                return True
             except Exception as e:
                 ycpbuiltins.y2error(str(e))
-                self.got_creds = ycred.get_creds()
+            return False
+        self.cred_valid = cred_valid
+        ycred = YCreds(creds)
+        self.got_creds = ycred.Show(self.cred_valid)
 
     def __setup_menus(self, container=False, obj=False):
         menus = [{'title': '&File', 'id': 'file', 'type': 'Menu'},
@@ -1079,20 +1080,9 @@ class ADUC:
             elif str(ret) == 'refresh':
                 self.__refresh(current_container)
             elif str(ret) == 'change_domain':
-                realm = switch_domains(self.realm)
-                if realm:
-                    self.lp.set('realm', realm.upper())
-                    self.realm = realm.upper()
-                    ycred = YCreds(self.creds)
-                    self.got_creds = True
-                    while self.got_creds:
-                        try:
-                            self.conn = Connection(self.lp, self.creds)
-                            Wizard.SetContents('Active Directory Users and Computers', self.__aduc_page(), '', False, False)
-                            break
-                        except Exception as e:
-                            ycpbuiltins.y2error(str(e))
-                            self.got_creds = ycred.get_creds()
+                if switch_domains(self.lp, self.creds, self.cred_valid):
+                    self.realm = self.lp.get('realm')
+                    Wizard.SetContents('Active Directory Users and Computers', self.__aduc_page(), '', False, False)
             UI.SetApplicationTitle('Active Directory Users and Computers')
         return Symbol(ret)
 
