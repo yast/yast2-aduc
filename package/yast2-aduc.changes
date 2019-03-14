@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Thu Mar 14 18:48:22 UTC 2019 - dmulder@suse.com
+
+- Update to 1.2:
+  + Move the module to Network Services
+  + Use common auth from yast2-adcommon-python
+  + Switch to using a unified file/actions menu, instead of random buttons
+  + Add change domains feature
+
+-------------------------------------------------------------------
 Tue Oct  9 16:46:25 UTC 2018 - dmulder@suse.com
 
 - Update to 1.1, highlights:

@@ -10,7 +10,6 @@ client_DATA =			\
 ynclude_DATA =			\
 	wizards.py		\
 	dialogs.py		\
-	defaults.py		\
 	complex.py
 
 aduc.desktop: aduc.desktop.in

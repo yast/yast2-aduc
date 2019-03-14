@@ -1,7 +1,7 @@
 #
 # spec file for package yast2-aduc
 #
-# Copyright (c) 2018 SUSE LINUX GmbH, Nuernberg, Germany.
+# Copyright (c) 2019 SUSE LINUX GmbH, Nuernberg, Germany.
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
@@ -12,18 +12,18 @@
 # license that conforms to the Open Source Definition (Version 1.9)
 # published by the Open Source Initiative.
 
-# Please submit bugfixes or comments via http://bugs.opensuse.org/
+# Please submit bugfixes or comments via https://bugs.opensuse.org/
 #
 
 
 Name:           yast2-aduc
-Version:        1.1
+Version:        1.2
 Release:        0
 Summary:        Active Directory Users and Computers for YaST
-License:        GPL-3.0
+License:        GPL-3.0-only
 Group:          Productivity/Networking/Samba
 Url:            http://www.github.com/yast-samba/yast-aduc
-Source:         %{name}-%{version}.tar.bz2
+Source:         %{name}-v%{version}.tar.bz2
 BuildArch:      noarch
 Requires:       krb5-client
 Requires:       samba-client
@@ -48,7 +48,7 @@ The Active Directory Users and Computers for YaST module provides tools for
 creating and modifying Users, Groups, and Computer objects in Active Directory.
 
 %prep
-%setup -q
+%setup -q -n %{name}-v%{version}
 
 %build
 %yast_build
