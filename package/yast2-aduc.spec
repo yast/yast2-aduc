@@ -22,7 +22,7 @@ Release:        0
 Summary:        Active Directory Users and Computers for YaST
 License:        GPL-3.0-only
 Group:          Productivity/Networking/Samba
-Url:            http://www.github.com/yast-samba/yast-aduc
+Url:            http://www.github.com/yast/yast2-aduc
 Source:         %{name}-%{version}.tar.bz2
 BuildArch:      noarch
 Requires:       krb5-client
