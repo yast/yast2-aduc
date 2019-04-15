@@ -8,6 +8,11 @@ Thu Mar 14 18:48:22 UTC 2019 - dmulder@suse.com
   + Add change domains feature
 
 -------------------------------------------------------------------
+Tue Dec 11 15:53:00 UTC 2018 - dmulder@suse.com
+
+- Remove invalid python3-gssapi requires
+
+-------------------------------------------------------------------
 Tue Oct  9 16:46:25 UTC 2018 - dmulder@suse.com
 
 - Update to 1.1, highlights:
