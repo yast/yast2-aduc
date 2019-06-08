@@ -18,6 +18,7 @@ X-SuSE-YaST-AutoInstResource=aduc
 Icon=yast-aduc
 Exec=/usr/bin/xdg-su -c 'yast2 aduc qt'
 
-Name=Active Directory Users and Computers
-GenericName=Manage Active Directory Users and Computers
+Name=YaST Active Directory Users and Computers
+GenericName=Active Directory Users and Computers
+Comment=Manage Active Directory Users and Computers
 StartupNotify=true
