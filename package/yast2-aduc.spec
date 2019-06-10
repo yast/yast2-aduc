@@ -22,7 +22,7 @@ Release:        0
 Summary:        Active Directory Users and Computers for YaST
 License:        GPL-3.0-only
 Group:          Productivity/Networking/Samba
-Url:            https://www.github.com/yast/yast2-aduc
+Url:            https://github.com/yast/yast2-aduc
 
 Source:         %{name}-%{version}.tar.bz2
 
