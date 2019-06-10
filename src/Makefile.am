@@ -12,7 +12,7 @@ ynclude_DATA =			\
 	dialogs.py		\
 	complex.py
 
-aduc.desktop: org.opensuse.yast.ADUC.desktop.in
+org.opensuse.yast.ADUC.desktop: org.opensuse.yast.ADUC.desktop.in
 	sed -e 's;[@]CLIENTDIR[@];$(clientdir);g' < $(srcdir)/org.opensuse.yast.ADUC.desktop.in > $(srcdir)/org.opensuse.yast.ADUC.desktop
 
 desktopdir = ${prefix}/share/applications/YaST2
