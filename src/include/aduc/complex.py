@@ -46,7 +46,7 @@ class Connection(Ldap):
     def objects_list(self, container):
         return self.ldap_search_s(container, SCOPE_ONELEVEL, '(|(objectCategory=person)(objectCategory=group)(objectCategory=computer))', [])
 
-    def add_user(self, user_attrs, container=None):
+    def add_user(self, user_attrs, container=None, inetorgperson=False):
         if not container:
             container = self.__well_known_container('users')
         if not strcmp(user_attrs['userPassword'], user_attrs['confirm_passwd']):
@@ -54,6 +54,8 @@ class Connection(Ldap):
         attrs = {}
 
         attrs['objectClass'] = ['top', 'person', 'organizationalPerson', 'user']
+        if inetorgperson:
+            attrs['objectClass'].append('inetOrgPerson')
         attrs['objectCategory'] = 'CN=Person,CN=Schema,CN=Configuration,%s' % self.realm_to_dn(self.realm)
 
         attrs['displayName'] = user_attrs['cn']

@@ -615,7 +615,7 @@ class NewObjDialog:
 
     def __fetch_pane(self):
         if not self.dialog:
-            if strcmp(self.obj_type, 'user'):
+            if strcmp(self.obj_type, 'user') or strcmp(self.obj_type, 'InetOrgPerson'):
                 self.dialog = self.__user_dialog()
             elif strcmp(self.obj_type, 'group'):
                 self.dialog = self.__group_dialog()
@@ -939,9 +939,10 @@ class ADUC:
         if container:
             menus.append({'title': 'Find...', 'id': 'find', 'type': 'MenuEntry', 'parent': 'action'})
             menus.append({'title': 'New', 'id': 'new_but', 'type': 'SubMenu', 'parent': 'action'})
-            menus.append({'title': 'User', 'id': 'context_add_user', 'type': 'MenuEntry', 'parent': 'new_but'})
-            menus.append({'title': 'Group', 'id': 'context_add_group', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'Computer', 'id': 'context_add_computer', 'type': 'MenuEntry', 'parent': 'new_but'})
+            menus.append({'title': 'Group', 'id': 'context_add_group', 'type': 'MenuEntry', 'parent': 'new_but'})
+            menus.append({'title': 'InetOrgPerson', 'id': 'context_add_inetorgperson', 'type': 'MenuEntry', 'parent': 'new_but'})
+            menus.append({'title': 'User', 'id': 'context_add_user', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'Refresh', 'id': 'refresh', 'type': 'MenuEntry', 'parent': 'action'})
         elif obj:
             menus.append({'title': 'Delete', 'id': 'delete', 'type': 'MenuEntry', 'parent': 'action'})
@@ -986,7 +987,7 @@ class ADUC:
                     Item(Id('context_add_computer'), 'Computer'),
                     #Item(Id('context_add_contact'), 'Contact'),
                     Item(Id('context_add_group'), 'Group'),
-                    #Item(Id('context_add_inetorgperson'), 'InetOrgPerson'),
+                    Item(Id('context_add_inetorgperson'), 'InetOrgPerson'),
                     #Item(Id('context_add_msmq_queue_alias'), 'MSMQ Queue Alias'),
                     #Item(Id('context_add_printer'), 'Printer'),
                     Item(Id('context_add_user'), 'User'),
@@ -1062,6 +1063,11 @@ class ADUC:
                 user = NewObjDialog(self.lp, 'user', current_container).Show()
                 if user:
                     self.conn.add_user(user, current_container)
+                    self.__refresh(current_container, user['cn'])
+            elif str(ret) == 'context_add_inetorgperson':
+                user = NewObjDialog(self.lp, 'InetOrgPerson', current_container).Show()
+                if user:
+                    self.conn.add_user(user, current_container, inetorgperson=True)
                     self.__refresh(current_container, user['cn'])
             elif str(ret) == 'context_add_group':
                 group = NewObjDialog(self.lp, 'group', current_container).Show()
