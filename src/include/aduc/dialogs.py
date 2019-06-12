@@ -167,6 +167,11 @@ UserTabContents = {
         }
         }
 
+ContactTabContents = {
+        'general' : UserTabContents['general'],
+        'address' : UserTabContents['address'],
+}
+
 def compare(obj1, obj2):
     if type(obj1) is list and type(obj2) is list:
         if len(obj1) == len(obj2):
@@ -318,6 +323,10 @@ class TabProps(object):
 class UserProps(TabProps):
     def __init__(self, conn, obj):
         TabProps.__init__(self, conn, obj, UserTabContents, 'general')
+
+class ContactProps(TabProps):
+    def __init__(self, conn, obj):
+        TabProps.__init__(self, conn, obj, ContactTabContents, 'general')
 
 ComputerDataModel = {
         'general' : {
@@ -841,6 +850,8 @@ class SearchDialog:
             edit = UserProps(self.conn, currentItem)
         elif six.b('group') in currentItem[1]['objectClass']:
             edit = GroupProps(self.conn, currentItem)
+        elif six.b('contact') in currentItem[1]['objectClass']:
+            edit = ContactProps(self.conn, currentItem)
         else:
             return
 
@@ -994,6 +1005,8 @@ class ADUC:
             edit = UserProps(self.conn, currentItem)
         elif six.b('group') in currentItem[1]['objectClass']:
             edit = GroupProps(self.conn, currentItem)
+        elif six.b('contact') in currentItem[1]['objectClass']:
+            edit = ContactProps(self.conn, currentItem)
         else:
             return
 
