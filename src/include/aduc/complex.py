@@ -44,7 +44,7 @@ class Connection(Ldap):
         return self.ldap_search(dn, SCOPE_BASE, '(objectClass=*)', attrs)[-1]
 
     def objects_list(self, container):
-        return self.ldap_search_s(container, SCOPE_ONELEVEL, '(|(objectCategory=person)(objectCategory=group)(objectCategory=computer))', [])
+        return self.ldap_search_s(container, SCOPE_ONELEVEL, '(|(objectCategory=person)(objectCategory=group)(objectCategory=computer)(objectCategory=MSMQ-Custom-Recipient))', [])
 
     def add_contact(self, user_attrs, container=None):
         if not container:
@@ -218,4 +218,13 @@ class Connection(Ldap):
             ycpbuiltins.y2error(str(e))
             return False
         return True
+
+    def add_obj(self, container, attrs):
+        dn = 'CN=%s,%s' % (attrs['cn'], container)
+        try:
+            self.ldap_add(dn, addlist(stringify_ldap(attrs)))
+        except LdapException as e:
+            ycpbuiltins.y2error(traceback.format_exc())
+            ycpbuiltins.y2error('ldap.add_s: %s\n' % self.__ldap_exc_msg(e))
+        return dn
 

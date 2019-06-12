@@ -102,6 +102,83 @@ def account_hook(key, val):
         val = str(uac)
     return val
 
+class AttrEdit:
+    def __init__(self, conn, attr, val):
+        self.conn = conn
+        self.attribute = attr
+        self.value = val
+        if self.attribute.encode() in self.conn.schema['attributeTypes']:
+            self.attr_type = self.conn.schema['attributeTypes'][self.attribute.encode()]
+        else:
+            self.attr_type = None
+
+    def __dialog(self):
+        opts = tuple()
+        if not self.attr_type['user-modifiable']:
+            opts = tuple(['disabled'])
+        input_box = InputField(Id('value'), Opt('hstretch', *opts), 'Value:', self.value)
+        return MinSize(60, 8, HBox(HSpacing(3), VBox(
+            VSpacing(1),
+            Left(Label('Attribute:\t%s' % self.attribute)),
+            VSpacing(1),
+            Left(input_box),
+            Bottom(
+                HBox(
+                    Left(PushButton(Id('clear'), Opt(*opts), 'Clear')),
+                    Right(PushButton(Id('ok'), 'OK')),
+                    Right(PushButton(Id('cancel'), 'Cancel')),
+                )
+            ),
+            VSpacing(1),
+        ), HSpacing(3)))
+
+    def Show(self):
+        UI.SetApplicationTitle('String Attribute Editor')
+        if self.attr_type and (not self.attr_type['multi-valued'] or not self.attr_type['user-modifiable']):
+            UI.OpenDialog(self.__dialog())
+        else:
+            return None
+        while True:
+            ret = UI.UserInput()
+            if ret == 'abort' or ret == 'cancel':
+                ret = None
+                break
+            elif ret == 'ok':
+                ret = UI.QueryWidget(Id('value'), 'Value')
+                if not self.attr_type['multi-valued']:
+                    ret = [ret]
+                break
+            elif ret == 'clear':
+                UI.ChangeWidget(Id('value'), 'Value', '')
+        UI.CloseDialog()
+        return ret
+
+def object_editor_input(ret, conn, model):
+    if str(ret) == 'edit' or str(ret) == 'attrs':
+        attr = UI.QueryWidget('attrs', 'Value')
+        val = conn.display_schema_value(attr, model.get_value(attr, False))
+        new_val = AttrEdit(conn, attr, val).Show()
+        model.set_value(attr, new_val)
+
+CommonTabContents = {
+        'editor' : {
+            'content' : (lambda conn, model: VBox(
+                Left(Label('Attributes:')),
+                Table(Id('attrs'), Opt('vstretch', 'notify'), Header('Attribute', 'Value'), [
+                    Item(Id(key), key, conn.display_schema_value(key, model.get_value(key, False))) for key in sorted(model.props_map.keys(), key=str.lower)
+                    ]),
+                HBox(
+                    Left(PushButton(Id('edit'), 'Edit')),
+                    Right(PushButton(Id('filter'), 'Filter'))
+                    )
+            )),
+            'data' : {},
+            'title' : 'Attribute Editor',
+            'set_hook' : None,
+            'input_hook' : object_editor_input,
+            }
+        }
+
 UserTabContents = {
         'general' : {
             'content' : (lambda conn, model: VBox(Left(HBox(
@@ -164,12 +241,14 @@ UserTabContents = {
             'title' : 'Unix Attributes',
             'set_hook' : None,
             'input_hook' : None,
-        }
+        },
+        'editor' : CommonTabContents['editor'],
         }
 
 ContactTabContents = {
         'general' : UserTabContents['general'],
         'address' : UserTabContents['address'],
+        'editor' : CommonTabContents['editor'],
 }
 
 def compare(obj1, obj2):
@@ -199,9 +278,9 @@ class TabModel:
             if not self.modified:
                 self.modified = True
 
-    def get_value(self, key):
+    def get_value(self, key, strip=True):
         value = self.props_map.get(key, [""])
-        if len(value) == 1:
+        if strip and len(value) == 1:
             value = value[-1]
         return value
 
@@ -272,14 +351,14 @@ class TabProps(object):
             HBox(HSpacing(1), Left(
                 VBox(
                     VSpacing(0.3),
-                    Top(
+                    VWeight(15, Top(
                         ReplacePoint(Id('tabContents'), self.content(self.initial_tab))
-                    ),
+                    )),
                     VSpacing(1),
-                    Bottom(
+                    VWeight(1, Bottom(
                         HBox(PushButton(Id('ok'), "OK"), PushButton(Id('cancel'), "Cancel"),
                         PushButton(Id('apply'), "Apply")),
-                    ),
+                    )),
                     VSpacing(0.3),
                 ),
             ),
@@ -317,6 +396,7 @@ class TabProps(object):
                 break
             if self.contents[self.current_tab]['input_hook']:
                 self.contents[self.current_tab]['input_hook'](ret, self.conn, self.tabModel)
+                UI.ReplaceWidget('tabContents', self.content(next_tab))
                 continue
         UI.CloseDialog()
 
@@ -327,6 +407,14 @@ class UserProps(TabProps):
 class ContactProps(TabProps):
     def __init__(self, conn, obj):
         TabProps.__init__(self, conn, obj, ContactTabContents, 'general')
+
+class ObjectProps(TabProps):
+    def __init__(self, conn, obj):
+        TabProps.__init__(self, conn, obj, ObjectTabContents, 'editor')
+
+ObjectTabContents = {
+        'editor' : CommonTabContents['editor'],
+        }
 
 ComputerDataModel = {
         'general' : {
@@ -377,7 +465,8 @@ ComputerTabContents = {
             'title': 'Location',
             'set_hook' : None,
             'input_hook' : None,
-            }
+            },
+        'editor' : CommonTabContents['editor'],
         }
 
 class ComputerProps(TabProps):
@@ -593,7 +682,8 @@ GroupTabContents = {
         'title' : 'Members',
         'set_hook' : None,
         'input_hook' : group_members_input,
-    }
+    },
+    'editor' : CommonTabContents['editor'],
 }
 
 class GroupProps(TabProps):
@@ -632,7 +722,26 @@ class NewObjDialog:
                 self.dialog = self.__computer_dialog()
             elif strcmp(self.obj_type, 'contact'):
                 self.dialog = self.__contact_dialog()
+            else:
+                self.dialog = self.__object_dialog()
         return self.dialog[self.dialog_seq][0]
+
+    def __object_dialog(self):
+        return [
+            [VBox(
+                Left(Label('Attribute name:\tcn')),
+                Left(Label('Attribute type:\tUnicode String')),
+                TextEntry(Id('cn'), 'cn'),
+                Bottom(Right(HBox(
+                    PushButton(Id('finish'), 'OK'),
+                    PushButton(Id('cancel'), 'Cancel'),
+                ))),
+            ),
+            ['cn'], # known keys
+            ['cn'], # required keys
+            None, # dialog hook
+            ]
+        ]
 
     def __contact_dialog(self):
         return [
@@ -853,7 +962,7 @@ class SearchDialog:
         elif six.b('contact') in currentItem[1]['objectClass']:
             edit = ContactProps(self.conn, currentItem)
         else:
-            return
+            edit = ObjectProps(self.conn, currentItem)
 
         edit.Show()
 
@@ -977,6 +1086,7 @@ class ADUC:
             menus.append({'title': 'Contact', 'id': 'context_add_contact', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'Group', 'id': 'context_add_group', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'InetOrgPerson', 'id': 'context_add_inetorgperson', 'type': 'MenuEntry', 'parent': 'new_but'})
+            menus.append({'title': 'MSMQ Queue Alias', 'id': 'context_add_msmq_queue_alias', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'User', 'id': 'context_add_user', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'Refresh', 'id': 'refresh', 'type': 'MenuEntry', 'parent': 'action'})
         elif obj:
@@ -1008,7 +1118,7 @@ class ADUC:
         elif six.b('contact') in currentItem[1]['objectClass']:
             edit = ContactProps(self.conn, currentItem)
         else:
-            return
+            edit = ObjectProps(self.conn, currentItem)
 
         edit.Show()
 
@@ -1025,7 +1135,7 @@ class ADUC:
                     Item(Id('context_add_contact'), 'Contact'),
                     Item(Id('context_add_group'), 'Group'),
                     Item(Id('context_add_inetorgperson'), 'InetOrgPerson'),
-                    #Item(Id('context_add_msmq_queue_alias'), 'MSMQ Queue Alias'),
+                    Item(Id('context_add_msmq_queue_alias'), 'MSMQ Queue Alias'),
                     #Item(Id('context_add_printer'), 'Printer'),
                     Item(Id('context_add_user'), 'User'),
                     #Item(Id('context_add_shared_folder'), 'Shared Folder')
@@ -1096,6 +1206,13 @@ class ADUC:
                     self.__show_properties(current_container)
             elif str(ret) == 'properties':
                 self.__show_properties(current_container)
+            elif str(ret) == 'context_add_msmq_queue_alias':
+                obj = NewObjDialog(self.lp, 'msMQ-Custom-Recipient', current_container).Show()
+                obj['objectClass'] = ['top', 'msMQ-Custom-Recipient']
+                obj['objectCategory'] = 'CN=MSMQ-Custom-Recipient,CN=Schema,CN=Configuration,%s' % self.conn.realm_to_dn(self.realm)
+                if obj:
+                    dn = self.conn.add_obj(current_container, obj)
+                    self.__refresh(current_container, dn)
             elif str(ret) == 'context_add_contact':
                 contact = NewObjDialog(self.lp, 'contact', current_container).Show()
                 if contact:
