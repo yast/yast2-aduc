@@ -46,6 +46,33 @@ class Connection(Ldap):
     def objects_list(self, container):
         return self.ldap_search_s(container, SCOPE_ONELEVEL, '(|(objectCategory=person)(objectCategory=group)(objectCategory=computer))', [])
 
+    def add_contact(self, user_attrs, container=None):
+        if not container:
+            container = self.__well_known_container('users')
+        attrs = {}
+
+        attrs['objectClass'] = ['top', 'person', 'organizationalPerson', 'contact']
+        attrs['objectCategory'] = 'CN=Person,CN=Schema,CN=Configuration,%s' % self.realm_to_dn(self.realm)
+        attrs['cn'] = user_attrs['cn'].strip()
+        attrs['name'] = user_attrs['cn']
+        if 'sn' in user_attrs:
+            attrs['sn'] = user_attrs['sn']
+        if 'givenName' in user_attrs:
+            attrs['givenName'] = user_attrs['givenName']
+        if 'initials' in user_attrs:
+            attrs['initials'] = user_attrs['initials']
+        if 'displayName' in user_attrs:
+            attrs['displayName'] = user_attrs['displayName']
+        dn = 'CN=%s,%s' % (attrs['cn'], container)
+        attrs['distinguishedName'] = dn
+
+        try:
+            self.ldap_add(dn, addlist(stringify_ldap(attrs)))
+        except LdapException as e:
+            ycpbuiltins.y2error(traceback.format_exc())
+            ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
+            return
+
     def add_user(self, user_attrs, container=None, inetorgperson=False):
         if not container:
             container = self.__well_known_container('users')

@@ -621,7 +621,30 @@ class NewObjDialog:
                 self.dialog = self.__group_dialog()
             elif strcmp(self.obj_type, 'computer'):
                 self.dialog = self.__computer_dialog()
+            elif strcmp(self.obj_type, 'contact'):
+                self.dialog = self.__contact_dialog()
         return self.dialog[self.dialog_seq][0]
+
+    def __contact_dialog(self):
+        return [
+            [VBox(
+                HBox(
+                    TextEntry(Id('givenName'), UserDataModel['general']['givenName']),
+                    TextEntry(Id('initials'), UserDataModel['general']['initials']),
+                ),
+                TextEntry(Id('sn'), UserDataModel['general']['sn']),
+                TextEntry(Id('cn'), 'Full name:'),
+                TextEntry(Id('displayName'), UserDataModel['general']['displayName']),
+                Bottom(Right(HBox(
+                    PushButton(Id('finish'), 'OK'),
+                    PushButton(Id('cancel'), 'Cancel'),
+                ))),
+            ),
+            ['givenName', 'initials', 'sn', 'cn', 'displayName'], # known keys
+            ['cn'], # required keys
+            None, # dialog hook
+            ]
+        ]
 
     def __user_dialog(self):
         def unix_user_hook():
@@ -940,6 +963,7 @@ class ADUC:
             menus.append({'title': 'Find...', 'id': 'find', 'type': 'MenuEntry', 'parent': 'action'})
             menus.append({'title': 'New', 'id': 'new_but', 'type': 'SubMenu', 'parent': 'action'})
             menus.append({'title': 'Computer', 'id': 'context_add_computer', 'type': 'MenuEntry', 'parent': 'new_but'})
+            menus.append({'title': 'Contact', 'id': 'context_add_contact', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'Group', 'id': 'context_add_group', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'InetOrgPerson', 'id': 'context_add_inetorgperson', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'User', 'id': 'context_add_user', 'type': 'MenuEntry', 'parent': 'new_but'})
@@ -985,7 +1009,7 @@ class ADUC:
             Item(Id('find'), 'Find...'),
             Term('menu', 'New', [
                     Item(Id('context_add_computer'), 'Computer'),
-                    #Item(Id('context_add_contact'), 'Contact'),
+                    Item(Id('context_add_contact'), 'Contact'),
                     Item(Id('context_add_group'), 'Group'),
                     Item(Id('context_add_inetorgperson'), 'InetOrgPerson'),
                     #Item(Id('context_add_msmq_queue_alias'), 'MSMQ Queue Alias'),
@@ -1059,6 +1083,11 @@ class ADUC:
                     self.__show_properties(current_container)
             elif str(ret) == 'properties':
                 self.__show_properties(current_container)
+            elif str(ret) == 'context_add_contact':
+                contact = NewObjDialog(self.lp, 'contact', current_container).Show()
+                if contact:
+                    self.conn.add_contact(contact, current_container)
+                    self.__refresh(current_container, contact['cn'])
             elif str(ret) == 'context_add_user':
                 user = NewObjDialog(self.lp, 'user', current_container).Show()
                 if user:
