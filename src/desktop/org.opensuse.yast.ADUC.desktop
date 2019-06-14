@@ -16,7 +16,7 @@ X-SuSE-YaST-SortKey=
 X-SuSE-YaST-AutoInstResource=aduc
 
 Icon=yast-aduc
-Exec=/usr/bin/xdg-su -c 'yast2 aduc qt'
+Exec=xdg-su -c "/sbin/yast2 aduc"
 
 Name=YaST Active Directory Users and Computers
 GenericName=Active Directory Users and Computers
