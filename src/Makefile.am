@@ -12,9 +12,6 @@ ynclude_DATA =			\
 	dialogs.py		\
 	complex.py
 
-org.opensuse.yast.ADUC.desktop: org.opensuse.yast.ADUC.desktop.in
-	sed -e 's;[@]CLIENTDIR[@];$(clientdir);g' < $(srcdir)/org.opensuse.yast.ADUC.desktop.in > $(srcdir)/org.opensuse.yast.ADUC.desktop
-
 desktopdir = ${prefix}/share/applications/YaST2
 desktop_DATA =			\
 	org.opensuse.yast.ADUC.desktop
@@ -27,5 +24,4 @@ aduc:
 ycpchook = aduc
 
 EXTRA_DIST = $(client_DATA) $(ynclude_DATA) $(module_DATA) $(desktop_DATA)
-
-CLEANFILES = org.opensuse.yast.ADUC.desktop *.pyc
+CLEANFILES = *.pyc
