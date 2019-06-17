@@ -12,6 +12,7 @@ from ldap.filter import filter_format
 from adcommon.yldap import SCOPE_SUBTREE as SUBTREE
 from adcommon.creds import YCreds, switch_domains
 from adcommon.ui import CreateMenu, DeleteButtonBox
+import traceback
 
 def have_x():
     from subprocess import Popen, PIPE
@@ -924,6 +925,7 @@ class ADUC:
                 return True
             except Exception as e:
                 ycpbuiltins.y2error(str(e))
+                ycpbuiltins.y2error(traceback.format_exc())
             return False
         self.cred_valid = cred_valid
         ycred = YCreds(creds)
