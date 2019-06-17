@@ -26,14 +26,13 @@ Url:            https://github.com/yast/yast2-aduc
 
 Source:         %{name}-%{version}.tar.bz2
 
-BuildRequires:  autoconf
-BuildRequires:  automake
 BuildRequires:  perl-XML-Writer
 BuildRequires:  python3
 BuildRequires:  update-desktop-files
 BuildRequires:  yast2
 BuildRequires:  yast2-devtools
 BuildRequires:  yast2-testsuite
+BuildRequires:  rubygem(%rb_default_ruby_abi:yast-rake)
 
 Requires:       krb5-client
 Requires:       samba-client
@@ -56,7 +55,6 @@ creating and modifying Users, Groups, and Computer objects in Active Directory.
 %setup -q
 
 %build
-%yast_build
 
 %install
 %yast_install
