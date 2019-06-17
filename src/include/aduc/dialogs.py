@@ -919,6 +919,7 @@ class ADUC:
         self.__setup_menus()
         def cred_valid():
             try:
+                lp.set('realm', creds.get_domain())
                 self.conn = Connection(lp, creds)
                 return True
             except Exception as e:
