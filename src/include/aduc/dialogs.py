@@ -1057,7 +1057,6 @@ class SearchDialog:
 
 class ADUC:
     def __init__(self, lp, creds):
-        self.realm = lp.get('realm')
         self.lp = lp
         self.creds = creds
         self.__setup_menus()
@@ -1073,6 +1072,7 @@ class ADUC:
         self.cred_valid = cred_valid
         ycred = YCreds(creds)
         self.got_creds = ycred.Show(self.cred_valid)
+        self.realm = self.lp.get('realm')
 
     def __setup_menus(self, container=False, obj=False):
         menus = [{'title': '&File', 'id': 'file', 'type': 'Menu'},
