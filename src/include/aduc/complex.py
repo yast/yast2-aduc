@@ -246,3 +246,10 @@ class Connection(Ldap):
             y2error_dialog(e.info if e.info else e.msg)
         return dn
 
+    def rename(self, dn, newrdn, newsuperior):
+        try:
+            self.l.rename_s(dn, newrdn, newsuperior)
+        except Exception as e:
+            ycpbuiltins.y2error(traceback.format_exc())
+            ycpbuiltins.y2error('ldap.rename_s: %s\n' % str(e))
+            y2error_dialog(str(e))

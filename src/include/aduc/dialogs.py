@@ -1093,6 +1093,46 @@ class SearchDialog:
             VSpacing(.3)
         ), HSpacing(3)))
 
+class MoveDialog:
+    def __init__(self, conn):
+        self.conn = conn
+
+    def __sub_tree(self, dn):
+        tree_containers = self.conn.containers(dn)
+        return [Item(Id(c[0]), c[1], False, self.__sub_tree(c[0])) for c in tree_containers]
+
+    def __tree_dialog(self):
+        tree_containers = self.conn.containers()
+        items = [Item(Id(c[0]), c[1], False, self.__sub_tree(c[0])) for c in tree_containers]
+        return MinSize(50, 20, HBox(HSpacing(3), VBox(VSpacing(.3),
+            Left(Label('Move object into container:')),
+            VSpacing(1),
+            VWeight(10, Tree(Id('move_tree'), '', [
+                Item(Id(self.conn.realm_to_dn(self.conn.realm)), self.conn.realm.lower(), True, items),
+            ])),
+            VSpacing(1),
+            VWeight(1, Bottom(Right(HBox(
+                PushButton(Id('ok'), 'OK'),
+                PushButton(Id('cancel'), 'Cancel'),
+            )))),
+            VSpacing(.3)
+        ), HSpacing(3)))
+
+    def Show(self):
+        UI.SetApplicationTitle('Move')
+        UI.OpenDialog(self.__tree_dialog())
+        while True:
+            ret = UI.UserInput()
+            if str(ret) == 'abort' or str(ret) == 'cancel':
+                ret = None
+                break
+            elif str(ret) == 'ok':
+                ret = UI.QueryWidget('move_tree', 'Value')
+                if ret:
+                    break
+        UI.CloseDialog()
+        return ret
+
 class ADUC:
     def __init__(self, lp, creds):
         self.lp = lp
@@ -1133,6 +1173,7 @@ class ADUC:
             menus.append({'title': 'Shared Folder', 'id': 'context_add_shared_folder', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'Refresh', 'id': 'refresh', 'type': 'MenuEntry', 'parent': 'action'})
         elif obj:
+            menus.append({'title': 'Move...', 'id': 'context_move', 'type': 'MenuEntry', 'parent': 'action'})
             menus.append({'title': 'Delete', 'id': 'delete', 'type': 'MenuEntry', 'parent': 'action'})
             menus.append({'title': 'Properties', 'id': 'properties', 'type': 'MenuEntry', 'parent': 'action'})
         CreateMenu(menus)
@@ -1141,7 +1182,7 @@ class ADUC:
         currentItemName = UI.QueryWidget('items', 'CurrentItem')
         searchList = self.conn.objects_list(container)
         currentItem = self.__find_by_name(searchList, currentItemName)
-        if self.__warn_delete(currentItem[-1]['name'][-1]):
+        if self.__warn_message('Delete', 'Are you sure you want to delete \'%s\'?' % currentItem[-1]['name'][-1].decode()):
             self.conn.ldap_delete(currentItem[0])
 
     def __show_properties(self, container):
@@ -1196,6 +1237,7 @@ class ADUC:
 
     def __obj_context_menu(self):
         return Term('menu', [
+            Item(Id('context_move'), 'Move...'),
             Item(Id('properties'), 'Properties'),
             Item(Id('delete'), 'Delete')
         ])
@@ -1310,6 +1352,28 @@ class ADUC:
                 if computer:
                     self.conn.add_computer(computer, current_container)
                     self.__refresh(current_container, computer['name'])
+            elif str(ret) == 'context_move':
+                location = MoveDialog(self.conn).Show()
+                if location:
+                    resp = self.__warn_message('Active Directory Domain Services',
+                            'Moving objects in Active Directory Domain Services can prevent your existing\n' +
+                            'system from working the way it was designed. For example, moving an\n' +
+                            'organizational unit (OU) can affect the way that group policies are applied to the\n' +
+                            'accounts within the OU.\n' +
+                            'Are you sure you want to move this object?')
+                    if resp:
+                        currentItemName = UI.QueryWidget('items', 'CurrentItem')
+                        searchList = self.conn.objects_list(current_container)
+                        currentItem = self.__find_by_name(searchList, currentItemName)
+                        dn = currentItem[0]
+                        newrdn = None
+                        if 'cn' in currentItem[-1]:
+                            newrdn = 'CN=%s' % currentItem[-1]['cn'][-1].decode()
+                        elif 'ou' in currentItem[-1]:
+                            newrdn = 'OU=%s' % currentItem[-1]['ou'][-1].decode()
+                        if newrdn:
+                            self.conn.rename(dn, newrdn, location)
+                            self.__refresh(current_container)
             elif str(ret) == 'delete':
                 self.__delete_selected_obj(current_container)
                 self.__refresh(current_container)
@@ -1324,14 +1388,14 @@ class ADUC:
             UI.SetApplicationTitle('Active Directory Users and Computers')
         return Symbol(ret)
 
-    def __warn_delete(self, name):
-        if six.PY3 and type(name) is bytes:
-            name = name.decode('utf-8')
+    def __warn_message(self, title, msg):
+        if six.PY3 and type(msg) is bytes:
+            msg = msg.decode('utf-8')
         ans = False
-        UI.SetApplicationTitle('Delete')
+        UI.SetApplicationTitle(title)
         UI.OpenDialog(Opt('warncolor'), HBox(HSpacing(1), VBox(
             VSpacing(.3),
-            Label('Are you sure you want to delete \'%s\'?' % name),
+            Label(msg),
             Right(HBox(
                 PushButton(Id('yes'), 'Yes'),
                 PushButton(Id('no'), 'No')
