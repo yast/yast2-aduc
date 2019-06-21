@@ -7,7 +7,7 @@ from syslog import syslog, LOG_INFO, LOG_ERR, LOG_DEBUG, LOG_EMERG, LOG_ALERT
 import traceback
 from yast import ycpbuiltins
 from adcommon.strings import strcmp, strcasecmp
-from adcommon.yldap import Ldap, LdapException, stringify_ldap, SCOPE_SUBTREE, SCOPE_ONELEVEL, SCOPE_BASE, addlist, modlist
+from adcommon.yldap import Ldap, LdapException, stringify_ldap, SCOPE_SUBTREE, SCOPE_ONELEVEL, SCOPE_BASE, addlist, modlist, y2error_dialog
 
 import six
 
@@ -71,6 +71,7 @@ class Connection(Ldap):
         except LdapException as e:
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
+            y2error_dialog(e.info if e.info else e.msg)
             return
 
     def add_user(self, user_attrs, container=None, inetorgperson=False):
@@ -119,6 +120,7 @@ class Connection(Ldap):
         except LdapException as e:
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
+            y2error_dialog(e.info if e.info else e.msg)
             return
 
         try:
@@ -130,6 +132,7 @@ class Connection(Ldap):
         except Exception as e:
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error(str(e))
+            y2error_dialog(str(e))
 
         uac = 0x0200
         # Direct modification of the cannot change password bit isn't allowed
@@ -173,6 +176,7 @@ class Connection(Ldap):
         except LdapException as e:
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
+            y2error_dialog(e.info if e.info else e.msg)
 
     def add_computer(self, computer_attrs, container=None):
         if not container:
@@ -198,6 +202,7 @@ class Connection(Ldap):
         except LdapException as e:
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
+            y2error_dialog(e.info if e.info else e.msg)
 
     def update(self, dn, orig_map, modattr, addattr):
         dn = dn if isinstance(dn, six.string_types) else dn.decode('utf8')
@@ -213,9 +218,11 @@ class Connection(Ldap):
                 except LdapException as e:
                     ycpbuiltins.y2error(traceback.format_exc())
                     ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
+                    y2error_dialog(e.info if e.info else e.msg)
         except Exception as e:
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error(str(e))
+            y2error_dialog(str(e))
             return False
         return True
 
@@ -226,5 +233,6 @@ class Connection(Ldap):
         except LdapException as e:
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
+            y2error_dialog(e.info if e.info else e.msg)
         return dn
 
