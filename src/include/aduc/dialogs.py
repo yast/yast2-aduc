@@ -1188,6 +1188,7 @@ class ADUC:
         UI.SetFocus('aduc_tree')
         current_container = self.conn.realm_to_dn(self.realm)
         self.__setup_menus(container=current_container)
+        UI.SetApplicationTitle('Active Directory Users and Computers')
         while True:
             event = UI.WaitForEvent()
             if 'WidgetID' in event:
