@@ -692,7 +692,7 @@ class GroupProps(TabProps):
         self.dimensions = (60, 24)
 
 class NewObjDialog:
-    def __init__(self, lp, obj_type, location):
+    def __init__(self, lp, obj_type, location, attrs=[('cn', 'Unicode String', 'Common-Name')]):
         self.lp = lp
         self.obj = {}
         self.obj_type = obj_type
@@ -702,6 +702,7 @@ class NewObjDialog:
         realm_dn = ','.join(['DC=%s' % part for part in self.realm.lower().split('.')])
         loc_dn = location[:location.lower().find(realm_dn.lower())-1]
         self.location = '/'.join([i[3:] for i in reversed(loc_dn.split(','))])
+        self.obj_attrs = attrs
 
     def __new(self):
         pane = self.__fetch_pane()
@@ -729,19 +730,21 @@ class NewObjDialog:
     def __object_dialog(self):
         return [
             [VBox(
-                Left(Label('Attribute name:\tcn')),
-                Left(Label('Attribute type:\tUnicode String')),
-                TextEntry(Id('cn'), 'cn'),
+                Left(Label('Attribute:\t%s' % attr[0])),
+                Left(Label('Syntax:\t%s' % attr[1])),
+                Left(Label('Description:\t%s' % attr[2])),
+                TextEntry(Id(attr[0]), 'Value:'),
                 Bottom(Right(HBox(
-                    PushButton(Id('finish'), 'OK'),
+                    PushButton(Id('back'), Opt('disabled') if attr == self.obj_attrs[0] else Opt(''), '< Back') if len(self.obj_attrs) > 1 else Empty(),
+                    PushButton(Id('next'), 'Next >') if attr != self.obj_attrs[-1] else PushButton(Id('finish'), 'Finish' if len(self.obj_attrs) > 1 else 'OK'),
                     PushButton(Id('cancel'), 'Cancel'),
                 ))),
             ),
-            ['cn'], # known keys
-            ['cn'], # required keys
+            [attr[0]], # known keys
+            [attr[0]], # required keys
             None, # dialog hook
             ]
-        ]
+        for attr in self.obj_attrs]
 
     def __contact_dialog(self):
         return [
@@ -1087,6 +1090,7 @@ class ADUC:
             menus.append({'title': 'Group', 'id': 'context_add_group', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'InetOrgPerson', 'id': 'context_add_inetorgperson', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'MSMQ Queue Alias', 'id': 'context_add_msmq_queue_alias', 'type': 'MenuEntry', 'parent': 'new_but'})
+            menus.append({'title': 'Printer', 'id': 'context_add_printer', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'User', 'id': 'context_add_user', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'Refresh', 'id': 'refresh', 'type': 'MenuEntry', 'parent': 'action'})
         elif obj:
@@ -1136,7 +1140,7 @@ class ADUC:
                     Item(Id('context_add_group'), 'Group'),
                     Item(Id('context_add_inetorgperson'), 'InetOrgPerson'),
                     Item(Id('context_add_msmq_queue_alias'), 'MSMQ Queue Alias'),
-                    #Item(Id('context_add_printer'), 'Printer'),
+                    Item(Id('context_add_printer'), 'Printer'),
                     Item(Id('context_add_user'), 'User'),
                     #Item(Id('context_add_shared_folder'), 'Shared Folder')
                 ]),
@@ -1228,6 +1232,13 @@ class ADUC:
                 if user:
                     self.conn.add_user(user, current_container, inetorgperson=True)
                     self.__refresh(current_container, user['cn'])
+            elif str(ret) == 'context_add_printer':
+                obj = NewObjDialog(self.lp, 'printQueue', current_container, attrs=[('cn', 'Unicode String', 'Common-Name'), ('versionNumber', 'Integer', 'Version-Number'), ('uNCName', 'Unicode String', 'UNC-Name'), ('shortServerName', 'Unicode String', 'Short-Server-Name'), ('serverName', 'Unicode String', 'Server-Name'), ('printerName', 'Unicode String', 'Printer-Name')]).Show()
+                obj['objectClass'] = ['top', 'leaf', 'connectionPoint', 'printQueue']
+                obj['objectCategory'] = 'CN=Print-Queue,CN=Schema,CN=Configuration,%s' % self.conn.realm_to_dn(self.realm)
+                if obj:
+                    dn = self.conn.add_obj(current_container, obj)
+                    self.__refresh(current_container, dn)
             elif str(ret) == 'context_add_group':
                 group = NewObjDialog(self.lp, 'group', current_container).Show()
                 if group:
