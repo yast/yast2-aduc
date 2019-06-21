@@ -234,7 +234,10 @@ class Connection(Ldap):
         return True
 
     def add_obj(self, container, attrs):
-        dn = 'CN=%s,%s' % (attrs['cn'], container)
+        if 'ou' in attrs:
+            dn = 'OU=%s,%s' % (attrs['ou'], container)
+        else:
+            dn = 'CN=%s,%s' % (attrs['cn'], container)
         try:
             self.ldap_add(dn, addlist(stringify_ldap(attrs)))
         except LdapException as e:

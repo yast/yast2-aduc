@@ -725,6 +725,8 @@ class NewObjDialog:
                 self.dialog = self.__contact_dialog()
             elif strcmp(self.obj_type, 'volume'):
                 self.dialog = self.__volume_dialog()
+            elif strcmp(self.obj_type, 'organizationalUnit'):
+                self.dialog = self.__organizationalUnit_dialog()
             else:
                 self.dialog = self.__object_dialog()
         return self.dialog[self.dialog_seq][0]
@@ -760,6 +762,21 @@ class NewObjDialog:
             ),
             ['cn', 'uNCName'], # known keys
             ['cn', 'uNCName'], # required keys
+            None, # dialog hook
+            ]
+        ]
+
+    def __organizationalUnit_dialog(self):
+        return [
+            [VBox(
+                TextEntry(Id('ou'), 'Name:'),
+                Bottom(Right(HBox(
+                    PushButton(Id('finish'), 'OK'),
+                    PushButton(Id('cancel'), 'Cancel'),
+                ))),
+            ),
+            ['ou'], # known keys
+            ['ou'], # required keys
             None, # dialog hook
             ]
         ]
@@ -1095,11 +1112,12 @@ class ADUC:
         self.got_creds = ycred.Show(self.cred_valid)
         self.realm = self.lp.get('realm')
 
-    def __setup_menus(self, container=False, obj=False):
+    def __setup_menus(self, container=None, obj=False):
         menus = [{'title': '&File', 'id': 'file', 'type': 'Menu'},
                  {'title': 'Change domain...', 'id': 'change_domain', 'type': 'MenuEntry', 'parent': 'file'},
                  {'title': 'Exit', 'id': 'abort', 'type': 'MenuEntry', 'parent': 'file'},
                  {'title': 'Action', 'id': 'action', 'type': 'Menu'}]
+        ou = container and (container == self.conn.realm_to_dn(self.realm) or container[:3].upper() == 'OU=')
         if container:
             menus.append({'title': 'Find...', 'id': 'find', 'type': 'MenuEntry', 'parent': 'action'})
             menus.append({'title': 'New', 'id': 'new_but', 'type': 'SubMenu', 'parent': 'action'})
@@ -1108,6 +1126,8 @@ class ADUC:
             menus.append({'title': 'Group', 'id': 'context_add_group', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'InetOrgPerson', 'id': 'context_add_inetorgperson', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'MSMQ Queue Alias', 'id': 'context_add_msmq_queue_alias', 'type': 'MenuEntry', 'parent': 'new_but'})
+            if ou:
+                menus.append({'title': 'Organizational Unit', 'id': 'context_add_ou', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'Printer', 'id': 'context_add_printer', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'User', 'id': 'context_add_user', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'Shared Folder', 'id': 'context_add_shared_folder', 'type': 'MenuEntry', 'parent': 'new_but'})
@@ -1149,20 +1169,26 @@ class ADUC:
         if edit.tabModel.is_modified():
             self.__refresh(container, currentItemName)
 
-    def __objs_context_menu(self):
+    def __objs_context_menu(self, container):
+        ou = container == self.conn.realm_to_dn(self.realm) or container[:3].upper() == 'OU='
+        new_items = [
+            Item(Id('context_add_computer'), 'Computer'),
+            Item(Id('context_add_contact'), 'Contact'),
+            Item(Id('context_add_group'), 'Group'),
+            Item(Id('context_add_inetorgperson'), 'InetOrgPerson'),
+            Item(Id('context_add_msmq_queue_alias'), 'MSMQ Queue Alias')
+        ]
+        if ou:
+            new_items.append(Item(Id('context_add_ou'), 'Organizational Unit'))
+        new_items.extend([
+            Item(Id('context_add_printer'), 'Printer'),
+            Item(Id('context_add_user'), 'User'),
+            Item(Id('context_add_shared_folder'), 'Shared Folder')
+        ])
         return Term('menu', [
             #Item(Id('context_delegate_control'), 'Delegate Control...'),
             Item(Id('find'), 'Find...'),
-            Term('menu', 'New', [
-                    Item(Id('context_add_computer'), 'Computer'),
-                    Item(Id('context_add_contact'), 'Contact'),
-                    Item(Id('context_add_group'), 'Group'),
-                    Item(Id('context_add_inetorgperson'), 'InetOrgPerson'),
-                    Item(Id('context_add_msmq_queue_alias'), 'MSMQ Queue Alias'),
-                    Item(Id('context_add_printer'), 'Printer'),
-                    Item(Id('context_add_user'), 'User'),
-                    Item(Id('context_add_shared_folder'), 'Shared Folder')
-                ]),
+            Term('menu', 'New', new_items),
             Item(Id('refresh'), 'Refresh'),
             #Item(Id('context_properties'), 'Properties'),
             #Item(Id('context_help'), 'Help'),
@@ -1204,7 +1230,7 @@ class ADUC:
                 if 'DC=' in choice:
                     current_container = choice
                     self.__refresh(current_container)
-                    self.__setup_menus(container=True)
+                    self.__setup_menus(container=current_container)
                 else:
                     current_container = None
                     UI.ReplaceWidget('rightPane', Empty())
@@ -1212,7 +1238,7 @@ class ADUC:
                 if event['EventReason'] == 'ContextMenuActivated':
                     if current_container:
                         menu_open = True
-                        UI.OpenContextMenu(self.__objs_context_menu())
+                        UI.OpenContextMenu(self.__objs_context_menu(current_container))
                     elif choice == self.realm.lower():
                         menu_open = True
                         UI.OpenContextMenu(self.__dom_context_menu())
@@ -1222,7 +1248,7 @@ class ADUC:
                 if event['EventReason'] == 'ContextMenuActivated':
                     check = UI.QueryWidget('items', 'CurrentItem')
                     if check is None:
-                        UI.OpenContextMenu(self.__objs_context_menu())
+                        UI.OpenContextMenu(self.__objs_context_menu(current_container))
                     else:
                         UI.OpenContextMenu(self.__obj_context_menu())
                 elif event['EventReason'] == 'SelectionChanged':
@@ -1264,6 +1290,13 @@ class ADUC:
                 obj = NewObjDialog(self.lp, 'volume', current_container).Show()
                 obj['objectClass'] = ['top', 'leaf', 'connectionPoint', 'volume']
                 obj['objectCategory'] = 'CN=Volume,CN=Schema,CN=Configuration,%s' % self.conn.realm_to_dn(self.realm)
+                if obj:
+                    dn = self.conn.add_obj(current_container, obj)
+                    self.__refresh(current_container, dn)
+            elif str(ret) == 'context_add_ou':
+                obj = NewObjDialog(self.lp, 'organizationalUnit', current_container).Show()
+                obj['objectClass'] = ['top', 'organizationalUnit']
+                obj['objectCategory'] = 'CN=Organizational-Unit,CN=Schema,CN=Configuration,%s' % self.conn.realm_to_dn(self.realm)
                 if obj:
                     dn = self.conn.add_obj(current_container, obj)
                     self.__refresh(current_container, dn)
