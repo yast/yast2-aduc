@@ -723,6 +723,8 @@ class NewObjDialog:
                 self.dialog = self.__computer_dialog()
             elif strcmp(self.obj_type, 'contact'):
                 self.dialog = self.__contact_dialog()
+            elif strcmp(self.obj_type, 'volume'):
+                self.dialog = self.__volume_dialog()
             else:
                 self.dialog = self.__object_dialog()
         return self.dialog[self.dialog_seq][0]
@@ -745,6 +747,22 @@ class NewObjDialog:
             None, # dialog hook
             ]
         for attr in self.obj_attrs]
+
+    def __volume_dialog(self):
+        return [
+            [VBox(
+                TextEntry(Id('cn'), 'Name:'),
+                TextEntry(Id('uNCName'), 'Network path (\\\\server\\share):'),
+                Bottom(Right(HBox(
+                    PushButton(Id('finish'), 'OK'),
+                    PushButton(Id('cancel'), 'Cancel'),
+                ))),
+            ),
+            ['cn', 'uNCName'], # known keys
+            ['cn', 'uNCName'], # required keys
+            None, # dialog hook
+            ]
+        ]
 
     def __contact_dialog(self):
         return [
@@ -1092,6 +1110,7 @@ class ADUC:
             menus.append({'title': 'MSMQ Queue Alias', 'id': 'context_add_msmq_queue_alias', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'Printer', 'id': 'context_add_printer', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'User', 'id': 'context_add_user', 'type': 'MenuEntry', 'parent': 'new_but'})
+            menus.append({'title': 'Shared Folder', 'id': 'context_add_shared_folder', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'Refresh', 'id': 'refresh', 'type': 'MenuEntry', 'parent': 'action'})
         elif obj:
             menus.append({'title': 'Delete', 'id': 'delete', 'type': 'MenuEntry', 'parent': 'action'})
@@ -1142,7 +1161,7 @@ class ADUC:
                     Item(Id('context_add_msmq_queue_alias'), 'MSMQ Queue Alias'),
                     Item(Id('context_add_printer'), 'Printer'),
                     Item(Id('context_add_user'), 'User'),
-                    #Item(Id('context_add_shared_folder'), 'Shared Folder')
+                    Item(Id('context_add_shared_folder'), 'Shared Folder')
                 ]),
             Item(Id('refresh'), 'Refresh'),
             #Item(Id('context_properties'), 'Properties'),
@@ -1236,6 +1255,13 @@ class ADUC:
                 obj = NewObjDialog(self.lp, 'printQueue', current_container, attrs=[('cn', 'Unicode String', 'Common-Name'), ('versionNumber', 'Integer', 'Version-Number'), ('uNCName', 'Unicode String', 'UNC-Name'), ('shortServerName', 'Unicode String', 'Short-Server-Name'), ('serverName', 'Unicode String', 'Server-Name'), ('printerName', 'Unicode String', 'Printer-Name')]).Show()
                 obj['objectClass'] = ['top', 'leaf', 'connectionPoint', 'printQueue']
                 obj['objectCategory'] = 'CN=Print-Queue,CN=Schema,CN=Configuration,%s' % self.conn.realm_to_dn(self.realm)
+                if obj:
+                    dn = self.conn.add_obj(current_container, obj)
+                    self.__refresh(current_container, dn)
+            elif str(ret) == 'context_add_shared_folder':
+                obj = NewObjDialog(self.lp, 'volume', current_container).Show()
+                obj['objectClass'] = ['top', 'leaf', 'connectionPoint', 'volume']
+                obj['objectCategory'] = 'CN=Volume,CN=Schema,CN=Configuration,%s' % self.conn.realm_to_dn(self.realm)
                 if obj:
                     dn = self.conn.add_obj(current_container, obj)
                     self.__refresh(current_container, dn)
