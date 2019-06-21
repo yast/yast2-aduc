@@ -44,7 +44,14 @@ class Connection(Ldap):
         return self.ldap_search(dn, SCOPE_BASE, '(objectClass=*)', attrs)[-1]
 
     def objects_list(self, container):
-        return self.ldap_search_s(container, SCOPE_ONELEVEL, '(|(objectCategory=person)(objectCategory=group)(objectCategory=computer)(objectCategory=MSMQ-Custom-Recipient)(objectClass=printQueue)(objectCategory=Volume))', [])
+        ret = []
+        containers = self.ldap_search(container, SCOPE_ONELEVEL, '(&(|(objectClass=organizationalUnit)(objectCategory=Container)(objectClass=builtinDomain))(!(|(cn=System)(cn=Program Data))))', [])
+        if containers:
+            ret.extend(containers)
+        objs = self.ldap_search(container, SCOPE_ONELEVEL, '(|(objectCategory=person)(objectCategory=group)(objectCategory=computer)(objectCategory=MSMQ-Custom-Recipient)(objectClass=printQueue)(objectCategory=Volume))', [])
+        if objs:
+            ret.extend(objs)
+        return ret
 
     def add_contact(self, user_attrs, container=None):
         if not container:

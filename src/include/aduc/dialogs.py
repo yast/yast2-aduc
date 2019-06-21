@@ -1186,7 +1186,8 @@ class ADUC:
         menu_open = False
         DeleteButtonBox()
         UI.SetFocus('aduc_tree')
-        current_container = None
+        current_container = self.conn.realm_to_dn(self.realm)
+        self.__setup_menus(container=current_container)
         while True:
             event = UI.WaitForEvent()
             if 'WidgetID' in event:
@@ -1312,7 +1313,9 @@ class ADUC:
         return ans
 
     def __refresh(self, current_container, obj_id=None):
-        if current_container:
+        if current_container == self.conn.realm_to_dn(self.realm):
+            Wizard.SetContents('Active Directory Users and Computers', self.__aduc_page(), '', False, False)
+        elif current_container:
             UI.ReplaceWidget('rightPane', self.__objects_tab(current_container))
             if obj_id:
                 UI.ChangeWidget('items', 'CurrentItem', obj_id)
@@ -1325,12 +1328,12 @@ class ADUC:
     def __find_by_name(self, alist, name):
         if name:
             for item in alist:
-                if strcmp(item[1]['cn'][-1], name):
+                if strcmp(item[1]['cn'][-1] if 'cn' in item[1] else item[1]['name'][-1], name):
                     return item
         return None 
 
     def __objects_tab(self, container):
-        items = [Item(obj[1]['cn'][-1], obj[1]['objectClass'][-1].title(), obj[1]['description'][-1] if 'description' in obj[1] else '') for obj in self.conn.objects_list(container)]
+        items = [Item(obj[1]['cn'][-1] if 'cn' in obj[1] else obj[1]['name'][-1], obj[1]['objectClass'][-1].title(), obj[1]['description'][-1] if 'description' in obj[1] else '') for obj in self.conn.objects_list(container)]
         return Table(Id('items'), Opt('notify', 'immediate', 'notifyContextMenu'), Header('Name', 'Type', 'Description'), items)
 
     def __sub_tree(self, dn):
@@ -1343,13 +1346,13 @@ class ADUC:
 
         return VBox(
             Tree(Id('aduc_tree'), Opt('notify', 'immediate', 'notifyContextMenu'), '', [
-                Item(self.realm.lower(), True, items),
+                Item(Id(self.conn.realm_to_dn(self.realm)), self.realm.lower(), True, items),
             ]),
         )
 
     def __aduc_page(self):
         return HBox(
             HWeight(1, self.__aduc_tree()),
-            HWeight(2, ReplacePoint(Id('rightPane'), Empty()))
+            HWeight(2, ReplacePoint(Id('rightPane'), self.__objects_tab(self.conn.realm_to_dn(self.realm))))
         )
 
