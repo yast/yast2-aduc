@@ -1300,9 +1300,9 @@ class ADUC:
                 self.__show_properties(current_container)
             elif str(ret) == 'context_add_msmq_queue_alias':
                 obj = NewObjDialog(self.lp, 'msMQ-Custom-Recipient', current_container).Show()
-                obj['objectClass'] = ['top', 'msMQ-Custom-Recipient']
-                obj['objectCategory'] = 'CN=MSMQ-Custom-Recipient,CN=Schema,CN=Configuration,%s' % self.conn.realm_to_dn(self.realm)
                 if obj:
+                    obj['objectClass'] = ['top', 'msMQ-Custom-Recipient']
+                    obj['objectCategory'] = 'CN=MSMQ-Custom-Recipient,CN=Schema,CN=Configuration,%s' % self.conn.realm_to_dn(self.realm)
                     dn = self.conn.add_obj(current_container, obj)
                     self.__refresh(current_container, dn)
             elif str(ret) == 'context_add_contact':
@@ -1322,23 +1322,23 @@ class ADUC:
                     self.__refresh(current_container, user['cn'])
             elif str(ret) == 'context_add_printer':
                 obj = NewObjDialog(self.lp, 'printQueue', current_container, attrs=[('cn', 'Unicode String', 'Common-Name'), ('versionNumber', 'Integer', 'Version-Number'), ('uNCName', 'Unicode String', 'UNC-Name'), ('shortServerName', 'Unicode String', 'Short-Server-Name'), ('serverName', 'Unicode String', 'Server-Name'), ('printerName', 'Unicode String', 'Printer-Name')]).Show()
-                obj['objectClass'] = ['top', 'leaf', 'connectionPoint', 'printQueue']
-                obj['objectCategory'] = 'CN=Print-Queue,CN=Schema,CN=Configuration,%s' % self.conn.realm_to_dn(self.realm)
                 if obj:
+                    obj['objectClass'] = ['top', 'leaf', 'connectionPoint', 'printQueue']
+                    obj['objectCategory'] = 'CN=Print-Queue,CN=Schema,CN=Configuration,%s' % self.conn.realm_to_dn(self.realm)
                     dn = self.conn.add_obj(current_container, obj)
                     self.__refresh(current_container, dn)
             elif str(ret) == 'context_add_shared_folder':
                 obj = NewObjDialog(self.lp, 'volume', current_container).Show()
-                obj['objectClass'] = ['top', 'leaf', 'connectionPoint', 'volume']
-                obj['objectCategory'] = 'CN=Volume,CN=Schema,CN=Configuration,%s' % self.conn.realm_to_dn(self.realm)
                 if obj:
+                    obj['objectClass'] = ['top', 'leaf', 'connectionPoint', 'volume']
+                    obj['objectCategory'] = 'CN=Volume,CN=Schema,CN=Configuration,%s' % self.conn.realm_to_dn(self.realm)
                     dn = self.conn.add_obj(current_container, obj)
                     self.__refresh(current_container, dn)
             elif str(ret) == 'context_add_ou':
                 obj = NewObjDialog(self.lp, 'organizationalUnit', current_container).Show()
-                obj['objectClass'] = ['top', 'organizationalUnit']
-                obj['objectCategory'] = 'CN=Organizational-Unit,CN=Schema,CN=Configuration,%s' % self.conn.realm_to_dn(self.realm)
                 if obj:
+                    obj['objectClass'] = ['top', 'organizationalUnit']
+                    obj['objectCategory'] = 'CN=Organizational-Unit,CN=Schema,CN=Configuration,%s' % self.conn.realm_to_dn(self.realm)
                     dn = self.conn.add_obj(current_container, obj)
                     self.__refresh(current_container, dn)
             elif str(ret) == 'context_add_group':
