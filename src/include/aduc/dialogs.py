@@ -1287,14 +1287,13 @@ class ADUC:
             elif str(ret) == 'next':
                 return Symbol('abort')
             elif str(ret) == 'items':
+                self.__setup_menus(obj=True)
                 if event['EventReason'] == 'ContextMenuActivated':
                     check = UI.QueryWidget('items', 'CurrentItem')
                     if check is None:
                         UI.OpenContextMenu(self.__objs_context_menu(current_container))
                     else:
                         UI.OpenContextMenu(self.__obj_context_menu())
-                elif event['EventReason'] == 'SelectionChanged':
-                    self.__setup_menus(obj=True)
                 elif event['EventReason'] == 'Activated':
                     self.__show_properties(current_container)
             elif str(ret) == 'properties':
