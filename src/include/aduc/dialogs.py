@@ -1184,6 +1184,7 @@ class ADUC:
         currentItem = self.__find_by_name(searchList, currentItemName)
         if self.__warn_message('Delete', 'Are you sure you want to delete \'%s\'?' % currentItem[-1]['name'][-1].decode()):
             self.conn.ldap_delete(currentItem[0])
+            return currentItem[0].lower().startswith('ou=')
 
     def __show_properties(self, container):
         searchList = []
@@ -1340,7 +1341,7 @@ class ADUC:
                     obj['objectClass'] = ['top', 'organizationalUnit']
                     obj['objectCategory'] = 'CN=Organizational-Unit,CN=Schema,CN=Configuration,%s' % self.conn.realm_to_dn(self.realm)
                     dn = self.conn.add_obj(current_container, obj)
-                    self.__refresh(current_container, dn)
+                    self.__refresh(current_container, dn, ou=True)
             elif str(ret) == 'context_add_group':
                 group = NewObjDialog(self.lp, 'group', current_container).Show()
                 if group:
@@ -1374,8 +1375,8 @@ class ADUC:
                             self.conn.rename(dn, newrdn, location)
                             self.__refresh(current_container)
             elif str(ret) == 'delete':
-                self.__delete_selected_obj(current_container)
-                self.__refresh(current_container)
+                ou = self.__delete_selected_obj(current_container)
+                self.__refresh(current_container, ou=ou)
             elif str(ret) == 'find':
                 SearchDialog(self.lp, self.conn, current_container).Show()
             elif str(ret) == 'refresh':
@@ -1409,8 +1410,8 @@ class ADUC:
         UI.CloseDialog()
         return ans
 
-    def __refresh(self, current_container, obj_id=None):
-        if current_container == self.conn.realm_to_dn(self.realm):
+    def __refresh(self, current_container, obj_id=None, ou=False):
+        if current_container == self.conn.realm_to_dn(self.realm) or ou:
             Wizard.SetContents('Active Directory Users and Computers', self.__aduc_page(), '', False, False)
         elif current_container:
             UI.ReplaceWidget('rightPane', self.__objects_tab(current_container))
