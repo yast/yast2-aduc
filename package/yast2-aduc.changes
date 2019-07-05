@@ -1,4 +1,19 @@
 -------------------------------------------------------------------
+Mon Jul 01 17:17:59 UTC 2019 - dmulder@suse.com
+
+- Update to 1.5:
+  + Add InetOrgPerson new object wizard; (bsc#1138203);
+  + Add Contact new object wizard; (bsc#1138203);
+  + Add Contacts properties page; (bsc#1138203);
+  + Add MSMQ Queue Alias new dialog; (bsc#1138203);
+  + Add printer dialog; (bsc#1138203);
+  + Add Shared Folder dialog; (bsc#1138203);
+  + Domain level can also have objects, and OUs/containers should be
+    displayed in objects list.
+  + Add Organizationl Unit dialog; (bsc#1138203);
+  + Add the Move object dialog; (bsc#1138203);
+
+-------------------------------------------------------------------
 Mon Jun 17 21:43:03 UTC 2019 - dmulder@suse.com
 
 - Use the domain name stored in the samba Credentials object; (bsc#1138487);

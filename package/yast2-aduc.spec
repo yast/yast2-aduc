@@ -17,7 +17,7 @@
 
 
 Name:           yast2-aduc
-Version:        1.4
+Version:        1.5
 Release:        0
 Summary:        Active Directory Users and Computers for YaST
 License:        GPL-3.0-only

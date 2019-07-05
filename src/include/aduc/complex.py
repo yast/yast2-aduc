@@ -7,7 +7,7 @@ from syslog import syslog, LOG_INFO, LOG_ERR, LOG_DEBUG, LOG_EMERG, LOG_ALERT
 import traceback
 from yast import ycpbuiltins
 from adcommon.strings import strcmp, strcasecmp
-from adcommon.yldap import Ldap, LdapException, stringify_ldap, SCOPE_SUBTREE, SCOPE_ONELEVEL, SCOPE_BASE, addlist, modlist
+from adcommon.yldap import Ldap, LdapException, stringify_ldap, SCOPE_SUBTREE, SCOPE_ONELEVEL, SCOPE_BASE, addlist, modlist, y2error_dialog
 
 import six
 
@@ -44,9 +44,44 @@ class Connection(Ldap):
         return self.ldap_search(dn, SCOPE_BASE, '(objectClass=*)', attrs)[-1]
 
     def objects_list(self, container):
-        return self.ldap_search_s(container, SCOPE_ONELEVEL, '(|(objectCategory=person)(objectCategory=group)(objectCategory=computer))', [])
+        ret = []
+        containers = self.ldap_search(container, SCOPE_ONELEVEL, '(&(|(objectClass=organizationalUnit)(objectCategory=Container)(objectClass=builtinDomain))(!(|(cn=System)(cn=Program Data))))', [])
+        if containers:
+            ret.extend(containers)
+        objs = self.ldap_search(container, SCOPE_ONELEVEL, '(|(objectCategory=person)(objectCategory=group)(objectCategory=computer)(objectCategory=MSMQ-Custom-Recipient)(objectClass=printQueue)(objectCategory=Volume))', [])
+        if objs:
+            ret.extend(objs)
+        return ret
 
-    def add_user(self, user_attrs, container=None):
+    def add_contact(self, user_attrs, container=None):
+        if not container:
+            container = self.__well_known_container('users')
+        attrs = {}
+
+        attrs['objectClass'] = ['top', 'person', 'organizationalPerson', 'contact']
+        attrs['objectCategory'] = 'CN=Person,CN=Schema,CN=Configuration,%s' % self.realm_to_dn(self.realm)
+        attrs['cn'] = user_attrs['cn'].strip()
+        attrs['name'] = user_attrs['cn']
+        if 'sn' in user_attrs:
+            attrs['sn'] = user_attrs['sn']
+        if 'givenName' in user_attrs:
+            attrs['givenName'] = user_attrs['givenName']
+        if 'initials' in user_attrs:
+            attrs['initials'] = user_attrs['initials']
+        if 'displayName' in user_attrs:
+            attrs['displayName'] = user_attrs['displayName']
+        dn = 'CN=%s,%s' % (attrs['cn'], container)
+        attrs['distinguishedName'] = dn
+
+        try:
+            self.ldap_add(dn, addlist(stringify_ldap(attrs)))
+        except LdapException as e:
+            ycpbuiltins.y2error(traceback.format_exc())
+            ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
+            y2error_dialog(e.info if e.info else e.msg)
+            return
+
+    def add_user(self, user_attrs, container=None, inetorgperson=False):
         if not container:
             container = self.__well_known_container('users')
         if not strcmp(user_attrs['userPassword'], user_attrs['confirm_passwd']):
@@ -54,6 +89,8 @@ class Connection(Ldap):
         attrs = {}
 
         attrs['objectClass'] = ['top', 'person', 'organizationalPerson', 'user']
+        if inetorgperson:
+            attrs['objectClass'].append('inetOrgPerson')
         attrs['objectCategory'] = 'CN=Person,CN=Schema,CN=Configuration,%s' % self.realm_to_dn(self.realm)
 
         attrs['displayName'] = user_attrs['cn']
@@ -90,6 +127,7 @@ class Connection(Ldap):
         except LdapException as e:
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
+            y2error_dialog(e.info if e.info else e.msg)
             return
 
         try:
@@ -101,6 +139,7 @@ class Connection(Ldap):
         except Exception as e:
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error(str(e))
+            y2error_dialog(str(e))
 
         uac = 0x0200
         # Direct modification of the cannot change password bit isn't allowed
@@ -144,6 +183,7 @@ class Connection(Ldap):
         except LdapException as e:
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
+            y2error_dialog(e.info if e.info else e.msg)
 
     def add_computer(self, computer_attrs, container=None):
         if not container:
@@ -169,6 +209,7 @@ class Connection(Ldap):
         except LdapException as e:
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
+            y2error_dialog(e.info if e.info else e.msg)
 
     def update(self, dn, orig_map, modattr, addattr):
         dn = dn if isinstance(dn, six.string_types) else dn.decode('utf8')
@@ -184,9 +225,31 @@ class Connection(Ldap):
                 except LdapException as e:
                     ycpbuiltins.y2error(traceback.format_exc())
                     ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
+                    y2error_dialog(e.info if e.info else e.msg)
         except Exception as e:
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error(str(e))
+            y2error_dialog(str(e))
             return False
         return True
 
+    def add_obj(self, container, attrs):
+        if 'ou' in attrs:
+            dn = 'OU=%s,%s' % (attrs['ou'], container)
+        else:
+            dn = 'CN=%s,%s' % (attrs['cn'], container)
+        try:
+            self.ldap_add(dn, addlist(stringify_ldap(attrs)))
+        except LdapException as e:
+            ycpbuiltins.y2error(traceback.format_exc())
+            ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
+            y2error_dialog(e.info if e.info else e.msg)
+        return dn
+
+    def rename(self, dn, newrdn, newsuperior):
+        try:
+            self.l.rename_s(dn, newrdn, newsuperior)
+        except Exception as e:
+            ycpbuiltins.y2error(traceback.format_exc())
+            ycpbuiltins.y2error('ldap.rename_s: %s\n' % str(e))
+            y2error_dialog(str(e))

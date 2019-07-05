@@ -102,6 +102,83 @@ def account_hook(key, val):
         val = str(uac)
     return val
 
+class AttrEdit:
+    def __init__(self, conn, attr, val):
+        self.conn = conn
+        self.attribute = attr
+        self.value = val
+        if self.attribute.encode() in self.conn.schema['attributeTypes']:
+            self.attr_type = self.conn.schema['attributeTypes'][self.attribute.encode()]
+        else:
+            self.attr_type = None
+
+    def __dialog(self):
+        opts = tuple()
+        if not self.attr_type['user-modifiable']:
+            opts = tuple(['disabled'])
+        input_box = InputField(Id('value'), Opt('hstretch', *opts), 'Value:', self.value)
+        return MinSize(60, 8, HBox(HSpacing(3), VBox(
+            VSpacing(1),
+            Left(Label('Attribute:\t%s' % self.attribute)),
+            VSpacing(1),
+            Left(input_box),
+            Bottom(
+                HBox(
+                    Left(PushButton(Id('clear'), Opt(*opts), 'Clear')),
+                    Right(PushButton(Id('ok'), 'OK')),
+                    Right(PushButton(Id('cancel'), 'Cancel')),
+                )
+            ),
+            VSpacing(1),
+        ), HSpacing(3)))
+
+    def Show(self):
+        UI.SetApplicationTitle('String Attribute Editor')
+        if self.attr_type and (not self.attr_type['multi-valued'] or not self.attr_type['user-modifiable']):
+            UI.OpenDialog(self.__dialog())
+        else:
+            return None
+        while True:
+            ret = UI.UserInput()
+            if ret == 'abort' or ret == 'cancel':
+                ret = None
+                break
+            elif ret == 'ok':
+                ret = UI.QueryWidget(Id('value'), 'Value')
+                if not self.attr_type['multi-valued']:
+                    ret = [ret]
+                break
+            elif ret == 'clear':
+                UI.ChangeWidget(Id('value'), 'Value', '')
+        UI.CloseDialog()
+        return ret
+
+def object_editor_input(ret, conn, model):
+    if str(ret) == 'edit' or str(ret) == 'attrs':
+        attr = UI.QueryWidget('attrs', 'Value')
+        val = conn.display_schema_value(attr, model.get_value(attr, False))
+        new_val = AttrEdit(conn, attr, val).Show()
+        model.set_value(attr, new_val)
+
+CommonTabContents = {
+        'editor' : {
+            'content' : (lambda conn, model: VBox(
+                Left(Label('Attributes:')),
+                Table(Id('attrs'), Opt('vstretch', 'notify'), Header('Attribute', 'Value'), [
+                    Item(Id(key), key, conn.display_schema_value(key, model.get_value(key, False))) for key in sorted(model.props_map.keys(), key=str.lower)
+                    ]),
+                HBox(
+                    Left(PushButton(Id('edit'), 'Edit')),
+                    Right(PushButton(Id('filter'), 'Filter'))
+                    )
+            )),
+            'data' : {},
+            'title' : 'Attribute Editor',
+            'set_hook' : None,
+            'input_hook' : object_editor_input,
+            }
+        }
+
 UserTabContents = {
         'general' : {
             'content' : (lambda conn, model: VBox(Left(HBox(
@@ -164,8 +241,15 @@ UserTabContents = {
             'title' : 'Unix Attributes',
             'set_hook' : None,
             'input_hook' : None,
+        },
+        'editor' : CommonTabContents['editor'],
         }
-        }
+
+ContactTabContents = {
+        'general' : UserTabContents['general'],
+        'address' : UserTabContents['address'],
+        'editor' : CommonTabContents['editor'],
+}
 
 def compare(obj1, obj2):
     if type(obj1) is list and type(obj2) is list:
@@ -194,9 +278,9 @@ class TabModel:
             if not self.modified:
                 self.modified = True
 
-    def get_value(self, key):
+    def get_value(self, key, strip=True):
         value = self.props_map.get(key, [""])
-        if len(value) == 1:
+        if strip and len(value) == 1:
             value = value[-1]
         return value
 
@@ -267,14 +351,14 @@ class TabProps(object):
             HBox(HSpacing(1), Left(
                 VBox(
                     VSpacing(0.3),
-                    Top(
+                    VWeight(15, Top(
                         ReplacePoint(Id('tabContents'), self.content(self.initial_tab))
-                    ),
+                    )),
                     VSpacing(1),
-                    Bottom(
+                    VWeight(1, Bottom(
                         HBox(PushButton(Id('ok'), "OK"), PushButton(Id('cancel'), "Cancel"),
                         PushButton(Id('apply'), "Apply")),
-                    ),
+                    )),
                     VSpacing(0.3),
                 ),
             ),
@@ -312,12 +396,25 @@ class TabProps(object):
                 break
             if self.contents[self.current_tab]['input_hook']:
                 self.contents[self.current_tab]['input_hook'](ret, self.conn, self.tabModel)
+                UI.ReplaceWidget('tabContents', self.content(next_tab))
                 continue
         UI.CloseDialog()
 
 class UserProps(TabProps):
     def __init__(self, conn, obj):
         TabProps.__init__(self, conn, obj, UserTabContents, 'general')
+
+class ContactProps(TabProps):
+    def __init__(self, conn, obj):
+        TabProps.__init__(self, conn, obj, ContactTabContents, 'general')
+
+class ObjectProps(TabProps):
+    def __init__(self, conn, obj):
+        TabProps.__init__(self, conn, obj, ObjectTabContents, 'editor')
+
+ObjectTabContents = {
+        'editor' : CommonTabContents['editor'],
+        }
 
 ComputerDataModel = {
         'general' : {
@@ -368,7 +465,8 @@ ComputerTabContents = {
             'title': 'Location',
             'set_hook' : None,
             'input_hook' : None,
-            }
+            },
+        'editor' : CommonTabContents['editor'],
         }
 
 class ComputerProps(TabProps):
@@ -584,7 +682,8 @@ GroupTabContents = {
         'title' : 'Members',
         'set_hook' : None,
         'input_hook' : group_members_input,
-    }
+    },
+    'editor' : CommonTabContents['editor'],
 }
 
 class GroupProps(TabProps):
@@ -593,7 +692,7 @@ class GroupProps(TabProps):
         self.dimensions = (60, 24)
 
 class NewObjDialog:
-    def __init__(self, lp, obj_type, location):
+    def __init__(self, lp, obj_type, location, attrs=[('cn', 'Unicode String', 'Common-Name')]):
         self.lp = lp
         self.obj = {}
         self.obj_type = obj_type
@@ -603,6 +702,7 @@ class NewObjDialog:
         realm_dn = ','.join(['DC=%s' % part for part in self.realm.lower().split('.')])
         loc_dn = location[:location.lower().find(realm_dn.lower())-1]
         self.location = '/'.join([i[3:] for i in reversed(loc_dn.split(','))])
+        self.obj_attrs = attrs
 
     def __new(self):
         pane = self.__fetch_pane()
@@ -615,13 +715,92 @@ class NewObjDialog:
 
     def __fetch_pane(self):
         if not self.dialog:
-            if strcmp(self.obj_type, 'user'):
+            if strcmp(self.obj_type, 'user') or strcmp(self.obj_type, 'InetOrgPerson'):
                 self.dialog = self.__user_dialog()
             elif strcmp(self.obj_type, 'group'):
                 self.dialog = self.__group_dialog()
             elif strcmp(self.obj_type, 'computer'):
                 self.dialog = self.__computer_dialog()
+            elif strcmp(self.obj_type, 'contact'):
+                self.dialog = self.__contact_dialog()
+            elif strcmp(self.obj_type, 'volume'):
+                self.dialog = self.__volume_dialog()
+            elif strcmp(self.obj_type, 'organizationalUnit'):
+                self.dialog = self.__organizationalUnit_dialog()
+            else:
+                self.dialog = self.__object_dialog()
         return self.dialog[self.dialog_seq][0]
+
+    def __object_dialog(self):
+        return [
+            [VBox(
+                Left(Label('Attribute:\t%s' % attr[0])),
+                Left(Label('Syntax:\t%s' % attr[1])),
+                Left(Label('Description:\t%s' % attr[2])),
+                TextEntry(Id(attr[0]), 'Value:'),
+                Bottom(Right(HBox(
+                    PushButton(Id('back'), Opt('disabled') if attr == self.obj_attrs[0] else Opt(''), '< Back') if len(self.obj_attrs) > 1 else Empty(),
+                    PushButton(Id('next'), 'Next >') if attr != self.obj_attrs[-1] else PushButton(Id('finish'), 'Finish' if len(self.obj_attrs) > 1 else 'OK'),
+                    PushButton(Id('cancel'), 'Cancel'),
+                ))),
+            ),
+            [attr[0]], # known keys
+            [attr[0]], # required keys
+            None, # dialog hook
+            ]
+        for attr in self.obj_attrs]
+
+    def __volume_dialog(self):
+        return [
+            [VBox(
+                TextEntry(Id('cn'), 'Name:'),
+                TextEntry(Id('uNCName'), 'Network path (\\\\server\\share):'),
+                Bottom(Right(HBox(
+                    PushButton(Id('finish'), 'OK'),
+                    PushButton(Id('cancel'), 'Cancel'),
+                ))),
+            ),
+            ['cn', 'uNCName'], # known keys
+            ['cn', 'uNCName'], # required keys
+            None, # dialog hook
+            ]
+        ]
+
+    def __organizationalUnit_dialog(self):
+        return [
+            [VBox(
+                TextEntry(Id('ou'), 'Name:'),
+                Bottom(Right(HBox(
+                    PushButton(Id('finish'), 'OK'),
+                    PushButton(Id('cancel'), 'Cancel'),
+                ))),
+            ),
+            ['ou'], # known keys
+            ['ou'], # required keys
+            None, # dialog hook
+            ]
+        ]
+
+    def __contact_dialog(self):
+        return [
+            [VBox(
+                HBox(
+                    TextEntry(Id('givenName'), UserDataModel['general']['givenName']),
+                    TextEntry(Id('initials'), UserDataModel['general']['initials']),
+                ),
+                TextEntry(Id('sn'), UserDataModel['general']['sn']),
+                TextEntry(Id('cn'), 'Full name:'),
+                TextEntry(Id('displayName'), UserDataModel['general']['displayName']),
+                Bottom(Right(HBox(
+                    PushButton(Id('finish'), 'OK'),
+                    PushButton(Id('cancel'), 'Cancel'),
+                ))),
+            ),
+            ['givenName', 'initials', 'sn', 'cn', 'displayName'], # known keys
+            ['cn'], # required keys
+            None, # dialog hook
+            ]
+        ]
 
     def __user_dialog(self):
         def unix_user_hook():
@@ -818,8 +997,10 @@ class SearchDialog:
             edit = UserProps(self.conn, currentItem)
         elif six.b('group') in currentItem[1]['objectClass']:
             edit = GroupProps(self.conn, currentItem)
+        elif six.b('contact') in currentItem[1]['objectClass']:
+            edit = ContactProps(self.conn, currentItem)
         else:
-            return
+            edit = ObjectProps(self.conn, currentItem)
 
         edit.Show()
 
@@ -912,9 +1093,48 @@ class SearchDialog:
             VSpacing(.3)
         ), HSpacing(3)))
 
+class MoveDialog:
+    def __init__(self, conn):
+        self.conn = conn
+
+    def __sub_tree(self, dn):
+        tree_containers = self.conn.containers(dn)
+        return [Item(Id(c[0]), c[1], False, self.__sub_tree(c[0])) for c in tree_containers]
+
+    def __tree_dialog(self):
+        tree_containers = self.conn.containers()
+        items = [Item(Id(c[0]), c[1], False, self.__sub_tree(c[0])) for c in tree_containers]
+        return MinSize(50, 20, HBox(HSpacing(3), VBox(VSpacing(.3),
+            Left(Label('Move object into container:')),
+            VSpacing(1),
+            VWeight(10, Tree(Id('move_tree'), '', [
+                Item(Id(self.conn.realm_to_dn(self.conn.realm)), self.conn.realm.lower(), True, items),
+            ])),
+            VSpacing(1),
+            VWeight(1, Bottom(Right(HBox(
+                PushButton(Id('ok'), 'OK'),
+                PushButton(Id('cancel'), 'Cancel'),
+            )))),
+            VSpacing(.3)
+        ), HSpacing(3)))
+
+    def Show(self):
+        UI.SetApplicationTitle('Move')
+        UI.OpenDialog(self.__tree_dialog())
+        while True:
+            ret = UI.UserInput()
+            if str(ret) == 'abort' or str(ret) == 'cancel':
+                ret = None
+                break
+            elif str(ret) == 'ok':
+                ret = UI.QueryWidget('move_tree', 'Value')
+                if ret:
+                    break
+        UI.CloseDialog()
+        return ret
+
 class ADUC:
     def __init__(self, lp, creds):
-        self.realm = lp.get('realm')
         self.lp = lp
         self.creds = creds
         self.__setup_menus()
@@ -930,20 +1150,30 @@ class ADUC:
         self.cred_valid = cred_valid
         ycred = YCreds(creds)
         self.got_creds = ycred.Show(self.cred_valid)
+        self.realm = self.lp.get('realm')
 
-    def __setup_menus(self, container=False, obj=False):
+    def __setup_menus(self, container=None, obj=False):
         menus = [{'title': '&File', 'id': 'file', 'type': 'Menu'},
                  {'title': 'Change domain...', 'id': 'change_domain', 'type': 'MenuEntry', 'parent': 'file'},
                  {'title': 'Exit', 'id': 'abort', 'type': 'MenuEntry', 'parent': 'file'},
                  {'title': 'Action', 'id': 'action', 'type': 'Menu'}]
+        ou = container and (container == self.conn.realm_to_dn(self.realm) or container[:3].upper() == 'OU=')
         if container:
             menus.append({'title': 'Find...', 'id': 'find', 'type': 'MenuEntry', 'parent': 'action'})
             menus.append({'title': 'New', 'id': 'new_but', 'type': 'SubMenu', 'parent': 'action'})
-            menus.append({'title': 'User', 'id': 'context_add_user', 'type': 'MenuEntry', 'parent': 'new_but'})
-            menus.append({'title': 'Group', 'id': 'context_add_group', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'Computer', 'id': 'context_add_computer', 'type': 'MenuEntry', 'parent': 'new_but'})
+            menus.append({'title': 'Contact', 'id': 'context_add_contact', 'type': 'MenuEntry', 'parent': 'new_but'})
+            menus.append({'title': 'Group', 'id': 'context_add_group', 'type': 'MenuEntry', 'parent': 'new_but'})
+            menus.append({'title': 'InetOrgPerson', 'id': 'context_add_inetorgperson', 'type': 'MenuEntry', 'parent': 'new_but'})
+            menus.append({'title': 'MSMQ Queue Alias', 'id': 'context_add_msmq_queue_alias', 'type': 'MenuEntry', 'parent': 'new_but'})
+            if ou:
+                menus.append({'title': 'Organizational Unit', 'id': 'context_add_ou', 'type': 'MenuEntry', 'parent': 'new_but'})
+            menus.append({'title': 'Printer', 'id': 'context_add_printer', 'type': 'MenuEntry', 'parent': 'new_but'})
+            menus.append({'title': 'User', 'id': 'context_add_user', 'type': 'MenuEntry', 'parent': 'new_but'})
+            menus.append({'title': 'Shared Folder', 'id': 'context_add_shared_folder', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'Refresh', 'id': 'refresh', 'type': 'MenuEntry', 'parent': 'action'})
         elif obj:
+            menus.append({'title': 'Move...', 'id': 'context_move', 'type': 'MenuEntry', 'parent': 'action'})
             menus.append({'title': 'Delete', 'id': 'delete', 'type': 'MenuEntry', 'parent': 'action'})
             menus.append({'title': 'Properties', 'id': 'properties', 'type': 'MenuEntry', 'parent': 'action'})
         CreateMenu(menus)
@@ -952,8 +1182,9 @@ class ADUC:
         currentItemName = UI.QueryWidget('items', 'CurrentItem')
         searchList = self.conn.objects_list(container)
         currentItem = self.__find_by_name(searchList, currentItemName)
-        if self.__warn_delete(currentItem[-1]['name'][-1]):
+        if self.__warn_message('Delete', 'Are you sure you want to delete \'%s\'?' % currentItem[-1]['name'][-1].decode()):
             self.conn.ldap_delete(currentItem[0])
+            return currentItem[0].lower().startswith('ou=')
 
     def __show_properties(self, container):
         searchList = []
@@ -969,8 +1200,10 @@ class ADUC:
             edit = UserProps(self.conn, currentItem)
         elif six.b('group') in currentItem[1]['objectClass']:
             edit = GroupProps(self.conn, currentItem)
+        elif six.b('contact') in currentItem[1]['objectClass']:
+            edit = ContactProps(self.conn, currentItem)
         else:
-            return
+            edit = ObjectProps(self.conn, currentItem)
 
         edit.Show()
 
@@ -978,20 +1211,26 @@ class ADUC:
         if edit.tabModel.is_modified():
             self.__refresh(container, currentItemName)
 
-    def __objs_context_menu(self):
+    def __objs_context_menu(self, container):
+        ou = container == self.conn.realm_to_dn(self.realm) or container[:3].upper() == 'OU='
+        new_items = [
+            Item(Id('context_add_computer'), 'Computer'),
+            Item(Id('context_add_contact'), 'Contact'),
+            Item(Id('context_add_group'), 'Group'),
+            Item(Id('context_add_inetorgperson'), 'InetOrgPerson'),
+            Item(Id('context_add_msmq_queue_alias'), 'MSMQ Queue Alias')
+        ]
+        if ou:
+            new_items.append(Item(Id('context_add_ou'), 'Organizational Unit'))
+        new_items.extend([
+            Item(Id('context_add_printer'), 'Printer'),
+            Item(Id('context_add_user'), 'User'),
+            Item(Id('context_add_shared_folder'), 'Shared Folder')
+        ])
         return Term('menu', [
             #Item(Id('context_delegate_control'), 'Delegate Control...'),
             Item(Id('find'), 'Find...'),
-            Term('menu', 'New', [
-                    Item(Id('context_add_computer'), 'Computer'),
-                    #Item(Id('context_add_contact'), 'Contact'),
-                    Item(Id('context_add_group'), 'Group'),
-                    #Item(Id('context_add_inetorgperson'), 'InetOrgPerson'),
-                    #Item(Id('context_add_msmq_queue_alias'), 'MSMQ Queue Alias'),
-                    #Item(Id('context_add_printer'), 'Printer'),
-                    Item(Id('context_add_user'), 'User'),
-                    #Item(Id('context_add_shared_folder'), 'Shared Folder')
-                ]),
+            Term('menu', 'New', new_items),
             Item(Id('refresh'), 'Refresh'),
             #Item(Id('context_properties'), 'Properties'),
             #Item(Id('context_help'), 'Help'),
@@ -999,6 +1238,7 @@ class ADUC:
 
     def __obj_context_menu(self):
         return Term('menu', [
+            Item(Id('context_move'), 'Move...'),
             Item(Id('properties'), 'Properties'),
             Item(Id('delete'), 'Delete')
         ])
@@ -1015,7 +1255,9 @@ class ADUC:
         menu_open = False
         DeleteButtonBox()
         UI.SetFocus('aduc_tree')
-        current_container = None
+        current_container = self.conn.realm_to_dn(self.realm)
+        self.__setup_menus(container=current_container)
+        UI.SetApplicationTitle('Active Directory Users and Computers')
         while True:
             event = UI.WaitForEvent()
             if 'WidgetID' in event:
@@ -1031,7 +1273,7 @@ class ADUC:
                 if 'DC=' in choice:
                     current_container = choice
                     self.__refresh(current_container)
-                    self.__setup_menus(container=True)
+                    self.__setup_menus(container=current_container)
                 else:
                     current_container = None
                     UI.ReplaceWidget('rightPane', Empty())
@@ -1039,30 +1281,67 @@ class ADUC:
                 if event['EventReason'] == 'ContextMenuActivated':
                     if current_container:
                         menu_open = True
-                        UI.OpenContextMenu(self.__objs_context_menu())
+                        UI.OpenContextMenu(self.__objs_context_menu(current_container))
                     elif choice == self.realm.lower():
                         menu_open = True
                         UI.OpenContextMenu(self.__dom_context_menu())
             elif str(ret) == 'next':
                 return Symbol('abort')
             elif str(ret) == 'items':
+                self.__setup_menus(obj=True)
                 if event['EventReason'] == 'ContextMenuActivated':
                     check = UI.QueryWidget('items', 'CurrentItem')
                     if check is None:
-                        UI.OpenContextMenu(self.__objs_context_menu())
+                        UI.OpenContextMenu(self.__objs_context_menu(current_container))
                     else:
                         UI.OpenContextMenu(self.__obj_context_menu())
-                elif event['EventReason'] == 'SelectionChanged':
-                    self.__setup_menus(obj=True)
                 elif event['EventReason'] == 'Activated':
                     self.__show_properties(current_container)
             elif str(ret) == 'properties':
                 self.__show_properties(current_container)
+            elif str(ret) == 'context_add_msmq_queue_alias':
+                obj = NewObjDialog(self.lp, 'msMQ-Custom-Recipient', current_container).Show()
+                if obj:
+                    obj['objectClass'] = ['top', 'msMQ-Custom-Recipient']
+                    obj['objectCategory'] = 'CN=MSMQ-Custom-Recipient,CN=Schema,CN=Configuration,%s' % self.conn.realm_to_dn(self.realm)
+                    dn = self.conn.add_obj(current_container, obj)
+                    self.__refresh(current_container, dn)
+            elif str(ret) == 'context_add_contact':
+                contact = NewObjDialog(self.lp, 'contact', current_container).Show()
+                if contact:
+                    self.conn.add_contact(contact, current_container)
+                    self.__refresh(current_container, contact['cn'])
             elif str(ret) == 'context_add_user':
                 user = NewObjDialog(self.lp, 'user', current_container).Show()
                 if user:
                     self.conn.add_user(user, current_container)
                     self.__refresh(current_container, user['cn'])
+            elif str(ret) == 'context_add_inetorgperson':
+                user = NewObjDialog(self.lp, 'InetOrgPerson', current_container).Show()
+                if user:
+                    self.conn.add_user(user, current_container, inetorgperson=True)
+                    self.__refresh(current_container, user['cn'])
+            elif str(ret) == 'context_add_printer':
+                obj = NewObjDialog(self.lp, 'printQueue', current_container, attrs=[('cn', 'Unicode String', 'Common-Name'), ('versionNumber', 'Integer', 'Version-Number'), ('uNCName', 'Unicode String', 'UNC-Name'), ('shortServerName', 'Unicode String', 'Short-Server-Name'), ('serverName', 'Unicode String', 'Server-Name'), ('printerName', 'Unicode String', 'Printer-Name')]).Show()
+                if obj:
+                    obj['objectClass'] = ['top', 'leaf', 'connectionPoint', 'printQueue']
+                    obj['objectCategory'] = 'CN=Print-Queue,CN=Schema,CN=Configuration,%s' % self.conn.realm_to_dn(self.realm)
+                    dn = self.conn.add_obj(current_container, obj)
+                    self.__refresh(current_container, dn)
+            elif str(ret) == 'context_add_shared_folder':
+                obj = NewObjDialog(self.lp, 'volume', current_container).Show()
+                if obj:
+                    obj['objectClass'] = ['top', 'leaf', 'connectionPoint', 'volume']
+                    obj['objectCategory'] = 'CN=Volume,CN=Schema,CN=Configuration,%s' % self.conn.realm_to_dn(self.realm)
+                    dn = self.conn.add_obj(current_container, obj)
+                    self.__refresh(current_container, dn)
+            elif str(ret) == 'context_add_ou':
+                obj = NewObjDialog(self.lp, 'organizationalUnit', current_container).Show()
+                if obj:
+                    obj['objectClass'] = ['top', 'organizationalUnit']
+                    obj['objectCategory'] = 'CN=Organizational-Unit,CN=Schema,CN=Configuration,%s' % self.conn.realm_to_dn(self.realm)
+                    dn = self.conn.add_obj(current_container, obj)
+                    self.__refresh(current_container, dn, ou=True)
             elif str(ret) == 'context_add_group':
                 group = NewObjDialog(self.lp, 'group', current_container).Show()
                 if group:
@@ -1073,9 +1352,31 @@ class ADUC:
                 if computer:
                     self.conn.add_computer(computer, current_container)
                     self.__refresh(current_container, computer['name'])
+            elif str(ret) == 'context_move':
+                location = MoveDialog(self.conn).Show()
+                if location:
+                    resp = self.__warn_message('Active Directory Domain Services',
+                            'Moving objects in Active Directory Domain Services can prevent your existing\n' +
+                            'system from working the way it was designed. For example, moving an\n' +
+                            'organizational unit (OU) can affect the way that group policies are applied to the\n' +
+                            'accounts within the OU.\n' +
+                            'Are you sure you want to move this object?')
+                    if resp:
+                        currentItemName = UI.QueryWidget('items', 'CurrentItem')
+                        searchList = self.conn.objects_list(current_container)
+                        currentItem = self.__find_by_name(searchList, currentItemName)
+                        dn = currentItem[0]
+                        newrdn = None
+                        if 'cn' in currentItem[-1]:
+                            newrdn = 'CN=%s' % currentItem[-1]['cn'][-1].decode()
+                        elif 'ou' in currentItem[-1]:
+                            newrdn = 'OU=%s' % currentItem[-1]['ou'][-1].decode()
+                        if newrdn:
+                            self.conn.rename(dn, newrdn, location)
+                            self.__refresh(current_container)
             elif str(ret) == 'delete':
-                self.__delete_selected_obj(current_container)
-                self.__refresh(current_container)
+                ou = self.__delete_selected_obj(current_container)
+                self.__refresh(current_container, ou=ou)
             elif str(ret) == 'find':
                 SearchDialog(self.lp, self.conn, current_container).Show()
             elif str(ret) == 'refresh':
@@ -1087,14 +1388,14 @@ class ADUC:
             UI.SetApplicationTitle('Active Directory Users and Computers')
         return Symbol(ret)
 
-    def __warn_delete(self, name):
-        if six.PY3 and type(name) is bytes:
-            name = name.decode('utf-8')
+    def __warn_message(self, title, msg):
+        if six.PY3 and type(msg) is bytes:
+            msg = msg.decode('utf-8')
         ans = False
-        UI.SetApplicationTitle('Delete')
+        UI.SetApplicationTitle(title)
         UI.OpenDialog(Opt('warncolor'), HBox(HSpacing(1), VBox(
             VSpacing(.3),
-            Label('Are you sure you want to delete \'%s\'?' % name),
+            Label(msg),
             Right(HBox(
                 PushButton(Id('yes'), 'Yes'),
                 PushButton(Id('no'), 'No')
@@ -1109,8 +1410,10 @@ class ADUC:
         UI.CloseDialog()
         return ans
 
-    def __refresh(self, current_container, obj_id=None):
-        if current_container:
+    def __refresh(self, current_container, obj_id=None, ou=False):
+        if current_container == self.conn.realm_to_dn(self.realm) or ou:
+            Wizard.SetContents('Active Directory Users and Computers', self.__aduc_page(), '', False, False)
+        elif current_container:
             UI.ReplaceWidget('rightPane', self.__objects_tab(current_container))
             if obj_id:
                 UI.ChangeWidget('items', 'CurrentItem', obj_id)
@@ -1123,12 +1426,12 @@ class ADUC:
     def __find_by_name(self, alist, name):
         if name:
             for item in alist:
-                if strcmp(item[1]['cn'][-1], name):
+                if strcmp(item[1]['cn'][-1] if 'cn' in item[1] else item[1]['name'][-1], name):
                     return item
         return None 
 
     def __objects_tab(self, container):
-        items = [Item(obj[1]['cn'][-1], obj[1]['objectClass'][-1].title(), obj[1]['description'][-1] if 'description' in obj[1] else '') for obj in self.conn.objects_list(container)]
+        items = [Item(obj[1]['cn'][-1] if 'cn' in obj[1] else obj[1]['name'][-1], obj[1]['objectClass'][-1].title(), obj[1]['description'][-1] if 'description' in obj[1] else '') for obj in self.conn.objects_list(container)]
         return Table(Id('items'), Opt('notify', 'immediate', 'notifyContextMenu'), Header('Name', 'Type', 'Description'), items)
 
     def __sub_tree(self, dn):
@@ -1141,13 +1444,13 @@ class ADUC:
 
         return VBox(
             Tree(Id('aduc_tree'), Opt('notify', 'immediate', 'notifyContextMenu'), '', [
-                Item(self.realm.lower(), True, items),
+                Item(Id(self.conn.realm_to_dn(self.realm)), self.realm.lower(), True, items),
             ]),
         )
 
     def __aduc_page(self):
         return HBox(
             HWeight(1, self.__aduc_tree()),
-            HWeight(2, ReplacePoint(Id('rightPane'), Empty()))
+            HWeight(2, ReplacePoint(Id('rightPane'), self.__objects_tab(self.conn.realm_to_dn(self.realm))))
         )
 
