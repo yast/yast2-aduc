@@ -8,11 +8,18 @@ import_module('Wizard')
 import_module('UI')
 from yast import *
 import six
-from ldap.filter import filter_format
 from adcommon.yldap import SCOPE_SUBTREE as SUBTREE
 from adcommon.creds import YCreds, switch_domains
 from adcommon.ui import CreateMenu, DeleteButtonBox
 import traceback
+
+def escape_filter_chars(val):
+    """ Escape special chars from RFC 4515
+    """
+    return val.replace('\\', r'\5c').replace(r'*', r'\2a').replace(r'(', r'\28').replace(r')', r'\29').replace('\x00', r'\00')
+
+def filter_format(template, vals):
+    return template % tuple(escape_filter_chars(v) for v in vals)
 
 def have_x():
     from subprocess import Popen, PIPE
