@@ -39,7 +39,10 @@ if __name__ == "__main__":
     if os.getenv("SMB_CONF_PATH") is not None:
         lp.load(os.getenv("SMB_CONF_PATH"))
     else:
-        lp.load_default()
+        try:
+            lp.load_default()
+        except RuntimeError:
+            ycpbuiltins.y2error('Failed to load default smb.conf!')
 
     # Initialize the session
     creds = Credentials()
