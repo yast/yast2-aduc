@@ -21,12 +21,6 @@ def escape_filter_chars(val):
 def filter_format(template, vals):
     return template % tuple(escape_filter_chars(v) for v in vals)
 
-def have_x():
-    from subprocess import Popen, PIPE
-    p = Popen(['xset', '-q'], stdout=PIPE, stderr=PIPE)
-    return p.wait() == 0
-have_advanced_gui = have_x()
-
 def dump(obj):
     ycpbuiltins.y2debug("len obj %d" % len(obj))
     i = 0
