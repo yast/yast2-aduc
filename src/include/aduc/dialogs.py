@@ -1144,6 +1144,9 @@ class ADUC:
                 lp.set('realm', creds.get_domain())
                 self.conn = Connection(lp, creds)
                 return True
+            except MemoryError: # Bug 1151713: Try again on Ubuntu
+                self.conn = Connection(lp, creds)
+                return True
             except Exception as e:
                 ycpbuiltins.y2error(str(e))
                 ycpbuiltins.y2error(traceback.format_exc())
