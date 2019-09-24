@@ -253,3 +253,21 @@ class Connection(Ldap):
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error('ldap.rename_s: %s\n' % str(e))
             y2error_dialog(str(e))
+
+    def is_user(self, cn, container):
+        SAM_USER_OBJECT = 0x30000000
+        res = self.search(container, SCOPE_ONELEVEL, '(cn=%s)' % cn, ['sAMAccountType'])
+        if len(res) == 1 and 'sAMAccountType' in res[0].keys():
+            sAMAccountType = int(str(res[0]['sAMAccountType']))
+            if sAMAccountType == SAM_USER_OBJECT:
+                return True
+        return False
+
+    def is_user_enabled(self, cn, container):
+        DISABLED = 0x0002
+        res = self.search(container, SCOPE_ONELEVEL, '(cn=%s)' % cn, ['userAccountControl'])
+        if len(res) == 1 and 'userAccountControl' in res[0].keys():
+            userAccountControl = int(str(res[0]['userAccountControl']))
+            if not bool(userAccountControl & DISABLED):
+                return True
+        return False

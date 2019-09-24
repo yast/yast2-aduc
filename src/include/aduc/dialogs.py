@@ -12,6 +12,7 @@ from adcommon.yldap import SCOPE_SUBTREE as SUBTREE
 from adcommon.creds import YCreds, switch_domains
 from adcommon.ui import CreateMenu, DeleteButtonBox
 import traceback
+from adcommon.yldap import ldb
 
 def escape_filter_chars(val):
     """ Escape special chars from RFC 4515
@@ -1156,7 +1157,7 @@ class ADUC:
         self.got_creds = ycred.Show(self.cred_valid)
         self.realm = self.lp.get('realm')
 
-    def __setup_menus(self, container=None, obj=False):
+    def __setup_menus(self, container=None, obj=None, user=False, enabled=True):
         menus = [{'title': '&File', 'id': 'file', 'type': 'Menu'},
                  {'title': 'Change domain...', 'id': 'change_domain', 'type': 'MenuEntry', 'parent': 'file'},
                  {'title': 'Exit', 'id': 'abort', 'type': 'MenuEntry', 'parent': 'file'},
@@ -1176,7 +1177,11 @@ class ADUC:
             menus.append({'title': 'User', 'id': 'context_add_user', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'Shared Folder', 'id': 'context_add_shared_folder', 'type': 'MenuEntry', 'parent': 'new_but'})
             menus.append({'title': 'Refresh', 'id': 'refresh', 'type': 'MenuEntry', 'parent': 'action'})
-        elif obj:
+        if user and enabled:
+            menus.append({'title': 'Disable Account', 'id': 'disable', 'type': 'MenuEntry', 'parent': 'action'})
+        elif user and not enabled:
+            menus.append({'title': 'Enable Account', 'id': 'enable', 'type': 'MenuEntry', 'parent': 'action'})
+        if obj:
             menus.append({'title': 'Move...', 'id': 'context_move', 'type': 'MenuEntry', 'parent': 'action'})
             menus.append({'title': 'Delete', 'id': 'delete', 'type': 'MenuEntry', 'parent': 'action'})
             menus.append({'title': 'Properties', 'id': 'properties', 'type': 'MenuEntry', 'parent': 'action'})
@@ -1240,12 +1245,19 @@ class ADUC:
             #Item(Id('context_help'), 'Help'),
             ])
 
-    def __obj_context_menu(self):
-        return Term('menu', [
-            Item(Id('context_move'), 'Move...'),
+    def __obj_context_menu(self, user=False, enabled=True):
+        items = [
+            Item(Id('context_move'), 'Move...')
+        ]
+        if user and not enabled:
+            items.append(Item(Id('enable'), 'Enable Account'))
+        if user and enabled:
+            items.append(Item(Id('disable'), 'Disable Account'))
+        items.extend([
             Item(Id('properties'), 'Properties'),
             Item(Id('delete'), 'Delete')
         ])
+        return Term('menu', items)
 
     def __dom_context_menu(self):
         return Term('menu', [
@@ -1292,13 +1304,18 @@ class ADUC:
             elif str(ret) == 'next':
                 return Symbol('abort')
             elif str(ret) == 'items':
-                self.__setup_menus(obj=True)
+                user = False
+                enabled = True
+                obj = UI.QueryWidget('items', 'CurrentItem')
+                if obj:
+                    user = self.conn.is_user(obj, current_container)
+                    enabled = self.conn.is_user_enabled(obj, current_container)
+                self.__setup_menus(obj=True, user=user, enabled=enabled)
                 if event['EventReason'] == 'ContextMenuActivated':
-                    check = UI.QueryWidget('items', 'CurrentItem')
-                    if check is None:
+                    if obj is None:
                         UI.OpenContextMenu(self.__objs_context_menu(current_container))
                     else:
-                        UI.OpenContextMenu(self.__obj_context_menu())
+                        UI.OpenContextMenu(self.__obj_context_menu(user=user, enabled=enabled))
                 elif event['EventReason'] == 'Activated':
                     self.__show_properties(current_container)
             elif str(ret) == 'properties':
@@ -1389,6 +1406,28 @@ class ADUC:
                 if switch_domains(self.lp, self.creds, self.cred_valid):
                     self.realm = self.lp.get('realm')
                     Wizard.SetContents('Active Directory Users and Computers', self.__aduc_page(), '', False, False)
+            elif str(ret) == 'enable':
+                obj = UI.QueryWidget('items', 'CurrentItem')
+                searchList = self.conn.objects_list(current_container)
+                currentItem = self.__find_by_name(searchList, obj)
+                if currentItem:
+                    try:
+                        self.conn.enable_account('(sAMAccountName=%s)' % currentItem[-1]['sAMAccountName'][-1].decode())
+                    except ldb.LdbError as e:
+                        MessageBox(e.args[-1]).Show()
+                    else:
+                        MessageBox('Object %s has been enabled.' % obj).Show()
+            elif str(ret) == 'disable':
+                obj = UI.QueryWidget('items', 'CurrentItem')
+                searchList = self.conn.objects_list(current_container)
+                currentItem = self.__find_by_name(searchList, obj)
+                if currentItem:
+                    try:
+                        self.conn.disable_account('(sAMAccountName=%s)' % currentItem[-1]['sAMAccountName'][-1].decode())
+                    except ldb.LdbError as e:
+                        MessageBox(e.args[-1]).Show()
+                    else:
+                        MessageBox('Object %s has been disabled.' % obj).Show()
             UI.SetApplicationTitle('Active Directory Users and Computers')
         return Symbol(ret)
 
