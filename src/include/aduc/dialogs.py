@@ -1181,6 +1181,8 @@ class ADUC:
             menus.append({'title': 'Disable Account', 'id': 'disable', 'type': 'MenuEntry', 'parent': 'action'})
         elif user and not enabled:
             menus.append({'title': 'Enable Account', 'id': 'enable', 'type': 'MenuEntry', 'parent': 'action'})
+        if user:
+            menus.append({'title': 'Reset Password...', 'id': 'reset', 'type': 'MenuEntry', 'parent': 'action'})
         if obj:
             menus.append({'title': 'Move...', 'id': 'context_move', 'type': 'MenuEntry', 'parent': 'action'})
             menus.append({'title': 'Delete', 'id': 'delete', 'type': 'MenuEntry', 'parent': 'action'})
@@ -1253,6 +1255,8 @@ class ADUC:
             items.append(Item(Id('enable'), 'Enable Account'))
         if user and enabled:
             items.append(Item(Id('disable'), 'Disable Account'))
+        if user:
+            items.append(Item(Id('reset'), 'Reset Password...'))
         items.extend([
             Item(Id('properties'), 'Properties'),
             Item(Id('delete'), 'Delete')
@@ -1428,8 +1432,49 @@ class ADUC:
                         MessageBox(e.args[-1]).Show()
                     else:
                         MessageBox('Object %s has been disabled.' % obj).Show()
+            elif str(ret) == 'reset':
+                obj = UI.QueryWidget('items', 'CurrentItem')
+                searchList = self.conn.objects_list(current_container)
+                currentItem = self.__find_by_name(searchList, obj)
+                if currentItem:
+                    password, pwdLastSet, unlock = self.__reset_password()
+                    if password:
+                        sam = currentItem[-1]['sAMAccountName'][-1].decode()
+                        if self.conn.reset_password(currentItem[0], sam, password, pwdLastSet, unlock):
+                            MessageBox('The password for %s has been changed.' % obj).Show()
             UI.SetApplicationTitle('Active Directory Users and Computers')
         return Symbol(ret)
+
+    def __reset_password(self):
+        UI.SetApplicationTitle('Reset Password')
+        UI.OpenDialog(HBox(HSpacing(1), VBox(
+            VSpacing(.3),
+            Left(Password(Id('userPassword'), Opt('hstretch'), 'New password:')),
+            Left(Password(Id('confirm_passwd'), Opt('hstretch'), 'Confirm password:')),
+            Left(CheckBox(Id('pwdLastSet'), Opt('hstretch'), UserDataModel['account']['pwdLastSet'], True)),
+            Left(CheckBox(Id('unlock'), Opt('hstretch'), 'Unlock the user\'s account', False)),
+            Right(HBox(
+                PushButton(Id('ok'), 'OK'),
+                PushButton(Id('cancel'), 'Cancel')
+            )),
+            VSpacing(.3),
+        ), HSpacing(1)))
+        while True:
+            ret = UI.UserInput()
+            if str(ret) == 'ok':
+                userPassword = UI.QueryWidget('userPassword', 'Value')
+                confirm_passwd = UI.QueryWidget('confirm_passwd', 'Value')
+                if userPassword != confirm_passwd:
+                    self.__warn_message('Active Directory Domain Services', 'The New and Confirm passwords must match. Please re-type them.')
+                    continue
+                pwdLastSet = 0 if UI.QueryWidget('pwdLastSet', 'Value') else -1
+                unlock = UI.QueryWidget('unlock', 'Value')
+                UI.CloseDialog()
+                return (userPassword, pwdLastSet, unlock)
+            elif str(ret) == 'abort' or str(ret) == 'cancel':
+                break
+        UI.CloseDialog()
+        return (None, None, None)
 
     def __warn_message(self, title, msg):
         if six.PY3 and type(msg) is bytes:

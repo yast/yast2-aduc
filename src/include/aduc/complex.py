@@ -7,7 +7,8 @@ from syslog import syslog, LOG_INFO, LOG_ERR, LOG_DEBUG, LOG_EMERG, LOG_ALERT
 import traceback
 from yast import ycpbuiltins
 from adcommon.strings import strcmp, strcasecmp
-from adcommon.yldap import Ldap, LdapException, stringify_ldap, SCOPE_SUBTREE, SCOPE_ONELEVEL, SCOPE_BASE, addlist, modlist, y2error_dialog
+from adcommon.yldap import Ldap, LdapException, stringify_ldap, SCOPE_SUBTREE, SCOPE_ONELEVEL, SCOPE_BASE, addlist, modlist, y2error_dialog, ldb
+from samba import NTSTATUSError
 
 import six
 
@@ -271,3 +272,20 @@ class Connection(Ldap):
             if not bool(userAccountControl & DISABLED):
                 return True
         return False
+
+    def reset_password(self, dn, sAMAccountName, password, pwdLastSet, unlock):
+        try:
+            self.net.set_password(sAMAccountName, self.realm, password)
+        except NTSTATUSError as e:
+            y2error_dialog(e.args[-1])
+            return False
+        ldif = 'dn: %s\nchangetype: modify\n' % dn
+        if unlock:
+            ldif += 'replace: lockoutTime\nlockoutTime: 0\n'
+        ldif += 'replace: pwdLastSet\npwdLastSet: %d\n' % pwdLastSet
+        try:
+            self.modify_ldif(ldif)
+        except ldb.LdbError as e:
+            y2error_dialog(e.args[-1])
+            return False
+        return True
