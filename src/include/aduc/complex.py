@@ -7,7 +7,8 @@ from syslog import syslog, LOG_INFO, LOG_ERR, LOG_DEBUG, LOG_EMERG, LOG_ALERT
 import traceback
 from yast import ycpbuiltins
 from adcommon.strings import strcmp, strcasecmp
-from adcommon.yldap import Ldap, LdapException, stringify_ldap, SCOPE_SUBTREE, SCOPE_ONELEVEL, SCOPE_BASE, addlist, modlist, y2error_dialog
+from adcommon.yldap import Ldap, LdapException, stringify_ldap, SCOPE_SUBTREE, SCOPE_ONELEVEL, SCOPE_BASE, addlist, modlist, y2error_dialog, ldb
+from samba import NTSTATUSError
 
 import six
 
@@ -253,3 +254,38 @@ class Connection(Ldap):
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error('ldap.rename_s: %s\n' % str(e))
             y2error_dialog(str(e))
+
+    def is_user(self, cn, container):
+        SAM_USER_OBJECT = 0x30000000
+        res = self.search(container, SCOPE_ONELEVEL, '(cn=%s)' % cn, ['sAMAccountType'])
+        if len(res) == 1 and 'sAMAccountType' in res[0].keys():
+            sAMAccountType = int(str(res[0]['sAMAccountType']))
+            if sAMAccountType == SAM_USER_OBJECT:
+                return True
+        return False
+
+    def is_user_enabled(self, cn, container):
+        DISABLED = 0x0002
+        res = self.search(container, SCOPE_ONELEVEL, '(cn=%s)' % cn, ['userAccountControl'])
+        if len(res) == 1 and 'userAccountControl' in res[0].keys():
+            userAccountControl = int(str(res[0]['userAccountControl']))
+            if not bool(userAccountControl & DISABLED):
+                return True
+        return False
+
+    def reset_password(self, dn, sAMAccountName, password, pwdLastSet, unlock):
+        try:
+            self.net.set_password(sAMAccountName, self.realm, password)
+        except NTSTATUSError as e:
+            y2error_dialog(e.args[-1])
+            return False
+        ldif = 'dn: %s\nchangetype: modify\n' % dn
+        if unlock:
+            ldif += 'replace: lockoutTime\nlockoutTime: 0\n'
+        ldif += 'replace: pwdLastSet\npwdLastSet: %d\n' % pwdLastSet
+        try:
+            self.modify_ldif(ldif)
+        except ldb.LdbError as e:
+            y2error_dialog(e.args[-1])
+            return False
+        return True
