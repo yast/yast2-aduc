@@ -160,7 +160,8 @@ def object_editor_input(ret, conn, model):
         attr = UI.QueryWidget('attrs', 'Value')
         val = conn.display_schema_value(attr, model.get_value(attr, False))
         new_val = AttrEdit(conn, attr, val).Show()
-        model.set_value(attr, new_val)
+        if new_val:
+            model.set_value(attr, new_val)
 
 CommonTabContents = {
         'editor' : {
