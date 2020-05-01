@@ -1436,7 +1436,7 @@ class ADUC:
                         MessageBox('Object %s has been disabled.' % obj).Show()
             elif str(ret) == 'reset':
                 obj = UI.QueryWidget('items', 'CurrentItem')
-                searchList = self.conn.objects_list(current_container)
+                searchList = self.conn.objects_list(current_container, ['cn', 'name', 'sAMAccountName'])
                 currentItem = self.__find_by_name(searchList, obj)
                 if currentItem:
                     password, pwdLastSet, unlock = self.__reset_password()
