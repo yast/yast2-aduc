@@ -44,12 +44,12 @@ class Connection(Ldap):
             dn = dn.decode('utf-8')
         return self.ldap_search(dn, SCOPE_BASE, '(objectClass=*)', attrs)[-1]
 
-    def objects_list(self, container):
+    def objects_list(self, container, attrs=[]):
         ret = []
-        containers = self.ldap_search(container, SCOPE_ONELEVEL, '(&(|(objectClass=organizationalUnit)(objectCategory=Container)(objectClass=builtinDomain))(!(|(cn=System)(cn=Program Data))))', [])
+        containers = self.ldap_search(container, SCOPE_ONELEVEL, '(&(|(objectClass=organizationalUnit)(objectCategory=Container)(objectClass=builtinDomain))(!(|(cn=System)(cn=Program Data))))', attrs)
         if containers:
             ret.extend(containers)
-        objs = self.ldap_search(container, SCOPE_ONELEVEL, '(|(objectCategory=person)(objectCategory=group)(objectCategory=computer)(objectCategory=MSMQ-Custom-Recipient)(objectClass=printQueue)(objectCategory=Volume))', [])
+        objs = self.ldap_search(container, SCOPE_ONELEVEL, '(|(objectCategory=person)(objectCategory=group)(objectCategory=computer)(objectCategory=MSMQ-Custom-Recipient)(objectClass=printQueue)(objectCategory=Volume))', attrs)
         if objs:
             ret.extend(objs)
         return ret
