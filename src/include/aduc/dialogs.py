@@ -1521,7 +1521,7 @@ class ADUC:
         return None 
 
     def __objects_tab(self, container):
-        items = [Item(obj[1]['cn'][-1] if 'cn' in obj[1] else obj[1]['name'][-1], obj[1]['objectClass'][-1].title(), obj[1]['description'][-1] if 'description' in obj[1] else '') for obj in self.conn.objects_list(container)]
+        items = [Item(obj[1]['cn'][-1] if 'cn' in obj[1] else obj[1]['name'][-1], obj[1]['objectClass'][-1].title(), obj[1]['description'][-1] if 'description' in obj[1] else '') for obj in self.conn.objects_list(container, ['cn', 'name', 'objectClass', 'description'])]
         return Table(Id('items'), Opt('notify', 'immediate', 'notifyContextMenu'), Header('Name', 'Type', 'Description'), items)
 
     def __sub_tree(self, dn):
