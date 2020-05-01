@@ -1194,7 +1194,7 @@ class ADUC:
         currentItemName = UI.QueryWidget('items', 'CurrentItem')
         searchList = self.conn.objects_list(container)
         currentItem = self.__find_by_name(searchList, currentItemName)
-        if self.__warn_message('Delete', 'Are you sure you want to delete \'%s\'?' % currentItem[-1]['name'][-1].decode()):
+        if currentItem and self.__warn_message('Delete', 'Are you sure you want to delete \'%s\'?' % currentItem[-1]['name'][-1].decode()):
             self.conn.ldap_delete(currentItem[0])
             return currentItem[0].lower().startswith('ou=')
 
