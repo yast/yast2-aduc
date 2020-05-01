@@ -1192,7 +1192,7 @@ class ADUC:
 
     def __delete_selected_obj(self, container):
         currentItemName = UI.QueryWidget('items', 'CurrentItem')
-        searchList = self.conn.objects_list(container)
+        searchList = self.conn.objects_list(container, ['cn', 'name'])
         currentItem = self.__find_by_name(searchList, currentItemName)
         if currentItem and self.__warn_message('Delete', 'Are you sure you want to delete \'%s\'?' % currentItem[-1]['name'][-1].decode()):
             self.conn.ldap_delete(currentItem[0])
