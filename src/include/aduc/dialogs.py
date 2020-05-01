@@ -1390,7 +1390,7 @@ class ADUC:
                             'Are you sure you want to move this object?')
                     if resp:
                         currentItemName = UI.QueryWidget('items', 'CurrentItem')
-                        searchList = self.conn.objects_list(current_container)
+                        searchList = self.conn.objects_list(current_container, ['cn', 'ou', 'name'])
                         currentItem = self.__find_by_name(searchList, currentItemName)
                         dn = currentItem[0]
                         newrdn = None
