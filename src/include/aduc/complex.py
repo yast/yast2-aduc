@@ -80,14 +80,15 @@ class Connection(Ldap):
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
             y2error_dialog(e.info if e.info else e.msg)
-            return
+            return None
+        return dn
 
     def add_user(self, user_attrs, container=None, inetorgperson=False):
         if not container:
             container = self.__well_known_container('users')
         if not strcmp(user_attrs['userPassword'], user_attrs['confirm_passwd']):
             y2error_dialog('The passwords do not match.')
-            return
+            return None
         attrs = {}
 
         attrs['objectClass'] = ['top', 'person', 'organizationalPerson', 'user']
@@ -130,7 +131,7 @@ class Connection(Ldap):
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
             y2error_dialog(e.info if e.info else e.msg)
-            return
+            return None
 
         try:
             if six.PY3:
@@ -152,6 +153,7 @@ class Connection(Ldap):
         if user_attrs['account_disabled']:
             uac |= 0x0002
         self.ldap_modify(dn, modlist(stringify_ldap({'userAccountControl': attrs['userAccountControl']}), stringify_ldap({'userAccountControl': [str(uac)]})))
+        return dn
 
     def add_group(self, group_attrs, container=None):
         if not container:
@@ -186,6 +188,7 @@ class Connection(Ldap):
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
             y2error_dialog(e.info if e.info else e.msg)
+        return dn
 
     def add_computer(self, computer_attrs, container=None):
         if not container:
@@ -212,6 +215,7 @@ class Connection(Ldap):
             ycpbuiltins.y2error(traceback.format_exc())
             ycpbuiltins.y2error('ldap.add_s: %s\n' % e.info if e.info else e.msg)
             y2error_dialog(e.info if e.info else e.msg)
+        return dn
 
     def update(self, dn, orig_map, modattr, addattr):
         dn = dn if isinstance(dn, six.string_types) else dn.decode('utf8')
@@ -256,18 +260,18 @@ class Connection(Ldap):
             ycpbuiltins.y2error('ldap.rename_s: %s\n' % str(e))
             y2error_dialog(str(e))
 
-    def is_user(self, cn, container):
+    def is_user(self, dn):
         SAM_USER_OBJECT = 0x30000000
-        res = self.search(container, SCOPE_ONELEVEL, '(cn=%s)' % cn, ['sAMAccountType'])
+        res = self.search(dn, SCOPE_BASE, None, ['sAMAccountType'])
         if len(res) == 1 and 'sAMAccountType' in res[0].keys():
             sAMAccountType = int(str(res[0]['sAMAccountType']))
             if sAMAccountType == SAM_USER_OBJECT:
                 return True
         return False
 
-    def is_user_enabled(self, cn, container):
+    def is_user_enabled(self, dn):
         DISABLED = 0x0002
-        res = self.search(container, SCOPE_ONELEVEL, '(cn=%s)' % cn, ['userAccountControl'])
+        res = self.search(dn, SCOPE_BASE, None, ['userAccountControl'])
         if len(res) == 1 and 'userAccountControl' in res[0].keys():
             userAccountControl = int(str(res[0]['userAccountControl']))
             if not bool(userAccountControl & DISABLED):
