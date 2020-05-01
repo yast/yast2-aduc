@@ -1414,7 +1414,7 @@ class ADUC:
                     Wizard.SetContents('Active Directory Users and Computers', self.__aduc_page(), '', False, False)
             elif str(ret) == 'enable':
                 obj = UI.QueryWidget('items', 'CurrentItem')
-                searchList = self.conn.objects_list(current_container)
+                searchList = self.conn.objects_list(current_container, ['cn', 'name', 'sAMAccountName'])
                 currentItem = self.__find_by_name(searchList, obj)
                 if currentItem:
                     try:
@@ -1425,7 +1425,7 @@ class ADUC:
                         MessageBox('Object %s has been enabled.' % obj).Show()
             elif str(ret) == 'disable':
                 obj = UI.QueryWidget('items', 'CurrentItem')
-                searchList = self.conn.objects_list(current_container)
+                searchList = self.conn.objects_list(current_container, ['cn', 'name', 'sAMAccountName'])
                 currentItem = self.__find_by_name(searchList, obj)
                 if currentItem:
                     try:
