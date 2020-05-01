@@ -86,7 +86,8 @@ class Connection(Ldap):
         if not container:
             container = self.__well_known_container('users')
         if not strcmp(user_attrs['userPassword'], user_attrs['confirm_passwd']):
-            raise Exception('The passwords do not match.')
+            y2error_dialog('The passwords do not match.')
+            return
         attrs = {}
 
         attrs['objectClass'] = ['top', 'person', 'organizationalPerson', 'user']
