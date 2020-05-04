@@ -1192,9 +1192,8 @@ class ADUC:
 
     def __delete_selected_obj(self, container):
         currentItemName = UI.QueryWidget('items', 'CurrentItem')
-        searchList = self.conn.objects_list(container)
-        currentItem = self.__find_by_name(searchList, currentItemName)
-        if self.__warn_message('Delete', 'Are you sure you want to delete \'%s\'?' % currentItem[-1]['name'][-1].decode()):
+        currentItem = self.conn.obj(currentItemName, ['cn', 'name'])
+        if currentItem and self.__warn_message('Delete', 'Are you sure you want to delete \'%s\'?' % currentItem[-1]['name'][-1].decode()):
             self.conn.ldap_delete(currentItem[0])
             return currentItem[0].lower().startswith('ou=')
 
@@ -1202,8 +1201,7 @@ class ADUC:
         searchList = []
         currentItemName = None
         currentItemName = UI.QueryWidget('items', 'CurrentItem')
-        searchList = self.conn.objects_list(container)
-        currentItem = self.__find_by_name(searchList, currentItemName)
+        currentItem = self.conn.obj(currentItemName)
         if currentItem is None:
             return
         if six.b('computer') in currentItem[1]['objectClass']:
@@ -1313,8 +1311,8 @@ class ADUC:
                 enabled = True
                 obj = UI.QueryWidget('items', 'CurrentItem')
                 if obj:
-                    user = self.conn.is_user(obj, current_container)
-                    enabled = self.conn.is_user_enabled(obj, current_container)
+                    user = self.conn.is_user(obj)
+                    enabled = self.conn.is_user_enabled(obj)
                 self.__setup_menus(obj=True, user=user, enabled=enabled)
                 if event['EventReason'] == 'ContextMenuActivated':
                     if obj is None:
@@ -1335,18 +1333,18 @@ class ADUC:
             elif str(ret) == 'context_add_contact':
                 contact = NewObjDialog(self.lp, 'contact', current_container).Show()
                 if contact:
-                    self.conn.add_contact(contact, current_container)
-                    self.__refresh(current_container, contact['cn'])
+                    dn = self.conn.add_contact(contact, current_container)
+                    self.__refresh(current_container, dn)
             elif str(ret) == 'context_add_user':
                 user = NewObjDialog(self.lp, 'user', current_container).Show()
                 if user:
-                    self.conn.add_user(user, current_container)
-                    self.__refresh(current_container, user['cn'])
+                    dn = self.conn.add_user(user, current_container)
+                    self.__refresh(current_container, dn)
             elif str(ret) == 'context_add_inetorgperson':
                 user = NewObjDialog(self.lp, 'InetOrgPerson', current_container).Show()
                 if user:
-                    self.conn.add_user(user, current_container, inetorgperson=True)
-                    self.__refresh(current_container, user['cn'])
+                    dn = self.conn.add_user(user, current_container, inetorgperson=True)
+                    self.__refresh(current_container, dn)
             elif str(ret) == 'context_add_printer':
                 obj = NewObjDialog(self.lp, 'printQueue', current_container, attrs=[('cn', 'Unicode String', 'Common-Name'), ('versionNumber', 'Integer', 'Version-Number'), ('uNCName', 'Unicode String', 'UNC-Name'), ('shortServerName', 'Unicode String', 'Short-Server-Name'), ('serverName', 'Unicode String', 'Server-Name'), ('printerName', 'Unicode String', 'Printer-Name')]).Show()
                 if obj:
@@ -1371,13 +1369,13 @@ class ADUC:
             elif str(ret) == 'context_add_group':
                 group = NewObjDialog(self.lp, 'group', current_container).Show()
                 if group:
-                    self.conn.add_group(group, current_container)
-                    self.__refresh(current_container, group['name'])
+                    dn = self.conn.add_group(group, current_container)
+                    self.__refresh(current_container, dn)
             elif str(ret) == 'context_add_computer':
                 computer = NewObjDialog(self.lp, 'computer', current_container).Show()
                 if computer:
-                    self.conn.add_computer(computer, current_container)
-                    self.__refresh(current_container, computer['name'])
+                    dn = self.conn.add_computer(computer, current_container)
+                    self.__refresh(current_container, dn)
             elif str(ret) == 'context_move':
                 location = MoveDialog(self.conn).Show()
                 if location:
@@ -1388,10 +1386,8 @@ class ADUC:
                             'accounts within the OU.\n' +
                             'Are you sure you want to move this object?')
                     if resp:
-                        currentItemName = UI.QueryWidget('items', 'CurrentItem')
-                        searchList = self.conn.objects_list(current_container)
-                        currentItem = self.__find_by_name(searchList, currentItemName)
-                        dn = currentItem[0]
+                        dn = UI.QueryWidget('items', 'CurrentItem')
+                        currentItem = self.conn.obj(dn, ['cn', 'ou'])
                         newrdn = None
                         if 'cn' in currentItem[-1]:
                             newrdn = 'CN=%s' % currentItem[-1]['cn'][-1].decode()
@@ -1413,8 +1409,7 @@ class ADUC:
                     Wizard.SetContents('Active Directory Users and Computers', self.__aduc_page(), '', False, False)
             elif str(ret) == 'enable':
                 obj = UI.QueryWidget('items', 'CurrentItem')
-                searchList = self.conn.objects_list(current_container)
-                currentItem = self.__find_by_name(searchList, obj)
+                currentItem = self.conn.obj(obj, ['cn', 'name', 'sAMAccountName'])
                 if currentItem:
                     try:
                         self.conn.enable_account('(sAMAccountName=%s)' % currentItem[-1]['sAMAccountName'][-1].decode())
@@ -1424,8 +1419,7 @@ class ADUC:
                         MessageBox('Object %s has been enabled.' % obj).Show()
             elif str(ret) == 'disable':
                 obj = UI.QueryWidget('items', 'CurrentItem')
-                searchList = self.conn.objects_list(current_container)
-                currentItem = self.__find_by_name(searchList, obj)
+                currentItem = self.conn.obj(obj, ['cn', 'name', 'sAMAccountName'])
                 if currentItem:
                     try:
                         self.conn.disable_account('(sAMAccountName=%s)' % currentItem[-1]['sAMAccountName'][-1].decode())
@@ -1435,14 +1429,14 @@ class ADUC:
                         MessageBox('Object %s has been disabled.' % obj).Show()
             elif str(ret) == 'reset':
                 obj = UI.QueryWidget('items', 'CurrentItem')
-                searchList = self.conn.objects_list(current_container)
-                currentItem = self.__find_by_name(searchList, obj)
+                currentItem = self.conn.obj(obj, ['cn', 'name', 'sAMAccountName'])
                 if currentItem:
                     password, pwdLastSet, unlock = self.__reset_password()
                     if password:
                         sam = currentItem[-1]['sAMAccountName'][-1].decode()
+                        name = currentItem[-1]['cn'][-1].decode() if 'cn' in currentItem[-1] else currentItem[-1]['name'][-1].decode()
                         if self.conn.reset_password(currentItem[0], sam, password, pwdLastSet, unlock):
-                            MessageBox('The password for %s has been changed.' % obj).Show()
+                            MessageBox('The password for %s has been changed.' % name).Show()
             UI.SetApplicationTitle('Active Directory Users and Computers')
         return Symbol(ret)
 
@@ -1520,7 +1514,7 @@ class ADUC:
         return None 
 
     def __objects_tab(self, container):
-        items = [Item(obj[1]['cn'][-1] if 'cn' in obj[1] else obj[1]['name'][-1], obj[1]['objectClass'][-1].title(), obj[1]['description'][-1] if 'description' in obj[1] else '') for obj in self.conn.objects_list(container)]
+        items = [Item(Id(obj[0]), obj[1]['cn'][-1] if 'cn' in obj[1] else obj[1]['name'][-1], obj[1]['objectClass'][-1].title(), obj[1]['description'][-1] if 'description' in obj[1] else '') for obj in self.conn.objects_list(container, ['cn', 'name', 'objectClass', 'description'])]
         return Table(Id('items'), Opt('notify', 'immediate', 'notifyContextMenu'), Header('Name', 'Type', 'Description'), items)
 
     def __sub_tree(self, dn):
