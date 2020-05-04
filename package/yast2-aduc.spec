@@ -57,13 +57,11 @@ creating and modifying Users, Groups, and Computer objects in Active Directory.
 
 %install
 %yast_install
-%yast_metainfo
 
 %files
 %{yast_clientdir}
 %{yast_yncludedir}
 %{yast_desktopdir}
-%{yast_metainfodir}
 %doc %{yast_docdir}
 %license COPYING
 
