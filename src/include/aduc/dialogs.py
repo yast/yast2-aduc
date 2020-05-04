@@ -1434,8 +1434,9 @@ class ADUC:
                     password, pwdLastSet, unlock = self.__reset_password()
                     if password:
                         sam = currentItem[-1]['sAMAccountName'][-1].decode()
+                        name = currentItem[-1]['cn'][-1].decode() if 'cn' in currentItem[-1] else currentItem[-1]['name'][-1].decode()
                         if self.conn.reset_password(currentItem[0], sam, password, pwdLastSet, unlock):
-                            MessageBox('The password for %s has been changed.' % obj).Show()
+                            MessageBox('The password for %s has been changed.' % name).Show()
             UI.SetApplicationTitle('Active Directory Users and Computers')
         return Symbol(ret)
 
