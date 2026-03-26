@@ -28,7 +28,6 @@ Source:         %{name}-%{version}.tar.bz2
 
 BuildRequires:  perl-XML-Writer
 BuildRequires:  python3
-BuildRequires:  update-desktop-files
 BuildRequires:  yast2
 BuildRequires:  yast2-devtools
 BuildRequires:  yast2-testsuite
